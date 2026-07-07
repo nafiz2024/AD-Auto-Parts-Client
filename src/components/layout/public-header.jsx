@@ -32,17 +32,18 @@ const navLinks = [
 
 function SearchBar() {
   return (
-    <div className="flex w-full max-w-3xl items-center rounded-2xl border border-border bg-white shadow-sm">
+    <form action={routes.public.search} className="flex w-full max-w-3xl items-center rounded-2xl border border-border bg-white shadow-sm">
       <Input
         type="search"
+        name="q"
         aria-label="Search parts"
         placeholder="Search by part name, OEM number or keyword..."
         className="border-0 shadow-none focus:ring-0"
       />
-      <Button size="icon" className="m-1 rounded-xl bg-brand-navy hover:bg-brand-navy-soft">
+      <Button type="submit" size="icon" className="m-1 rounded-xl bg-brand-navy hover:bg-brand-navy-soft">
         <SearchIcon />
       </Button>
-    </div>
+    </form>
   );
 }
 
@@ -71,6 +72,23 @@ export function PublicHeader() {
 
   return (
     <header className="sticky inset-block-start-0 z-40 border-b border-border bg-white/95 backdrop-blur">
+      <div className="hidden bg-brand-navy text-white lg:block">
+        <Container className="flex items-center justify-between gap-6 py-2 text-sm">
+          <div className="flex flex-wrap items-center gap-6 text-white/90">
+            <span>{t("inspectedParts")}</span>
+            <span>{t("nationwideDelivery")}</span>
+            <span>{t("customerSupport")}</span>
+          </div>
+          <div className="flex items-center gap-6 text-white/80">
+            <Link href={routes.public.search} className="transition hover:text-white">
+              Track Order
+            </Link>
+            <Link href={routes.public.contact} className="transition hover:text-white">
+              Help Center
+            </Link>
+          </div>
+        </Container>
+      </div>
       <Container>
         <div className="flex items-center justify-between gap-4 py-4 lg:grid lg:grid-cols-[auto_1fr_auto]">
           <div className="flex items-center gap-3">
@@ -90,7 +108,7 @@ export function PublicHeader() {
           <div className="hidden items-center gap-2 lg:flex">
             <LanguageToggle />
             <IconLink icon={HeartIcon} label={t("wishlist")} />
-            <IconLink icon={BagIcon} label="Cart" badge="2" />
+            <IconLink icon={BagIcon} label="Cart" badge="0" />
             <button
               type="button"
               className="flex min-w-28 items-center gap-2 rounded-2xl px-3 py-2 text-sm text-foreground transition hover:bg-muted"

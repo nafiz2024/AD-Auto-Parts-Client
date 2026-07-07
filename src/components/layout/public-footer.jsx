@@ -60,6 +60,26 @@ export function PublicFooter() {
           </div>
         </div>
       </Container>
+      <div className="border-t border-border/80 bg-white">
+        <Container className="grid gap-4 py-5 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-brand-navy/5 p-2 text-brand-navy">✓</span>
+            <span>Inspected parts</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-brand-navy/5 p-2 text-brand-navy">✓</span>
+            <span>Nationwide delivery</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-brand-navy/5 p-2 text-brand-navy">✓</span>
+            <span>COD and manual advance payment</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="rounded-full bg-brand-navy/5 p-2 text-brand-navy">✓</span>
+            <span>Customer support</span>
+          </div>
+        </Container>
+      </div>
     </footer>
   );
 }

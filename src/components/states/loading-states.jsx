@@ -20,6 +20,25 @@ export function ProductCardSkeleton() {
   );
 }
 
+export function CategoryCardSkeleton() {
+  return (
+    <Card className="space-y-5">
+      <SkeletonBlock className="h-14 w-14 rounded-2xl" />
+      <SkeletonBlock className="h-6 w-2/3" />
+      <SkeletonBlock className="h-4 w-1/2" />
+    </Card>
+  );
+}
+
+export function BrandCardSkeleton() {
+  return (
+    <Card className="flex flex-col items-center gap-4 py-5">
+      <SkeletonBlock className="h-16 w-16 rounded-2xl" />
+      <SkeletonBlock className="h-4 w-20" />
+    </Card>
+  );
+}
+
 export function ProductDetailsSkeleton() {
   return (
     <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
