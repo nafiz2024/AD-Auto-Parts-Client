@@ -60,15 +60,52 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Currency is SAR.
 - Country is SA.
 
-## Current Step 1 coverage
+## Current Step 2 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
 - Centralized backend endpoint constants
 - Frontend route constants for public, customer, and admin areas
 - Auth/session helpers for customer/admin flows with cookie-based requests
-- Lightweight client auth provider and hook
-- Minimal i18n direction helpers for English and Arabic
+- Runtime language provider with English/Arabic switching and RTL document updates
+- Public storefront layout with a two-row navbar and shared footer
+- Admin shell with sidebar, topbar, and dashboard placeholder routes
+- Shared UI components for buttons, inputs, cards, alerts, badges, dialogs, toasts, loading states, and error states
+- SAR money formatting helper for minor-unit prices
+
+## Layout structure
+
+- Public shell: `src/components/layout/public-*`
+- Admin shell: `src/components/layout/admin-*`
+- Shared UI components: `src/components/ui`
+- Loading/error state components: `src/components/states`
+- Runtime providers: `src/providers`
+
+## Public navbar behavior
+
+- Two-row storefront header inspired by the provided reference
+- Main row includes logo, large search bar, language toggle, wishlist, cart placeholder, and account placeholder
+- Second row includes categories trigger, main navigation links, and Saudi WhatsApp placeholder contact
+- Mobile layout collapses into a slide-in menu
+
+## Admin shell behavior
+
+- Dark navy sidebar with red active item styling
+- White topbar with search placeholder, View Store shortcut, notifications icon, and admin account placeholder
+- Dashboard route is still a placeholder and does not claim real analytics data
+
+## Language strategy
+
+- English remains the development default
+- Arabic is optional now
+- Arabic switches document direction to RTL
+- Final release can later move the default to Arabic through env configuration
+
+## SAR formatting note
+
+- Money helpers live in `src/lib/utils/money.js`
+- `formatMoneyMinor` and `formatSarMinor` assume backend values may arrive in minor units
+- Frontend display does not calculate authoritative totals
 
 ## Validation
 
@@ -77,4 +114,4 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 
 ## Next step
 
-Step 2 can build actual storefront and admin UI flows on top of this foundation, starting with backend-connected listing, detail, and authentication screens.
+Step 3 can start wiring these shells and shared components into backend-connected public listing/detail pages and admin CRUD screens without rebuilding the UI foundation.

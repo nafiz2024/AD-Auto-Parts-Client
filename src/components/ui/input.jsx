@@ -1,0 +1,13 @@
+import { cn } from "@/lib/utils/cn";
+
+export function Input({ className, ...props }) {
+  return (
+    <input
+      className={cn(
+        "h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-brand-red focus:ring-4 focus:ring-brand-red/10",
+        className,
+      )}
+      {...props}
+    />
+  );
+}

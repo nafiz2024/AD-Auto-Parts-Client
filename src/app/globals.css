@@ -1,26 +1,92 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f5ef;
+  --foreground: #0f172a;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --card: #ffffff;
+  --brand-navy: #0f1b33;
+  --brand-navy-soft: #1f3158;
+  --brand-red: #ef4444;
+  --brand-red-strong: #dc2626;
+  --secondary: #f1f5f9;
+  --accent: #fff1f2;
+  --success: #16a34a;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --focus-ring: rgba(239, 68, 68, 0.22);
+  --admin-sidebar: #101b2f;
+  --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-muted: var(--secondary);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-card: var(--card);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-navy-soft: var(--brand-navy-soft);
+  --color-brand-red: var(--brand-red);
+  --color-brand-red-strong: var(--brand-red-strong);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-error: var(--error);
+  --color-admin-sidebar: var(--admin-sidebar);
+  --shadow-soft: var(--shadow-soft);
   --font-sans: "Segoe UI", "Tahoma", "Arial", sans-serif;
   --font-mono: "Cascadia Code", "Consolas", "Courier New", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(180deg, #fbfaf6 0%, var(--background) 100%);
   color: var(--foreground);
   font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(239, 68, 68, 0.18);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+[dir="rtl"] .flip-in-rtl {
+  transform: scaleX(-1);
 }
