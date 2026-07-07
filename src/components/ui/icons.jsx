@@ -35,6 +35,33 @@ export function SearchIcon(props) {
   );
 }
 
+export function GridIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+    </Svg>
+  );
+}
+
+export function ListIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M8 6h13M8 12h13M8 18h13" />
+      <path d="M3 6h.01M3 12h.01M3 18h.01" />
+    </Svg>
+  );
+}
+
+export function FilterIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M4 6h16" />
+      <path d="M7 12h10" />
+      <path d="M10 18h4" />
+    </Svg>
+  );
+}
+
 export function HeartIcon(props) {
   return (
     <Svg {...props}>

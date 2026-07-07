@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 3 coverage
+## Current Step 4 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -66,6 +66,10 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Shared UI components for buttons, inputs, cards, alerts, badges, dialogs, toasts, loading states, and error states
 - SAR money formatting helper for minor-unit prices
 - Homepage landing page with hero, compatibility finder preview, categories, product sections, vehicle brands, CTA, why-choose-us, how-it-works, reviews preview, and recently-viewed placeholder
+- Storefront shop page with filter sidebar, sorting, grid/list view toggle, pagination, and Buy Now focused product cards
+- Search results page with query-driven hero, suggestions, filters, sorting, pagination, and no-results support CTA
+- Category detail pages that reuse the shared storefront listing experience
+- Route-level loading states for shop, search, and category listing pages
 
 ## Layout structure
 
@@ -74,6 +78,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Shared UI components: `src/components/ui`
 - Loading/error state components: `src/components/states`
 - Runtime providers: `src/providers`
+- Storefront listing feature: `src/features/listing`
 
 ## Public navbar behavior
 
@@ -129,6 +134,14 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Lint: `npm run lint`
 - Build: `npm run build`
 
+## Listing behavior
+
+- `GET /products` is used as the primary backend source for shop, category, and search pages
+- Safe backend filters currently used by the frontend include `q`, `page`, `limit`, `sort`, `year`, `minPriceMinor`, `maxPriceMinor`, `availability`, `position`, and supported condition values
+- When the local backend returns no products or empty taxonomy collections, the storefront falls back to clearly labeled preview content so the Step 4 UI can still be reviewed
+- Wishlist buttons are visual placeholders only
+- Product cards continue to use `Buy Now` and `View Details`; no cart workflow has been introduced
+
 ## Next step
 
-Step 4 can connect the public products, compatibility, search, and product detail pages to richer backend data and real filtering without redesigning the landing page again.
+Step 5 can connect the product details page, compatibility page, and checkout placeholder to richer backend data while preserving the Buy Now only flow.

@@ -2,6 +2,8 @@ export const routes = {
   public: {
     home: "/",
     products: "/products",
+    categories: "/products",
+    categoryDetail: (categorySlug) => `/categories/${categorySlug}`,
     productDetail: (productId) => `/products/${productId}`,
     search: "/search",
     compatibility: "/compatibility",

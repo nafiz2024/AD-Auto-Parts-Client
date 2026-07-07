@@ -154,7 +154,7 @@ function HeroSection() {
 function CategoryCard({ category }) {
   return (
     <Link
-      href={`${routes.public.products}${buildQueryString({ category: category.slug ?? category.id })}`}
+      href={routes.public.categoryDetail(category.slug ?? category.id)}
       className={`group rounded-[2rem] border border-border bg-gradient-to-br ${category.accent} p-5 shadow-soft transition hover:-translate-y-1`}
     >
       <div className="flex items-center justify-between">

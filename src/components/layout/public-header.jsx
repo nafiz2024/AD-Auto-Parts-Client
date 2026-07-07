@@ -23,10 +23,10 @@ import { cn } from "@/lib/utils/cn";
 
 const navLinks = [
   { key: "shop", href: routes.public.products },
-  { key: "categories", href: routes.public.products },
+  { key: "categories", href: routes.public.categories },
   { key: "brands", href: routes.public.products },
-  { key: "featuredParts", href: routes.public.products },
-  { key: "latestArrivals", href: routes.public.products },
+  { key: "featuredParts", href: `${routes.public.products}?sort=featured` },
+  { key: "latestArrivals", href: `${routes.public.products}?sort=newest` },
   { key: "contactUs", href: routes.public.contact },
 ];
 
