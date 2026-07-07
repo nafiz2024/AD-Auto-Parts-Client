@@ -413,7 +413,10 @@ function ProductsSection({ title, description, products, buyNowBaseHref }) {
           <ProductCard
             key={`${title}-${product.id}`}
             product={product}
-            buyNowHref={`${buyNowBaseHref}${buildQueryString({ product: product.slug ?? product.id })}`}
+          buyNowHref={`${buyNowBaseHref}${buildQueryString({
+            productId: product.slug ?? product.id,
+            qty: 1,
+          })}`}
           />
         ))}
       </div>

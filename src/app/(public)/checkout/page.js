@@ -4,7 +4,8 @@ import { PageHeader } from "@/components/ui/page-header";
 
 export default async function CheckoutPage({ searchParams }) {
   const params = await searchParams;
-  const selectedProduct = params?.product ?? null;
+  const selectedProduct = params?.productId ?? params?.product ?? null;
+  const selectedQty = params?.qty ?? "1";
 
   return (
     <Container className="space-y-8 py-10">
@@ -17,7 +18,7 @@ export default async function CheckoutPage({ searchParams }) {
           <CardTitle>Checkout placeholder</CardTitle>
           <CardDescription>
             {selectedProduct
-              ? `Selected product: ${selectedProduct}`
+              ? `Selected product: ${selectedProduct} (qty: ${selectedQty})`
               : "A product identifier will appear here when Buy Now is triggered from a product card."}
           </CardDescription>
         </CardHeader>

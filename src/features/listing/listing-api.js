@@ -1155,4 +1155,4 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
   };
 }
 
-export { PAGE_SIZE, previewCategories, previewProducts };
+export { PAGE_SIZE, normalizeProduct, previewCategories, previewProducts };

@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 4 coverage
+## Current Step 5 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -70,6 +70,11 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Search results page with query-driven hero, suggestions, filters, sorting, pagination, and no-results support CTA
 - Category detail pages that reuse the shared storefront listing experience
 - Route-level loading states for shop, search, and category listing pages
+- Product detail route with backend-first product loading
+- Product gallery with safe image fallbacks and thumbnail selection
+- Compatibility summary, condition summary, specifications, delivery/return, and reviews preview sections
+- Related products using the shared storefront product card
+- Buy Now remains single-item checkout only with product identifier plus `qty=1`
 
 ## Layout structure
 
@@ -128,6 +133,7 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - The homepage does not implement a cart system
 - Product cards use `Buy Now` and `View Details`
 - `Buy Now` routes to a single-item checkout placeholder, never to a cart flow
+- The product details page also routes only to single-item checkout and does not create cart state
 
 ## Validation
 
@@ -144,4 +150,4 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 
 ## Next step
 
-Step 5 can connect the product details page, compatibility page, and checkout placeholder to richer backend data while preserving the Buy Now only flow.
+Step 6 can connect the checkout placeholder, compatibility search, and later question/review submission flows while preserving the Buy Now only storefront behavior.

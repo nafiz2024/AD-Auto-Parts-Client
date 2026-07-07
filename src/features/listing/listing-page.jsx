@@ -454,7 +454,10 @@ function ProductCard({ product, view = "grid" }) {
         : "error";
   const tone = product.categorySlug === "lighting-parts" ? "lighting" : product.categorySlug === "engine-parts" ? "engine" : "default";
   const detailHref = routes.public.productDetail(product.slug);
-  const buyNowHref = `${routes.public.checkout}${buildQueryString({ product: product.slug })}`;
+  const buyNowHref = `${routes.public.checkout}${buildQueryString({
+    productId: product.slug,
+    qty: 1,
+  })}`;
 
   if (view === "list") {
     return (
@@ -874,3 +877,5 @@ export function ListingLoadingPage() {
     </div>
   );
 }
+
+export { ProductCard };
