@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 5 coverage
+## Current Step 6 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -75,6 +75,9 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Compatibility summary, condition summary, specifications, delivery/return, and reviews preview sections
 - Related products using the shared storefront product card
 - Buy Now remains single-item checkout only with product identifier plus `qty=1`
+- Single-item checkout route with backend product reload, checkout form state, delivery estimate requests, and idempotent order submission
+- Order success route with order number summary and safe next-step messaging
+- Track order page with authenticated order-detail lookup fallback and safe public messaging when a public tracking endpoint is not exposed in the current frontend contract
 
 ## Layout structure
 
@@ -134,6 +137,15 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Product cards use `Buy Now` and `View Details`
 - `Buy Now` routes to a single-item checkout placeholder, never to a cart flow
 - The product details page also routes only to single-item checkout and does not create cart state
+- The checkout flow does not create or persist cart state; it submits one product only
+
+## Checkout behavior
+
+- Checkout expects `productId` plus `qty=1` in the URL
+- Product, stock, price, delivery fee, and total are always reloaded or confirmed by the backend
+- Delivery estimate is requested from the backend and shown as informational until order placement confirms the final total
+- Supported payment methods in the UI are `COD` and `Manual Advance Payment`
+- No external payment gateway, card form, or multi-item cart logic is implemented
 
 ## Validation
 
@@ -148,6 +160,14 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Wishlist buttons are visual placeholders only
 - Product cards continue to use `Buy Now` and `View Details`; no cart workflow has been introduced
 
+## Backend endpoints used by checkout/order UI
+
+- `GET /products/:id`
+- `GET /delivery-zones`
+- `GET /delivery-estimate`
+- `POST /customer/checkout`
+- `GET /customer/orders/:orderNumber`
+
 ## Next step
 
-Step 6 can connect the checkout placeholder, compatibility search, and later question/review submission flows while preserving the Buy Now only storefront behavior.
+Step 7 can expand customer account order pages, manual payment proof submission UI, and richer public order tracking if a dedicated public tracking endpoint is exposed by the backend contract.

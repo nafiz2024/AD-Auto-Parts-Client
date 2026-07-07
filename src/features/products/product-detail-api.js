@@ -625,3 +625,5 @@ export const getProductDetailPageData = cache(async (productId) => {
     throw error;
   }
 });
+
+export { normalizeProductDetail };

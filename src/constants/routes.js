@@ -8,6 +8,7 @@ export const routes = {
     search: "/search",
     compatibility: "/compatibility",
     checkout: "/checkout",
+    checkoutSuccess: "/checkout/success",
     trackOrder: "/track-order",
     contact: "/contact",
   },
