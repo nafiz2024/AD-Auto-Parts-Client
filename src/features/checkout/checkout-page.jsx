@@ -94,7 +94,7 @@ export function CheckoutPage({
   initialProductId,
   initialQty = 1,
 }) {
-  const { t } = useLanguage();
+  const { t, getLocalizedField } = useLanguage();
   const toast = useToast();
   const router = useRouter();
   const [isSubmitting, startSubmitTransition] = useTransition();
@@ -192,10 +192,10 @@ export function CheckoutPage({
         mapEstimatePayload(productState.product.id, initialQty, form),
       );
       setEstimateState({ status: "ready", data: estimate, error: null });
-      toast.success("Delivery estimate updated", "Estimated delivery information has been refreshed.");
+      toast.success(t("deliveryEstimateUpdated"), t("deliveryEstimateRefreshed"));
     } catch (error) {
       setEstimateState({ status: "error", data: null, error });
-      toast.warning("Delivery estimate unavailable", "We could not load a delivery estimate right now.");
+      toast.warning(t("estimateUnavailable"), t("estimateUnavailableDescription"));
     }
   }
 
@@ -313,7 +313,7 @@ export function CheckoutPage({
       <Container className="py-12">
         <EmptyState
           title={t("noProductSelected")}
-          description="Choose a product from the storefront before opening checkout."
+          description={t("noProductSelectedDescription")}
           actionLabel={t("backToShop")}
           actionHref={routes.public.products}
         />
@@ -336,7 +336,7 @@ export function CheckoutPage({
       <Container className="py-12">
         <EmptyState
           title={t("failedToLoad")}
-          description="We could not load the selected product for checkout."
+          description={t("selectedProductCheckoutLoadError")}
           actionLabel={t("backToShop")}
           actionHref={routes.public.products}
         />
@@ -349,7 +349,7 @@ export function CheckoutPage({
       <Container className="py-12">
         <EmptyState
           title={t("productUnavailable")}
-          description="This product is currently unavailable for single-item checkout."
+          description={t("productUnavailableCheckout")}
           actionLabel={t("backToShop")}
           actionHref={routes.public.products}
         />
@@ -358,6 +358,7 @@ export function CheckoutPage({
   }
 
   const product = productState.product;
+  const localizedProductName = getLocalizedField(product, "name") || product.name;
 
   return (
     <div className="bg-[linear-gradient(180deg,#f8f7f4_0%,#ffffff_20%,#f8f7f4_100%)]">
@@ -370,7 +371,7 @@ export function CheckoutPage({
             {t("checkout")}
           </h1>
           <p className="text-base text-muted-foreground">
-            Single-item Buy Now checkout. No other products will be added.
+            {t("singleItemCheckoutDescription")}
           </p>
         </div>
 
@@ -383,17 +384,17 @@ export function CheckoutPage({
                     {product.images[0]?.url ? (
                       <img
                         src={product.images[0].url}
-                        alt={product.name}
+                        alt={localizedProductName}
                         className="h-28 w-full object-cover"
                       />
                     ) : (
                       <div className="flex h-28 items-center justify-center text-sm text-muted-foreground">
-                        No image
+                        {t("noImage")}
                       </div>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <p className="text-lg font-semibold text-foreground">{product.name}</p>
+                    <p className="text-lg font-semibold text-foreground">{localizedProductName}</p>
                     <p className="text-sm text-muted-foreground">
                       {product.shortDescription ?? product.compatibility.yearRange ?? ""}
                     </p>
@@ -422,7 +423,7 @@ export function CheckoutPage({
                     id="fullName"
                     value={form.fullName}
                     onChange={(event) => updateFormField("fullName", event.target.value)}
-                    placeholder="Enter your full name"
+                    placeholder={t("enterFullName")}
                   />
                   {getFieldError(fieldErrors, "fullName") ? (
                     <p className="text-sm text-error">{getFieldError(fieldErrors, "fullName")}</p>
@@ -483,7 +484,7 @@ export function CheckoutPage({
                     id="area"
                     value={form.area}
                     onChange={(event) => updateFormField("area", event.target.value)}
-                    placeholder="District or area"
+                    placeholder={t("districtOrArea")}
                   />
                   {getFieldError(fieldErrors, "area") ? (
                     <p className="text-sm text-error">{getFieldError(fieldErrors, "area")}</p>
@@ -495,10 +496,10 @@ export function CheckoutPage({
                 <Label htmlFor="streetAddress">{t("streetAddress")}</Label>
                 <Input
                   id="streetAddress"
-                  value={form.streetAddress}
-                  onChange={(event) => updateFormField("streetAddress", event.target.value)}
-                  placeholder="Street, neighborhood, and unit details"
-                />
+                    value={form.streetAddress}
+                    onChange={(event) => updateFormField("streetAddress", event.target.value)}
+                    placeholder={t("streetNeighborhoodUnitDetails")}
+                  />
                 {getFieldError(fieldErrors, "streetAddress") ? (
                   <p className="text-sm text-error">{getFieldError(fieldErrors, "streetAddress")}</p>
                 ) : null}
@@ -511,7 +512,7 @@ export function CheckoutPage({
                     id="buildingNo"
                     value={form.buildingNo}
                     onChange={(event) => updateFormField("buildingNo", event.target.value)}
-                    placeholder="Optional"
+                    placeholder={t("optional")}
                   />
                 </div>
                 <div className="space-y-2">
@@ -520,7 +521,7 @@ export function CheckoutPage({
                     id="postalCode"
                     value={form.postalCode}
                     onChange={(event) => updateFormField("postalCode", event.target.value)}
-                    placeholder="Optional"
+                    placeholder={t("optional")}
                   />
                 </div>
               </div>
@@ -532,7 +533,7 @@ export function CheckoutPage({
                   className="min-h-24"
                   value={form.additionalDirections}
                   onChange={(event) => updateFormField("additionalDirections", event.target.value)}
-                  placeholder="Delivery notes for the driver"
+                  placeholder={t("deliveryNotesForDriver")}
                 />
               </div>
 
@@ -541,7 +542,7 @@ export function CheckoutPage({
                   <div>
                     <p className="font-semibold text-foreground">{t("deliveryMethod")}</p>
                     <p className="text-sm text-muted-foreground">
-                      {estimateState.data?.estimatedDelivery ?? "Use the button below to request a backend delivery estimate."}
+                      {estimateState.data?.estimatedDelivery ?? t("backendDeliveryEstimateInstruction")}
                     </p>
                   </div>
                   <Button
@@ -553,16 +554,16 @@ export function CheckoutPage({
                     {estimateState.status === "loading" ? (
                       <>
                         <RefreshCcwIcon className="size-4 animate-spin" />
-                        Loading...
+                        {t("loading")}
                       </>
                     ) : (
-                      "Update Estimate"
+                      t("updateEstimate")
                     )}
                   </Button>
                 </div>
                 {estimateState.status === "error" ? (
-                  <Alert variant="warning" className="mt-4" title="Estimate unavailable">
-                    We could not load delivery pricing right now. Final delivery cost will still be confirmed by the backend during order placement.
+                  <Alert variant="warning" className="mt-4" title={t("estimateUnavailable")}>
+                    {t("estimateUnavailablePricingDescription")}
                   </Alert>
                 ) : null}
               </div>
@@ -594,7 +595,7 @@ export function CheckoutPage({
                   className="min-h-24"
                   value={form.orderNote}
                   onChange={(event) => updateFormField("orderNote", event.target.value)}
-                  placeholder="Optional delivery or compatibility note"
+                  placeholder={t("optionalDeliveryCompatibilityNote")}
                 />
               </div>
 
@@ -605,7 +606,7 @@ export function CheckoutPage({
                   className="mt-1"
                 />
                 <span className="text-sm leading-6 text-foreground">
-                  I confirm that this order is for one product only and that the backend will confirm stock, delivery fee, and final total.
+                  {t("confirmSingleProductOnly")}
                 </span>
               </label>
               {getFieldError(fieldErrors, "termsAccepted") ? (
@@ -623,17 +624,17 @@ export function CheckoutPage({
                     {product.images[0]?.url ? (
                       <img
                         src={product.images[0].url}
-                        alt={product.name}
+                        alt={localizedProductName}
                         className="h-18 w-full object-cover"
                       />
                     ) : (
                       <div className="flex h-18 items-center justify-center text-xs text-muted-foreground">
-                        No image
+                        {t("noImage")}
                       </div>
                     )}
                   </div>
                   <div className="space-y-1">
-                    <p className="font-semibold text-foreground">{product.name}</p>
+                    <p className="font-semibold text-foreground">{localizedProductName}</p>
                     <p className="text-sm text-muted-foreground">
                       {t("quantity")}: {initialQty}
                     </p>
@@ -643,7 +644,7 @@ export function CheckoutPage({
 
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-muted-foreground">Item Total</span>
+                  <span className="text-muted-foreground">{t("itemTotal")}</span>
                   <PriceDisplay amountMinor={product.priceMinor} />
                 </div>
                 <div className="flex items-center justify-between gap-4">
@@ -651,7 +652,7 @@ export function CheckoutPage({
                   {estimateState.status === "ready" && estimateState.data?.feeMinor !== null ? (
                     <PriceDisplay amountMinor={estimateState.data.feeMinor} />
                   ) : (
-                    <span className="text-muted-foreground">Pending estimate</span>
+                    <span className="text-muted-foreground">{t("pendingEstimate")}</span>
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-4 border-t border-border pt-3 text-lg font-semibold text-foreground">
@@ -665,7 +666,7 @@ export function CheckoutPage({
               </div>
 
               <Alert variant="warning" title={t("finalTotalServerConfirmed")}>
-                Delivery fees and final totals shown here are informational until the backend confirms the order.
+                {t("finalTotalInformationalDescription")}
               </Alert>
 
               {checkoutError ? (
@@ -697,12 +698,14 @@ export function CheckoutPage({
               <div className="rounded-[1.5rem] border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm text-emerald-900">
                 <div className="flex items-center gap-3">
                   <ShieldIcon className="size-5" />
-                  <span>Your information is safe and secure.</span>
+                  <span>{t("yourInformationSafeSecure")}</span>
                 </div>
               </div>
 
               <a
-                href={`https://wa.me/966543216789?text=${encodeURIComponent(`Hi, I need help with checkout for ${product.name}.`)}`}
+                href={`https://wa.me/966543216789?text=${encodeURIComponent(
+                  t("checkoutWhatsappHelp", { productName: localizedProductName }),
+                )}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex w-full"

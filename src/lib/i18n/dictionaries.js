@@ -24,6 +24,7 @@ export const dictionaries = {
     arabic: "Arabic",
     sar: "SAR",
     categories: "Categories",
+    category: "Category",
     enquiries: "Enquiries",
     viewStore: "View Store",
     logout: "Logout",
@@ -147,6 +148,9 @@ export const dictionaries = {
       "Archive this product so it no longer appears as active inventory.",
     markAsSoldConfirmation:
       "Mark this product as sold or unavailable for purchase if the backend supports it.",
+    publish: "Publish",
+    archive: "Archive",
+    markAsSold: "Mark as Sold",
     productActionCompleted: "The product action completed successfully.",
     adminProductsDescription:
       "Manage used auto parts inventory, status, pricing, and visibility from the admin panel.",
@@ -294,6 +298,68 @@ export const dictionaries = {
     untested: "Untested",
     fullyTested: "Fully Tested",
     optionalSubcategoryHint: "Optional subcategory identifier",
+    searchParts: "Search parts",
+    searchByPartNamePlaceholder: "Search by part name, OEM number or keyword...",
+    helpCenter: "Help Center",
+    openNavigationMenu: "Open navigation menu",
+    closeNavigationMenu: "Close navigation menu",
+    cart: "Cart",
+    whatsapp: "WhatsApp",
+    companySupportDescription:
+      "Used and second-hand auto parts with compatibility-first guidance, honest condition notes, and support across Saudi Arabia.",
+    saudiArabiaLocation: "Riyadh, Saudi Arabia",
+    openAdminNavigation: "Open admin navigation",
+    qualityPartsTrustedService: "Quality parts, trusted service",
+    previewContent: "Preview content",
+    inspectedAndGraded: "Inspected & graded",
+    usedReconditionedClearNotes:
+      "Used and reconditioned parts with clear condition notes.",
+    buyNowReady: "Buy Now ready",
+    singleItemOrderingFlowPrepared:
+      "Single-item ordering flow prepared for future checkout steps.",
+    listedPartsCount: "{count}+ listed parts",
+    compatiblePartsPreview: "Compatible parts preview",
+    customerReviewsDescription:
+      "Public reviews will connect to backend-safe review feeds in a later step. These cards are lightweight placeholders for now.",
+    needHelpFindingRightPartDescription:
+      "Send your car model, manufacturing year, and required part details so our team can guide you before you place a single-item order.",
+    callUs: "Call Us",
+    whyChooseUsDescription:
+      "AD Auto Parts focuses on truthful condition details, compatibility help, and reliable support across Saudi Arabia.",
+    everyListedPartChecked:
+      "Every listed part is checked before it reaches the storefront.",
+    clearConditionDetails: "Clear Condition Details",
+    conditionNotesTransparent:
+      "Condition notes stay transparent so buyers know what they are getting.",
+    vehicleCompatibilitySupport: "Vehicle Compatibility Support",
+    confirmFitmentBeforeBuyNow:
+      "Our team can help confirm fitment before you commit to Buy Now.",
+    fastDeliveryAcrossSa: "Fast Delivery Across SA",
+    deliverySupportSaudiArabia:
+      "Delivery support is designed around customers across Saudi Arabia.",
+    safePaymentOptions: "Safe Payment Options",
+    supportedPaymentsWithoutOverstating:
+      "COD and manual advance payment are supported without overstating gateway features.",
+    howItWorksDescription:
+      "A simple Buy Now journey without adding a cart workflow that the backend does not support.",
+    searchYourRequiredPart: "Search your required part",
+    checkCompatibility: "Check compatibility",
+    receiveTheProduct: "Receive the product",
+    shopByCategoryDescription:
+      "Browse the used parts catalog by the systems you need most.",
+    shopByVehicleBrandDescription:
+      "Popular brand filters for the storefront preview.",
+    recentlyViewed: "Recently Viewed",
+    recentlyViewedDescription:
+      "This section is reserved for a later localStorage-based enhancement.",
+    recentlyViewedItemsWillAppearHere:
+      "Recently viewed items will appear here",
+    recentlyViewedPlaceholderDescription:
+      "We are leaving this as a lightweight placeholder for now to avoid adding tracking complexity too early.",
+    featuredPartsDescription:
+      "Preview products curated for the storefront hero and product collection sections.",
+    latestArrivalsDescription:
+      "Newest or highlighted additions prepared for the public storefront.",
     trustedUsedAutoParts: "Trusted Used Auto Parts",
     reliableUsedAutoPartsForYourVehicle:
       "Reliable Used Auto Parts for Your Vehicle",
@@ -318,29 +384,72 @@ export const dictionaries = {
     inspectedParts: "Inspected Parts",
     nationwideDelivery: "Nationwide Delivery",
     customerSupport: "Customer Support",
+    findCompatibleParts: "Find compatible parts",
     searchResults: "Search Results",
+    searchResultsFor: "Search results for \"{query}\"",
+    searchResultsDescription:
+      "{count} matching results currently available for \"{query}\".",
+    searchCatalogDescription:
+      "Search the used auto parts catalog with backend-aware filters and Buy Now focused results.",
+    searchTheCatalog: "Search the catalog",
+    refineListingDescription:
+      "Refine the listing with safe filters for vehicle details, condition, stock, and price.",
     filterResults: "Filter Results",
     searchWithinResults: "Search Within Results",
     carBrand: "Car Brand",
+    selectCarBrand: "Select car brand",
     carModel: "Car Model",
+    model: "Model",
+    selectCarModel: "Select car model",
     manufacturingYear: "Manufacturing Year",
+    year: "Year",
+    anyYear: "Any year",
+    selectYear: "Select year",
     condition: "Condition",
     priceRange: "Price Range",
+    minPricePlaceholder: "Min SAR",
+    maxPricePlaceholder: "Max SAR",
+    enterSarAmountsNoDecimals: "Enter SAR amounts without commas. Decimals are optional.",
     availability: "Availability",
     partPosition: "Part Position",
     productBrand: "Product Brand",
+    partCategory: "Part Category",
+    selectPartCategory: "Select part category",
     engine: "Engine",
     engineCode: "Engine Code",
     applyFilters: "Apply Filters",
+    apply: "Apply",
     clearAll: "Clear All",
     sortBy: "Sort by",
+    sortByOption: "Sort by {label}",
     newest: "Newest",
     relevance: "Relevance",
     priceLowToHigh: "Price Low to High",
     priceHighToLow: "Price High to Low",
     mostViewed: "Most Viewed",
+    suggestedSearches: "Suggested searches",
+    previewFallback: "Preview",
+    partsAvailable: "{count} parts available",
+    inspectedAndCatalogedParts: "Inspected and cataloged parts",
+    showingPageOf: "Showing page {page} of {totalPages}",
+    showingZeroProducts: "Showing 0 products",
+    resultsCount: "{count} total results",
     noMatchingPartsFound: "No matching parts found",
+    noMatchingPartsFoundFor: "No matching parts found for \"{query}\"",
+    noMatchingPartsDescription:
+      "Try another keyword or relax one of the filters to see more compatible parts.",
+    stillCannotFindIt: "Still cannot find it?",
+    relatedParts: "Related parts",
+    similarCategories: "Similar categories",
+    callUsLabel: "Call us: {phone}",
     contactPartsExpert: "Contact Parts Expert",
+    shopAutoPartsDescription:
+      "Browse inspected used and second-hand parts prepared for a single-item Buy Now flow.",
+    categoryDefaultDescription:
+      "Browse available parts in this category with compatibility-first details.",
+    categoryNotFound: "Category not found",
+    categoryNotFoundDescription:
+      "The requested category could not be found or is no longer available.",
     productDetails: "Product Details",
     sku: "SKU",
     oemNumber: "OEM Number",
@@ -362,12 +471,17 @@ export const dictionaries = {
     testedStatus: "Tested Status",
     usedMileage: "Used Mileage",
     quantity: "Quantity",
+    stock: "Stock",
     productNotFound: "Product Not Found",
     failedToLoad: "Failed to Load",
+    failedToLoadDescription:
+      "We couldn't load the data. Please check your connection and try again.",
+    tryAgain: "Try again",
     backToShop: "Back to Shop",
     checkout: "Checkout",
     contactInformation: "Contact Information",
     shippingAddress: "Shipping Address",
+    billingAddress: "Billing Address",
     deliveryMethod: "Delivery Method",
     paymentMethod: "Payment Method",
     cashOnDelivery: "Cash on Delivery",
@@ -393,15 +507,62 @@ export const dictionaries = {
     estimatedDelivery: "Estimated Delivery",
     total: "Total",
     finalTotalServerConfirmed: "Final total will be confirmed by the server.",
+    checkoutFailed: "Checkout failed",
+    checkoutFailedDescription:
+      "We could not complete your order with the current payment or validation state.",
+    paymentWasDeclined: "Payment was declined",
+    paymentNotSuccessful:
+      "Your payment was not successful. Please try again or choose a different supported method.",
+    ifProblemPersistsContactSupport:
+      "If the problem continues, please contact support with your order number.",
+    deliveryEstimateUpdated: "Delivery estimate updated",
+    deliveryEstimateRefreshed:
+      "Estimated delivery information has been refreshed.",
+    estimateUnavailable: "Estimate unavailable",
+    estimateUnavailableDescription:
+      "We could not load a delivery estimate right now.",
+    estimateUnavailablePricingDescription:
+      "We could not load delivery pricing right now. Final delivery cost will still be confirmed by the backend during order placement.",
     payWhenReceive: "Pay when you receive the item.",
     submitPaymentProofAfterOrder: "Submit payment proof after placing the order.",
     noProductSelected: "No product selected",
+    noProductSelectedDescription:
+      "Choose a product from the storefront before opening checkout.",
     productUnavailable: "Product unavailable",
+    productUnavailableCheckout:
+      "This product is currently unavailable for single-item checkout.",
     failedToPlaceOrder: "Failed to place order",
     checkInfoAndTryAgain: "Please check your information and try again.",
     placingOrder: "Placing Order",
     cancelAndGoBack: "Cancel & Go Back",
     selectCity: "Select City",
+    singleItemCheckoutDescription:
+      "Single-item Buy Now checkout. No other products will be added.",
+    selectedProductCheckoutLoadError:
+      "We could not load the selected product for checkout.",
+    noImage: "No image",
+    enterFullName: "Enter your full name",
+    districtOrArea: "District or area",
+    streetNeighborhoodUnitDetails:
+      "Street, neighborhood, and unit details",
+    optional: "Optional",
+    deliveryNotesForDriver: "Delivery notes for the driver",
+    backendDeliveryEstimateInstruction:
+      "Use the button below to request a backend delivery estimate.",
+    loading: "Loading...",
+    updateEstimate: "Update Estimate",
+    optionalDeliveryCompatibilityNote:
+      "Optional delivery or compatibility note",
+    confirmSingleProductOnly:
+      "I confirm that this order is for one product only and that the backend will confirm stock, delivery fee, and final total.",
+    itemTotal: "Item Total",
+    pendingEstimate: "Pending estimate",
+    finalTotalInformationalDescription:
+      "Delivery fees and final totals shown here are informational until the backend confirms the order.",
+    yourInformationSafeSecure:
+      "Your information is safe and secure.",
+    checkoutWhatsappHelp:
+      "Hi, I need help with checkout for {productName}.",
     accountOverview: "Account Overview",
     accountOverviewDescription:
       "Review your orders, payments, invoices, support activity, and profile details in one place.",
@@ -445,6 +606,35 @@ export const dictionaries = {
     paymentProofSubmitted: "Payment Proof Submitted",
     paymentProofSuccessDescription:
       "Your manual payment proof was sent to the customer payment endpoint for review.",
+    orderNumberRequired: "Order number is required.",
+    trackingUnavailable: "Tracking unavailable",
+    trackingUnavailableDescription:
+      "Public track-order verification is not available in the current frontend API contract. Please sign in or contact support with your order number.",
+    trackingInfoLoaded: "Tracking information loaded",
+    orderLoaded: "Order {orderNumber} was loaded.",
+    couldNotFindMatchingOrder: "Could not find matching order",
+    trackOrderDescription:
+      "Enter your order number to view the latest safe tracking status.",
+    noTrackingDetailsYet: "No tracking details yet",
+    trackingDetailsAppearHere:
+      "Tracking information will appear here once an authenticated order lookup succeeds.",
+    orderFound: "Order Found",
+    orderFoundDescription:
+      "Here is the current safe status of your order.",
+    statusUpdatedFromBackend: "Status updated from backend",
+    placed: "Placed",
+    confirmed: "Confirmed",
+    processing: "Processing",
+    shipped: "Shipped",
+    delivered: "Delivered",
+    productSummary: "Product Summary",
+    singleItemOrder: "Single-item order",
+    shippingInformation: "Shipping Information",
+    courier: "Courier",
+    awaitingAssignment: "Awaiting assignment",
+    pending: "Pending",
+    trackingWhatsappHelp:
+      "Hi, I need help tracking order {orderNumber}.",
     noOrdersYet: "No Orders Yet",
     noOrdersDescription:
       "Your confirmed customer orders will appear here after checkout succeeds.",
@@ -492,6 +682,7 @@ export const dictionaries = {
     aboutAdAutoParts: "About AD Auto Parts",
     support: "Support",
     contactSupport: "Contact Support",
+    businessHours: "Business Hours",
     contactSupportIntro:
       "We're here to help with product enquiries, compatibility guidance, delivery questions, and order support across Saudi Arabia.",
     contactQuickHelp: "Need a faster answer? Reach our support team on WhatsApp.",
@@ -533,6 +724,67 @@ export const dictionaries = {
     failedToSendMessage: "Failed to Send Message",
     whatsappSupport: "WhatsApp Support",
     chatOnWhatsapp: "Chat on WhatsApp",
+    safeCompatibilitySummary:
+      "Safe compatibility summary based on the public product data.",
+    confirmExactFitment:
+      "Confirm the exact fitment with your vehicle VIN, trim, and side before ordering.",
+    usedSecondHandTransparentNotes:
+      "Used and second-hand parts are shown with transparent inspection notes.",
+    daysCount: "{count} days",
+    yes: "Yes",
+    no: "No",
+    reviewsCount: "{count} review{suffix}",
+    productWhatsappQuestion: "Hi, I want to ask about {productName}.",
+    confirmCompatibilityMessage:
+      "Hi, I want to confirm compatibility for {productName}{oemNumber}.",
+    partUnavailableImmediateCheckout:
+      "This part is not currently available for immediate checkout.",
+    onlyOneUnitAvailable: "Only 1 unit available",
+    onlyUnitsAvailable: "Only {count} units available",
+    vehicle: "Vehicle",
+    compatibilityDetailsWillAppear:
+      "Compatibility details will appear here when available.",
+    openingCheckout: "Opening checkout...",
+    deliveryTimingConfirmedAtCheckout:
+      "Delivery timing will be confirmed at checkout.",
+    finalTotalsPaymentOptionsBackend:
+      "Final totals and payment options come from the backend checkout flow.",
+    currentlyUnavailable: "Currently unavailable",
+    checkoutLinkPreview: "Checkout link preview",
+    buyNowCheckoutControlled:
+      "Buy Now sends only the product identifier and quantity=1 to checkout. Pricing and order totals stay backend-controlled.",
+    specificationsComingSoon: "Specifications coming soon",
+    specificationsComingSoonDescription:
+      "The backend did not provide public specification rows for this part yet.",
+    compatibilityDetailsUnavailable:
+      "Compatibility details unavailable",
+    compatibilityDetailsUnavailableDescription:
+      "Public compatibility rows are not available for this part yet.",
+    deliveryAndReturnComingSoon:
+      "Delivery and return details coming soon",
+    deliveryAndReturnComingSoonDescription:
+      "This product does not include public delivery or return notes yet.",
+    deliveryInformation: "Delivery Information",
+    returnAndWarranty: "Return & Warranty",
+    returnWarrantyNotesWillAppear:
+      "Return and warranty notes will appear here when provided by the backend.",
+    reviewsPreviewComingSoon: "Reviews preview coming soon",
+    reviewsPreviewComingSoonDescription:
+      "Public approved reviews are not available from the backend yet for this product.",
+    verifiedBuyer: "Verified Buyer",
+    detailedProductDescriptionWillAppear:
+      "Detailed public product description will appear here when provided by the backend.",
+    relatedProductsLoadError:
+      "We couldn't load related products right now. Please refresh and try again.",
+    noRelatedProducts: "No related products",
+    noRelatedProductsDescription:
+      "Related part suggestions are not available for this product yet.",
+    relatedProductsDescription:
+      "Similar inspected used parts that keep the single-item Buy Now flow.",
+    imagePreviewUnavailable: "Image preview unavailable",
+    viewImage: "View image",
+    viewProductImage: "View product image {index}",
+    thumbnailLabel: "{title} thumbnail {index}",
     pageNotFound: "Page Not Found",
     pageNotFoundDescription:
       "Sorry, the page you are looking for does not exist or has been moved.",
@@ -789,6 +1041,7 @@ export const dictionaries = {
     arabic: "العربية",
     sar: "ر.س",
     categories: "الفئات",
+    category: "الفئة",
     enquiries: "الاستفسارات",
     viewStore: "عرض المتجر",
     logout: "تسجيل الخروج",
@@ -908,6 +1161,9 @@ export const dictionaries = {
     unpublishProductConfirmation: "أعد هذا المنتج إلى حالة غير عامة إذا دعمت الخلفية ذلك.",
     archiveProductConfirmation: "أرشف هذا المنتج حتى لا يظهر كمخزون نشط.",
     markAsSoldConfirmation: "ضع علامة مباع أو غير متاح للشراء إذا دعمت الخلفية ذلك.",
+    publish: "نشر",
+    archive: "أرشفة",
+    markAsSold: "وضع علامة مباع",
     productActionCompleted: "اكتمل إجراء المنتج بنجاح.",
     adminProductsDescription: "إدارة مخزون قطع السيارات المستعملة والحالة والتسعير والظهور من لوحة الإدارة.",
     adminProductsLoadError: "تعذر تحميل قائمة منتجات الإدارة الآن.",
@@ -944,6 +1200,68 @@ export const dictionaries = {
     untested: "غير مختبر",
     fullyTested: "مختبر بالكامل",
     optionalSubcategoryHint: "معرف الفئة الفرعية اختياري",
+    searchParts: "ابحث عن القطع",
+    searchByPartNamePlaceholder: "ابحث باسم القطعة أو رقم OEM أو كلمة مفتاحية...",
+    helpCenter: "مركز المساعدة",
+    openNavigationMenu: "افتح قائمة التنقل",
+    closeNavigationMenu: "أغلق قائمة التنقل",
+    cart: "السلة",
+    whatsapp: "واتساب",
+    companySupportDescription:
+      "قطع غيار مستعملة وثانية الاستخدام مع إرشاد يركز على التوافق وملاحظات حالة واضحة ودعم داخل السعودية.",
+    saudiArabiaLocation: "الرياض، المملكة العربية السعودية",
+    openAdminNavigation: "افتح تنقل الإدارة",
+    qualityPartsTrustedService: "قطع بجودة عالية وخدمة موثوقة",
+    previewContent: "معاينة المحتوى",
+    inspectedAndGraded: "مفحوصة ومصنفة",
+    usedReconditionedClearNotes:
+      "قطع مستعملة ومجددة مع ملاحظات حالة واضحة.",
+    buyNowReady: "جاهزة للشراء الآن",
+    singleItemOrderingFlowPrepared:
+      "تدفق طلب عنصر واحد جاهز لخطوات الدفع القادمة.",
+    listedPartsCount: "{count}+ قطعة مدرجة",
+    compatiblePartsPreview: "معاينة القطع المتوافقة",
+    customerReviewsDescription:
+      "سترتبط مراجعات العملاء العامة بخلاصات مراجعات آمنة من الخلفية في خطوة لاحقة. هذه البطاقات مجرد عناصر خفيفة حاليًا.",
+    needHelpFindingRightPartDescription:
+      "أرسل طراز السيارة وسنة الصنع وتفاصيل القطعة المطلوبة ليقوم فريقنا بمساعدتك قبل إتمام طلب عنصر واحد.",
+    callUs: "اتصل بنا",
+    whyChooseUsDescription:
+      "تركز AD Auto Parts على تفاصيل الحالة الصادقة ومساعدة التوافق والدعم الموثوق داخل السعودية.",
+    everyListedPartChecked:
+      "كل قطعة مدرجة يتم فحصها قبل ظهورها في المتجر.",
+    clearConditionDetails: "تفاصيل حالة واضحة",
+    conditionNotesTransparent:
+      "تبقى ملاحظات الحالة واضحة حتى يعرف المشتري ما الذي سيحصل عليه.",
+    vehicleCompatibilitySupport: "دعم توافق المركبة",
+    confirmFitmentBeforeBuyNow:
+      "يمكن لفريقنا مساعدتك في تأكيد الملاءمة قبل الضغط على الشراء الآن.",
+    fastDeliveryAcrossSa: "توصيل سريع داخل المملكة",
+    deliverySupportSaudiArabia:
+      "تم تصميم دعم التوصيل للعملاء في أنحاء المملكة العربية السعودية.",
+    safePaymentOptions: "خيارات دفع آمنة",
+    supportedPaymentsWithoutOverstating:
+      "الدفع عند الاستلام والدفع اليدوي المسبق مدعومان دون المبالغة في مزايا البوابة.",
+    howItWorksDescription:
+      "رحلة شراء الآن بسيطة من دون إضافة نظام سلة لا تدعمه الخلفية.",
+    searchYourRequiredPart: "ابحث عن القطعة المطلوبة",
+    checkCompatibility: "تحقق من التوافق",
+    receiveTheProduct: "استلم المنتج",
+    shopByCategoryDescription:
+      "تصفح كتالوج القطع المستعملة حسب الأنظمة التي تحتاجها أكثر.",
+    shopByVehicleBrandDescription:
+      "مرشحات العلامات الشائعة لمعاينة واجهة المتجر.",
+    recentlyViewed: "شوهدت مؤخرًا",
+    recentlyViewedDescription:
+      "هذا القسم محجوز لتحسين يعتمد على التخزين المحلي في خطوة لاحقة.",
+    recentlyViewedItemsWillAppearHere:
+      "ستظهر العناصر التي شاهدتها مؤخرًا هنا",
+    recentlyViewedPlaceholderDescription:
+      "نترك هذا القسم كعنصر بسيط الآن لتجنب إضافة تعقيد التتبع مبكرًا.",
+    featuredPartsDescription:
+      "معاينة للمنتجات المنسقة لأقسام البطل والمجموعات في الواجهة العامة.",
+    latestArrivalsDescription:
+      "أحدث الإضافات أو المنتجات المميزة المجهزة للواجهة العامة.",
     trustedUsedAutoParts: "قطع غيار مستعملة موثوقة",
     reliableUsedAutoPartsForYourVehicle:
       "قطع غيار مستعملة موثوقة لسيارتك",
@@ -968,29 +1286,73 @@ export const dictionaries = {
     inspectedParts: "قطع مفحوصة",
     nationwideDelivery: "توصيل على مستوى المملكة",
     customerSupport: "دعم العملاء",
+    findCompatibleParts: "اعثر على القطع المتوافقة",
     searchResults: "نتائج البحث",
+    searchResultsFor: "نتائج البحث عن \"{query}\"",
+    searchResultsDescription:
+      "يوجد {count} نتيجة مطابقة متاحة حاليًا لعبارة \"{query}\".",
+    searchCatalogDescription:
+      "ابحث في كتالوج قطع الغيار المستعملة باستخدام مرشحات متوافقة مع الخلفية ونتائج تركز على الشراء الآن.",
+    searchTheCatalog: "ابحث في الكتالوج",
+    refineListingDescription:
+      "قم بتضييق النتائج باستخدام مرشحات آمنة لبيانات المركبة والحالة والمخزون والسعر.",
     filterResults: "تصفية النتائج",
     searchWithinResults: "ابحث داخل النتائج",
     carBrand: "علامة السيارة",
+    selectCarBrand: "اختر علامة السيارة",
     carModel: "طراز السيارة",
+    model: "الطراز",
+    selectCarModel: "اختر طراز السيارة",
     manufacturingYear: "سنة الصنع",
+    year: "السنة",
+    anyYear: "أي سنة",
+    selectYear: "اختر السنة",
     condition: "الحالة",
     priceRange: "نطاق السعر",
+    minPricePlaceholder: "أقل سعر بالريال",
+    maxPricePlaceholder: "أعلى سعر بالريال",
+    enterSarAmountsNoDecimals:
+      "أدخل مبالغ الريال السعودي من دون فواصل. الكسور العشرية اختيارية.",
     availability: "التوفر",
     partPosition: "موقع القطعة",
     productBrand: "علامة القطعة",
+    partCategory: "فئة القطعة",
+    selectPartCategory: "اختر فئة القطعة",
     engine: "المحرك",
     engineCode: "رمز المحرك",
     applyFilters: "تطبيق التصفية",
+    apply: "تطبيق",
     clearAll: "مسح الكل",
     sortBy: "ترتيب حسب",
+    sortByOption: "ترتيب حسب {label}",
     newest: "الأحدث",
     relevance: "الأكثر صلة",
     priceLowToHigh: "السعر من الأقل إلى الأعلى",
     priceHighToLow: "السعر من الأعلى إلى الأقل",
     mostViewed: "الأكثر مشاهدة",
+    suggestedSearches: "عمليات بحث مقترحة",
+    previewFallback: "معاينة",
+    partsAvailable: "{count} قطعة متاحة",
+    inspectedAndCatalogedParts: "قطع مفحوصة ومفهرسة",
+    showingPageOf: "عرض الصفحة {page} من {totalPages}",
+    showingZeroProducts: "عرض 0 منتجات",
+    resultsCount: "إجمالي النتائج: {count}",
     noMatchingPartsFound: "لم يتم العثور على قطع مطابقة",
+    noMatchingPartsFoundFor: "لم يتم العثور على قطع مطابقة لعبارة \"{query}\"",
+    noMatchingPartsDescription:
+      "جرّب كلمة مختلفة أو خفف أحد المرشحات لرؤية قطع أكثر توافقًا.",
+    stillCannotFindIt: "ما زلت لا تجد ما تبحث عنه؟",
+    relatedParts: "قطع ذات صلة",
+    similarCategories: "فئات مشابهة",
+    callUsLabel: "اتصل بنا: {phone}",
     contactPartsExpert: "تواصل مع خبير القطع",
+    shopAutoPartsDescription:
+      "تصفح قطعًا مستعملة وثانية الاستخدام مفحوصة ومجهزة لتدفق شراء عنصر واحد.",
+    categoryDefaultDescription:
+      "تصفح القطع المتاحة في هذه الفئة مع تفاصيل تركز على التوافق.",
+    categoryNotFound: "الفئة غير موجودة",
+    categoryNotFoundDescription:
+      "تعذر العثور على الفئة المطلوبة أو لم تعد متاحة.",
     productDetails: "تفاصيل المنتج",
     sku: "رمز المخزن",
     oemNumber: "رقم OEM",
@@ -1012,12 +1374,17 @@ export const dictionaries = {
     testedStatus: "حالة الاختبار",
     usedMileage: "المسافة المقطوعة",
     quantity: "الكمية",
+    stock: "المخزون",
     productNotFound: "المنتج غير موجود",
     failedToLoad: "فشل التحميل",
+    failedToLoadDescription:
+      "تعذر تحميل البيانات. يرجى التحقق من الاتصال ثم إعادة المحاولة.",
+    tryAgain: "حاول مرة أخرى",
     backToShop: "العودة إلى المتجر",
     checkout: "الدفع",
     contactInformation: "معلومات التواصل",
     shippingAddress: "عنوان التوصيل",
+    billingAddress: "عنوان الفاتورة",
     deliveryMethod: "طريقة التوصيل",
     paymentMethod: "طريقة الدفع",
     cashOnDelivery: "الدفع عند الاستلام",
@@ -1043,6 +1410,14 @@ export const dictionaries = {
     estimatedDelivery: "التوصيل المتوقع",
     total: "الإجمالي",
     finalTotalServerConfirmed: "سيتم تأكيد الإجمالي النهائي من الخادم.",
+    checkoutFailed: "فشل إتمام الطلب",
+    checkoutFailedDescription:
+      "تعذر إكمال طلبك بسبب حالة الدفع أو التحقق الحالية.",
+    paymentWasDeclined: "تم رفض الدفع",
+    paymentNotSuccessful:
+      "لم تنجح عملية الدفع. حاول مرة أخرى أو اختر طريقة مدعومة مختلفة.",
+    ifProblemPersistsContactSupport:
+      "إذا استمرت المشكلة، يرجى التواصل مع الدعم مع رقم الطلب.",
     payWhenReceive: "ادفع عند استلام الطلب.",
     submitPaymentProofAfterOrder: "أرسل إثبات الدفع بعد تأكيد الطلب.",
     noProductSelected: "لم يتم تحديد منتج",
@@ -1052,6 +1427,43 @@ export const dictionaries = {
     placingOrder: "جارٍ تأكيد الطلب",
     cancelAndGoBack: "إلغاء والعودة",
     selectCity: "اختر المدينة",
+    deliveryEstimateUpdated: "تم تحديث تقدير التوصيل",
+    deliveryEstimateRefreshed: "تم تحديث رسوم ومدة التوصيل من الخلفية.",
+    estimateUnavailable: "تعذر تقدير التوصيل",
+    estimateUnavailableDescription:
+      "تعذر تحميل تقدير التوصيل الآن. يمكنك متابعة الطلب وسيتم تأكيد الرسوم لاحقًا.",
+    estimateUnavailablePricingDescription:
+      "قد تكون رسوم التوصيل النهائية خاضعة لتأكيد الخلفية والمدينة.",
+    noProductSelectedDescription:
+      "يحتاج تدفق الدفع إلى منتج واحد صالح تم اختياره من واجهة المتجر.",
+    productUnavailableCheckout:
+      "المنتج المحدد لم يعد متاحًا للدفع حاليًا.",
+    singleItemCheckoutDescription:
+      "يدعم هذا التدفق طلب قطعة واحدة فقط في كل مرة وفقًا لتجربة الشراء الآن الحالية.",
+    selectedProductCheckoutLoadError:
+      "تعذر تحميل المنتج المحدد لهذا التدفق.",
+    noImage: "لا توجد صورة",
+    enterFullName: "أدخل اسمك الكامل",
+    districtOrArea: "الحي أو المنطقة",
+    streetNeighborhoodUnitDetails: "الشارع والحي وتفاصيل الوحدة",
+    optional: "اختياري",
+    deliveryNotesForDriver: "ملاحظات التوصيل للسائق",
+    backendDeliveryEstimateInstruction:
+      "اختر المدينة ثم حدّث التقدير باستخدام منطق التوصيل من الخلفية.",
+    loading: "جارٍ التحميل...",
+    updateEstimate: "تحديث التقدير",
+    optionalDeliveryCompatibilityNote:
+      "يمكنك إضافة ملاحظات اختيارية عن التوصيل أو التوافق أو الوصول.",
+    confirmSingleProductOnly:
+      "أؤكد أن هذا الطلب لمنتج واحد فقط وفقًا لتدفق الشراء الآن الحالي.",
+    itemTotal: "إجمالي العنصر",
+    pendingEstimate: "التقدير قيد الانتظار",
+    finalTotalInformationalDescription:
+      "قد يتغير الإجمالي النهائي بعد تأكيد رسوم التوصيل وطريقة الدفع من الخلفية.",
+    yourInformationSafeSecure:
+      "يتم استخدام معلوماتك فقط لإتمام الطلب والتواصل بشأن التوصيل.",
+    checkoutWhatsappHelp:
+      "هل تحتاج مساعدة قبل إتمام الطلب؟ تحدث معنا على واتساب بخصوص {productName}.",
     accountOverview: "نظرة عامة على الحساب",
     accountOverviewDescription:
       "راجع الطلبات والمدفوعات والفواتير ونشاط الدعم وبيانات الملف الشخصي في مكان واحد.",
@@ -1095,6 +1507,34 @@ export const dictionaries = {
     paymentProofSubmitted: "تم إرسال إثبات الدفع",
     paymentProofSuccessDescription:
       "تم إرسال إثبات الدفع اليدوي إلى نقطة دفع العميل للمراجعة.",
+    orderNumberRequired: "رقم الطلب مطلوب.",
+    trackingUnavailable: "التتبع غير متاح",
+    trackingUnavailableDescription:
+      "تعذر تحميل تفاصيل التتبع الآن. حاول مرة أخرى بعد قليل.",
+    trackingInfoLoaded: "تم تحميل بيانات التتبع",
+    orderLoaded: "تم تحميل الطلب من الخلفية.",
+    couldNotFindMatchingOrder: "تعذر العثور على طلب مطابق.",
+    trackOrderDescription:
+      "أدخل رقم الطلب لمراجعة حالة التنفيذ والشحن الحالية.",
+    noTrackingDetailsYet: "لا توجد تفاصيل تتبع بعد",
+    trackingDetailsAppearHere:
+      "ستظهر معلومات حالة الطلب والشحن هنا بعد إدخال رقم طلب صالح.",
+    orderFound: "تم العثور على الطلب",
+    orderFoundDescription: "تم تحميل أحدث حالة طلب من الخلفية.",
+    statusUpdatedFromBackend: "تم تحديث الحالة من بيانات الخلفية الحالية.",
+    placed: "تم الإنشاء",
+    confirmed: "تم التأكيد",
+    processing: "قيد المعالجة",
+    shipped: "تم الشحن",
+    delivered: "تم التسليم",
+    productSummary: "ملخص المنتج",
+    singleItemOrder: "طلب عنصر واحد",
+    shippingInformation: "معلومات الشحن",
+    courier: "شركة الشحن",
+    awaitingAssignment: "بانتظار التعيين",
+    pending: "قيد الانتظار",
+    trackingWhatsappHelp:
+      "هل تحتاج مساعدة بشأن الطلب {orderNumber}؟ تحدث معنا على واتساب.",
     noOrdersYet: "لا توجد طلبات بعد",
     noOrdersDescription:
       "ستظهر طلبات العميل المؤكدة هنا بعد نجاح عملية الشراء.",
@@ -1142,6 +1582,7 @@ export const dictionaries = {
     aboutAdAutoParts: "من نحن - AD Auto Parts",
     support: "الدعم",
     contactSupport: "تواصل مع الدعم",
+    businessHours: "ساعات العمل",
     contactSupportIntro:
       "نحن هنا للمساعدة في استفسارات القطع والتوافق والتوصيل ودعم الطلبات في السعودية.",
     contactQuickHelp: "تحتاج ردًا أسرع؟ تواصل مع فريق الدعم عبر واتساب.",
@@ -1183,6 +1624,64 @@ export const dictionaries = {
     failedToSendMessage: "فشل إرسال الرسالة",
     whatsappSupport: "دعم واتساب",
     chatOnWhatsapp: "الدردشة عبر واتساب",
+    safeCompatibilitySummary: "ملخص توافق آمن",
+    confirmExactFitment:
+      "أكد الملاءمة الدقيقة مع رقم الهيكل والفئة والجهة قبل الطلب.",
+    usedSecondHandTransparentNotes:
+      "تُعرض القطع المستعملة وثانية الاستخدام مع ملاحظات فحص واضحة.",
+    daysCount: "{count} يوم",
+    yes: "نعم",
+    no: "لا",
+    reviewsCount: "{count} مراجعة{suffix}",
+    productWhatsappQuestion:
+      "مرحبًا، أريد الاستفسار عن المنتج {productName}.",
+    confirmCompatibilityMessage:
+      "مرحبًا، أريد تأكيد توافق {productName}{oemNumber} مع سيارتي.",
+    partUnavailableImmediateCheckout:
+      "هذا المنتج غير متاح حاليًا للانتقال المباشر إلى الدفع.",
+    onlyOneUnitAvailable: "متبقي وحدة واحدة فقط",
+    onlyUnitsAvailable: "متبقي {count} وحدات فقط",
+    vehicle: "المركبة",
+    compatibilityDetailsWillAppear:
+      "ستظهر تفاصيل التوافق هنا عندما توفرها بيانات المنتج.",
+    openingCheckout: "جارٍ فتح صفحة الدفع...",
+    deliveryTimingConfirmedAtCheckout:
+      "سيتم تأكيد وقت التوصيل أثناء الدفع.",
+    finalTotalsPaymentOptionsBackend:
+      "سيتم تأكيد الإجماليات النهائية وخيارات الدفع من الخلفية.",
+    currentlyUnavailable: "غير متاح حاليًا",
+    checkoutLinkPreview: "معاينة رابط الدفع",
+    buyNowCheckoutControlled:
+      "يعرض هذا الرابط كيفية فتح تدفق شراء الآن من دون تجاوز قيود الخلفية الحالية.",
+    specificationsComingSoon: "المواصفات ستتوفر قريبًا",
+    specificationsComingSoonDescription:
+      "ستظهر المواصفات التفصيلية هنا عندما توفرها الخلفية أو بيانات الإدارة.",
+    compatibilityDetailsUnavailable: "تفاصيل التوافق غير متاحة",
+    compatibilityDetailsUnavailableDescription:
+      "لم تصل بيانات توافق منظمة لهذا المنتج بعد.",
+    deliveryAndReturnComingSoon: "معلومات التوصيل والإرجاع ستتوفر قريبًا",
+    deliveryAndReturnComingSoonDescription:
+      "ستظهر الملاحظات المنظمة حول التوصيل والإرجاع والضمان هنا لاحقًا.",
+    deliveryInformation: "معلومات التوصيل",
+    returnAndWarranty: "الإرجاع والضمان",
+    returnWarrantyNotesWillAppear:
+      "ستظهر ملاحظات الإرجاع والضمان المعتمدة هنا عندما تتوفر.",
+    reviewsPreviewComingSoon: "معاينة المراجعات ستتوفر قريبًا",
+    reviewsPreviewComingSoonDescription:
+      "لم يتم توصيل خلاصة مراجعات عامة كاملة لهذا المنتج بعد.",
+    verifiedBuyer: "مشتري موثق",
+    detailedProductDescriptionWillAppear:
+      "سيظهر وصف المنتج التفصيلي هنا عند توفره.",
+    relatedProductsLoadError: "تعذر تحميل المنتجات ذات الصلة الآن.",
+    noRelatedProducts: "لا توجد منتجات ذات صلة",
+    noRelatedProductsDescription:
+      "لم تُرجع الخلفية عناصر ذات صلة لهذا المنتج حتى الآن.",
+    relatedProductsDescription:
+      "منتجات إضافية قد تناسب نفس فئة المركبة أو النظام.",
+    imagePreviewUnavailable: "معاينة الصورة غير متاحة",
+    viewImage: "عرض الصورة",
+    viewProductImage: "عرض صورة المنتج",
+    thumbnailLabel: "صورة مصغرة رقم {index}",
     pageNotFound: "الصفحة غير موجودة",
     pageNotFoundDescription:
       "عذرًا، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",

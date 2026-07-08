@@ -7,8 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BoxIcon, SearchIcon } from "@/components/ui/icons";
+import { useLanguage } from "@/hooks/use-language";
 
 function ProductImageFallback({ title }) {
+  const { t } = useLanguage();
+
   return (
     <div className="flex h-full min-h-[420px] w-full flex-col items-center justify-center gap-4 rounded-[2rem] bg-[radial-gradient(circle_at_top,#ffffff_0%,#edf4fb_58%,#dfe8f3_100%)] p-8 text-center">
       <div className="rounded-full bg-white p-5 text-slate-300 shadow-soft">
@@ -16,7 +19,7 @@ function ProductImageFallback({ title }) {
       </div>
       <div className="space-y-1">
         <p className="font-semibold text-foreground">{title}</p>
-        <p className="text-sm text-muted-foreground">Image preview unavailable</p>
+        <p className="text-sm text-muted-foreground">{t("imagePreviewUnavailable")}</p>
       </div>
     </div>
   );
@@ -28,6 +31,7 @@ export function ProductGallery({
   conditionLabel,
   stockLabel,
 }) {
+  const { t } = useLanguage();
   const [brokenUrls, setBrokenUrls] = useState([]);
   const visibleImages = images.filter((image) => !brokenUrls.includes(image.url));
   const [activeIndex, setActiveIndex] = useState(0);
@@ -43,7 +47,7 @@ export function ProductGallery({
             {conditionLabel ? <Badge variant="success">{conditionLabel}</Badge> : null}
             {stockLabel ? <Badge variant="info">{stockLabel}</Badge> : null}
           </div>
-          <Button variant="outline" size="icon" aria-label="View image">
+          <Button variant="outline" size="icon" aria-label={t("viewImage")}>
             <SearchIcon className="size-5" />
           </Button>
         </div>
@@ -79,12 +83,12 @@ export function ProductGallery({
                   ? "border-brand-red shadow-soft"
                   : "border-border hover:border-brand-red/50"
               }`}
-              aria-label={`View product image ${index + 1}`}
+              aria-label={t("viewProductImage", { index: index + 1 })}
               aria-pressed={index === safeActiveIndex}
             >
               <img
                 src={image.url}
-                alt={image.alt || `${title} thumbnail ${index + 1}`}
+                alt={image.alt || t("thumbnailLabel", { title, index: index + 1 })}
                 className="h-20 w-full object-cover"
                 onError={() =>
                   setBrokenUrls((current) =>

@@ -13,6 +13,8 @@ import { buildQueryString } from "@/lib/api/query";
 import { BagIcon, ExternalLinkIcon, WhatsappIcon } from "@/components/ui/icons";
 
 function RatingStars({ ratingAverage, reviewCount }) {
+  const { t } = useLanguage();
+
   if (!ratingAverage) {
     return null;
   }
@@ -28,7 +30,10 @@ function RatingStars({ ratingAverage, reviewCount }) {
         {ratingAverage.toFixed(1)}
       </span>
       <span className="text-muted-foreground">
-        ({reviewCount} review{reviewCount === 1 ? "" : "s"})
+        {t("reviewsCount", {
+          count: reviewCount,
+          suffix: reviewCount === 1 ? "" : "s",
+        })}
       </span>
     </div>
   );
@@ -46,25 +51,27 @@ function InfoMiniCard({ title, value }) {
 }
 
 export function ProductInfoPanel({ product }) {
-  const { t } = useLanguage();
+  const { t, getLocalizedField } = useLanguage();
   const toast = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const localizedProductName = getLocalizedField(product, "name") || product.name;
   const checkoutHref = `${routes.public.checkout}${buildQueryString({
     productId: product.slug ?? product.id,
     qty: 1,
   })}`;
   const whatsappHref = `https://wa.me/${product.whatsappNumber}?text=${encodeURIComponent(
-    `Hi, I want to confirm compatibility for ${product.name}${
-      product.oemNumber ? ` (OEM: ${product.oemNumber})` : ""
-    }.`,
+    t("confirmCompatibilityMessage", {
+      productName: localizedProductName,
+      oemNumber: product.oemNumber ? ` (OEM: ${product.oemNumber})` : "",
+    }),
   )}`;
 
   function handleBuyNow() {
     if (!product.isPurchasable) {
       toast.error(
         product.isSold ? t("sold") : t("outOfStock"),
-        "This part is not currently available for immediate checkout.",
+        t("partUnavailableImmediateCheckout"),
       );
       return;
     }
@@ -85,7 +92,7 @@ export function ProductInfoPanel({ product }) {
 
         <div className="space-y-3">
           <h1 className="text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
-            {product.name}
+            {localizedProductName}
           </h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             {product.sku ? <span>{t("sku")}: {product.sku}</span> : null}
@@ -116,9 +123,9 @@ export function ProductInfoPanel({ product }) {
       {product.isLimitedStock ? (
         <Badge variant="warning">
           {product.availableQuantity === 1
-            ? "Only 1 unit available"
+            ? t("onlyOneUnitAvailable")
             : product.availableQuantity
-              ? `Only ${product.availableQuantity} units available`
+              ? t("onlyUnitsAvailable", { count: product.availableQuantity })
               : t("limitedStock")}
         </Badge>
       ) : null}
@@ -131,10 +138,10 @@ export function ProductInfoPanel({ product }) {
           <h2 className="text-2xl font-semibold text-foreground">{t("vehicleCompatibility")}</h2>
           <p className="text-sm leading-7 text-muted-foreground">
             {product.compatibility.vehicleBrand || product.compatibility.model || product.compatibility.yearRange
-              ? `${product.compatibility.vehicleBrand ?? "Vehicle"} ${
+              ? `${product.compatibility.vehicleBrand ?? t("vehicle")} ${
                   product.compatibility.model ?? ""
                 } ${product.compatibility.yearRange ?? ""}`.trim()
-              : "Compatibility details will appear here when available."}
+              : t("compatibilityDetailsWillAppear")}
           </p>
         </div>
         <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex">
@@ -163,7 +170,7 @@ export function ProductInfoPanel({ product }) {
         <div className="grid gap-3 sm:grid-cols-[1fr_1fr]">
           <Button size="lg" onClick={handleBuyNow} disabled={!product.isPurchasable || isPending}>
             <BagIcon className="size-5" />
-            {isPending ? "Opening checkout..." : t("buyNow")}
+            {isPending ? t("openingCheckout") : t("buyNow")}
           </Button>
           <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex">
             <Button variant="outline" size="lg" className="w-full">
@@ -175,11 +182,11 @@ export function ProductInfoPanel({ product }) {
       </Card>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <InfoMiniCard title="Delivery" value="Delivery timing confirmed during checkout." />
-        <InfoMiniCard title="Payment" value="Final totals and payment options come from the backend checkout flow." />
+        <InfoMiniCard title={t("delivery")} value={t("deliveryTimingConfirmedAtCheckout")} />
+        <InfoMiniCard title={t("paymentMethod")} value={t("finalTotalsPaymentOptionsBackend")} />
         <InfoMiniCard
-          title="Stock"
-          value={product.isPurchasable ? product.stockLabel : "Currently unavailable"}
+          title={t("stock")}
+          value={product.isPurchasable ? product.stockLabel : t("currentlyUnavailable")}
         />
       </div>
 
@@ -189,10 +196,10 @@ export function ProductInfoPanel({ product }) {
           className="inline-flex items-center gap-2 font-medium text-brand-red transition hover:text-brand-red-strong"
         >
           <ExternalLinkIcon className="size-4" />
-          Checkout link preview
+          {t("checkoutLinkPreview")}
         </a>
         <p className="mt-2 leading-7">
-          Buy Now sends only the product identifier and quantity=1 to checkout. Pricing and order totals stay backend-controlled.
+          {t("buyNowCheckoutControlled")}
         </p>
       </div>
     </div>

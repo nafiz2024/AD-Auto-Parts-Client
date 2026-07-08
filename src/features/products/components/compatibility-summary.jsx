@@ -40,7 +40,7 @@ export function CompatibilitySummary({ compatibility, whatsappHref, confirmLabel
       <div className="space-y-1">
         <h2 className="text-2xl font-semibold text-foreground">{t("vehicleCompatibility")}</h2>
         <p className="text-sm text-muted-foreground">
-          Safe compatibility summary based on the public product data.
+          {t("safeCompatibilitySummary")}
         </p>
       </div>
 
@@ -54,7 +54,7 @@ export function CompatibilitySummary({ compatibility, whatsappHref, confirmLabel
       </div>
 
       <Alert variant="warning" title={disclaimer}>
-        Confirm the exact fitment with your vehicle VIN, trim, and side before ordering.
+        {t("confirmExactFitment")}
       </Alert>
 
       <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex">

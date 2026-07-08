@@ -61,6 +61,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Frontend route constants for public, customer, and admin areas
 - Auth/session helpers for customer/admin flows with cookie-based requests
 - Runtime language provider with English/Arabic switching and RTL document updates
+- Translation helper with nested-key lookup, English fallback, interpolation, missing-key safety, and localized backend-field selection helpers
 - Public storefront layout with a two-row navbar and shared footer
 - Admin shell with sidebar, topbar, protected entry routing, login, TOTP verification, and backend-aware dashboard routes
 - Shared UI components for buttons, inputs, cards, alerts, badges, dialogs, toasts, loading states, and error states
@@ -139,6 +140,8 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - English remains the development default
 - Arabic is optional now
 - Arabic switches document direction to RTL
+- Shared visible UI copy is progressively routed through the central dictionary instead of hardcoded page strings
+- Dynamic backend content is localized only when Arabic companion fields such as `nameAr` or `name_ar` are present; otherwise English/base fields are used as safe fallbacks
 - Final release can later move the default to Arabic through env configuration
 
 ## SAR formatting note

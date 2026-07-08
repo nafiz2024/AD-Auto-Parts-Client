@@ -37,7 +37,7 @@ export function ConditionSummary({ conditionSummary }) {
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold text-foreground">{t("conditionSummary")}</h2>
           <p className="text-sm text-muted-foreground">
-            Used and second-hand parts are shown with transparent inspection notes.
+            {t("usedSecondHandTransparentNotes")}
           </p>
         </div>
         {conditionSummary.label ? <Badge variant="success">{conditionSummary.label}</Badge> : null}
@@ -52,18 +52,18 @@ export function ConditionSummary({ conditionSummary }) {
           label={t("warranty")}
           value={
             conditionSummary.warrantyDays !== null
-              ? `${conditionSummary.warrantyDays} days`
+              ? t("daysCount", { count: conditionSummary.warrantyDays })
               : null
           }
         />
         <ConditionMetric
           label={t("returnEligible")}
           value={
-            conditionSummary.returnEligible === null
+              conditionSummary.returnEligible === null
               ? null
               : conditionSummary.returnEligible
-                ? "Yes"
-                : "No"
+                ? t("yes")
+                : t("no")
           }
         />
       </div>

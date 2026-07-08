@@ -1,11 +1,16 @@
+"use client";
+
+import { useLanguage } from "@/hooks/use-language";
 import { ErrorState } from "@/components/ui/error-state";
 
 export function FailedToLoadState({ onRetry }) {
+  const { t } = useLanguage();
+
   return (
     <ErrorState
-      title="Failed to Load"
-      description="We couldn't load the data. Please check your connection and try again."
-      actionLabel="Retry"
+      title={t("failedToLoad")}
+      description={t("failedToLoadDescription")}
+      actionLabel={t("retry")}
       onAction={onRetry}
     />
   );

@@ -50,16 +50,16 @@ export function TrackOrderPage({ initialOrderNumber = "" }) {
     setResult(null);
 
     if (!orderNumber.trim()) {
-      setError(new Error("Order number is required."));
+      setError(new Error(t("orderNumberRequired")));
       return;
     }
 
     if (!isAuthenticated) {
       const unavailableError = new Error(
-        "Public track-order verification is not available in the current frontend API contract. Please sign in or contact support with your order number.",
+        t("trackingUnavailableDescription"),
       );
       setError(unavailableError);
-      toast.warning("Tracking unavailable", unavailableError.message);
+      toast.warning(t("trackingUnavailable"), unavailableError.message);
       return;
     }
 
@@ -67,10 +67,13 @@ export function TrackOrderPage({ initialOrderNumber = "" }) {
       try {
         const order = await getCustomerTrackOrder(orderNumber.trim());
         setResult(order);
-        toast.success("Tracking information loaded", `Order ${order.orderNumber ?? orderNumber} was loaded.`);
+        toast.success(
+          t("trackingInfoLoaded"),
+          t("orderLoaded", { orderNumber: order.orderNumber ?? orderNumber }),
+        );
       } catch (nextError) {
         setError(nextError);
-        toast.apiError(nextError, "Could not find matching order");
+        toast.apiError(nextError, t("couldNotFindMatchingOrder"));
       }
     });
   }
@@ -84,7 +87,7 @@ export function TrackOrderPage({ initialOrderNumber = "" }) {
           </p>
           <h1 className="text-5xl font-semibold tracking-tight text-foreground">{t("trackOrder")}</h1>
           <p className="text-lg text-muted-foreground">
-            Enter your order number to view the latest safe tracking status.
+            {t("trackOrderDescription")}
           </p>
         </div>
 
@@ -113,7 +116,7 @@ export function TrackOrderPage({ initialOrderNumber = "" }) {
                 {isPending ? (
                   <>
                     <RefreshCcwIcon className="size-4 animate-spin" />
-                    Loading...
+                    {t("loading")}
                   </>
                 ) : (
                   t("trackOrder")
@@ -132,8 +135,8 @@ export function TrackOrderPage({ initialOrderNumber = "" }) {
         {!result && attempted && !error ? (
           <EmptyState
             icon={BoxIcon}
-            title="No tracking details yet"
-            description="Tracking information will appear here once an authenticated order lookup succeeds."
+            title={t("noTrackingDetailsYet")}
+            description={t("trackingDetailsAppearHere")}
           />
         ) : null}
 
@@ -141,12 +144,12 @@ export function TrackOrderPage({ initialOrderNumber = "" }) {
           <Card className="space-y-6 rounded-[2rem]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-semibold text-foreground">Order Found</h2>
+                <h2 className="text-3xl font-semibold text-foreground">{t("orderFound")}</h2>
                 <p className="text-sm text-muted-foreground">
-                  Here is the current safe status of your order.
+                  {t("orderFoundDescription")}
                 </p>
               </div>
-              <p className="text-sm text-muted-foreground">{result.createdAt ?? "Status updated from backend"}</p>
+              <p className="text-sm text-muted-foreground">{result.createdAt ?? t("statusUpdatedFromBackend")}</p>
             </div>
 
             <div className="grid gap-4 rounded-[1.75rem] border border-border/70 bg-white p-5 md:grid-cols-4">
@@ -167,13 +170,13 @@ export function TrackOrderPage({ initialOrderNumber = "" }) {
                 )}
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Shipment Status</p>
+                <p className="text-sm text-muted-foreground">{t("shipmentStatus")}</p>
                 <p className="font-semibold text-foreground">{result.shipmentStatus}</p>
               </div>
             </div>
 
             <div className="flex flex-wrap justify-between gap-6 overflow-x-auto rounded-[1.75rem] border border-border/70 bg-white px-5 py-6">
-              {["Placed", "Confirmed", "Processing", "Shipped", "Delivered"].map((label) => (
+              {[t("placed"), t("confirmed"), t("processing"), t("shipped"), t("delivered")].map((label) => (
                 <TimelineStep
                   key={label}
                   label={label}
@@ -191,9 +194,9 @@ export function TrackOrderPage({ initialOrderNumber = "" }) {
 
             <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
               <Card className="rounded-[1.75rem]">
-                <h3 className="text-lg font-semibold text-foreground">Product Summary</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("productSummary")}</h3>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {result.productName ?? "Single-item order"}
+                  {result.productName ?? t("singleItemOrder")}
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {t("quantity")}: {result.quantity}
@@ -203,17 +206,19 @@ export function TrackOrderPage({ initialOrderNumber = "" }) {
                 ) : null}
               </Card>
               <Card className="rounded-[1.75rem]">
-                <h3 className="text-lg font-semibold text-foreground">Shipping Information</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("shippingInformation")}</h3>
                 <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-                  <p>Courier: {result.courierName ?? "Awaiting assignment"}</p>
-                  <p>Tracking Number: {result.trackingNumber ?? "Pending"}</p>
-                  <p>{t("estimatedDelivery")}: {result.estimatedDelivery ?? "Pending"}</p>
+                  <p>{t("courier")}: {result.courierName ?? t("awaitingAssignment")}</p>
+                  <p>{t("trackingNumber")}: {result.trackingNumber ?? t("pending")}</p>
+                  <p>{t("estimatedDelivery")}: {result.estimatedDelivery ?? t("pending")}</p>
                 </div>
               </Card>
             </div>
 
             <a
-              href={`https://wa.me/966543216789?text=${encodeURIComponent(`Hi, I need help tracking order ${result.orderNumber}.`)}`}
+              href={`https://wa.me/966543216789?text=${encodeURIComponent(
+                t("trackingWhatsappHelp", { orderNumber: result.orderNumber }),
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -1,15 +1,21 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertTriangleIcon, RefreshCcwIcon } from "@/components/ui/icons";
+import { useLanguage } from "@/hooks/use-language";
 
 export function ErrorState({
   title,
   description,
-  actionLabel = "Try again",
+  actionLabel,
   onAction,
   actionHref,
 }) {
+  const { t } = useLanguage();
+  const resolvedActionLabel = actionLabel ?? t("tryAgain");
+
   return (
     <Card className="flex min-h-72 flex-col items-center justify-center gap-5 text-center">
       <div className="rounded-full bg-error/10 p-5 text-error">
@@ -23,13 +29,13 @@ export function ErrorState({
         <Link href={actionHref}>
           <Button variant="outline">
             <RefreshCcwIcon className="size-4" />
-            {actionLabel}
+            {resolvedActionLabel}
           </Button>
         </Link>
       ) : (
         <Button variant="outline" onClick={onAction}>
           <RefreshCcwIcon className="size-4" />
-          {actionLabel}
+          {resolvedActionLabel}
         </Button>
       )}
     </Card>

@@ -70,7 +70,7 @@ export function AdminTopbar() {
         <button
           type="button"
           className="rounded-2xl border border-border p-3 text-foreground lg:hidden"
-          aria-label="Open admin navigation"
+          aria-label={t("openAdminNavigation")}
         >
           <MenuIcon />
         </button>

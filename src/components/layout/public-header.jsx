@@ -31,13 +31,15 @@ const navLinks = [
 ];
 
 function SearchBar() {
+  const { t } = useLanguage();
+
   return (
     <form action={routes.public.search} className="flex w-full max-w-3xl items-center rounded-2xl border border-border bg-white shadow-sm">
       <Input
         type="search"
         name="q"
-        aria-label="Search parts"
-        placeholder="Search by part name, OEM number or keyword..."
+        aria-label={t("searchParts")}
+        placeholder={t("searchByPartNamePlaceholder")}
         className="border-0 shadow-none focus:ring-0"
       />
       <Button type="submit" size="icon" className="m-1 rounded-xl bg-brand-navy hover:bg-brand-navy-soft">
@@ -81,10 +83,10 @@ export function PublicHeader() {
           </div>
           <div className="flex items-center gap-6 text-white/80">
             <Link href={routes.public.trackOrder} className="transition hover:text-white">
-              Track Order
+              {t("trackOrder")}
             </Link>
             <Link href={routes.public.contact} className="transition hover:text-white">
-              Help Center
+              {t("helpCenter")}
             </Link>
           </div>
         </Container>
@@ -96,7 +98,7 @@ export function PublicHeader() {
               type="button"
               className="rounded-2xl border border-border p-3 text-foreground lg:hidden"
               onClick={() => setMobileOpen(true)}
-              aria-label="Open navigation menu"
+              aria-label={t("openNavigationMenu")}
             >
               <MenuIcon />
             </button>
@@ -108,7 +110,7 @@ export function PublicHeader() {
           <div className="hidden items-center gap-2 lg:flex">
             <LanguageToggle />
             <IconLink icon={HeartIcon} label={t("wishlist")} />
-            <IconLink icon={BagIcon} label="Cart" badge="0" />
+            <IconLink icon={BagIcon} label={t("cart")} badge="0" />
             <button
               type="button"
               className="flex min-w-28 items-center gap-2 rounded-2xl px-3 py-2 text-sm text-foreground transition hover:bg-muted"
@@ -149,7 +151,7 @@ export function PublicHeader() {
           <div className="flex items-center gap-3 rounded-2xl border border-border px-4 py-2">
             <WhatsappIcon className="text-[#25d366]" />
             <div className="text-sm">
-              <p className="font-semibold text-foreground">WhatsApp</p>
+              <p className="font-semibold text-foreground">{t("whatsapp")}</p>
               <p className="text-muted-foreground">+966 54 321 6789</p>
             </div>
           </div>
@@ -168,7 +170,7 @@ export function PublicHeader() {
               type="button"
               onClick={() => setMobileOpen(false)}
               className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              aria-label="Close navigation menu"
+              aria-label={t("closeNavigationMenu")}
             >
               <XIcon />
             </button>
@@ -191,7 +193,7 @@ export function PublicHeader() {
           <div className="mt-auto space-y-4">
             <LanguageToggle />
             <div className="rounded-2xl border border-border p-4">
-              <p className="font-semibold text-foreground">WhatsApp</p>
+              <p className="font-semibold text-foreground">{t("whatsapp")}</p>
               <p className="text-sm text-muted-foreground">+966 54 321 6789</p>
             </div>
           </div>

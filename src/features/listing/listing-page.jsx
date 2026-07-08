@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,7 @@ import { PriceDisplay } from "@/components/ui/price-display";
 import { Select } from "@/components/ui/select";
 import { ProductCardSkeleton } from "@/components/states/loading-states";
 import { routes } from "@/constants/routes";
+import { useLanguage } from "@/hooks/use-language";
 import { buildQueryString } from "@/lib/api/query";
 
 function createQueryObject(filters, overrides = {}) {
@@ -90,13 +93,15 @@ function HiddenFields({ filters, exclude = [] }) {
 }
 
 function PreviewSourceBadge({ source }) {
+  const { t } = useLanguage();
+
   if (source !== "preview") {
     return null;
   }
 
   return (
     <Badge variant="warning" className="bg-warning/10 text-warning">
-      Preview fallback
+      {t("previewFallback")}
     </Badge>
   );
 }
@@ -145,42 +150,38 @@ function HeroVisual({ mode }) {
 }
 
 function ListingHero({ mode, filters, category, products, suggestedSearches }) {
+  const { t, getLocalizedField } = useLanguage();
   const isSearch = mode === "search";
   const isCategory = mode === "category";
   const title = isSearch
     ? filters.q
-        ? (
-          <>
-            Search Results for <span className="text-brand-red">&quot;{filters.q}&quot;</span>
-          </>
-        )
-      : "Search the Catalog"
+        ? t("searchResultsFor", { query: filters.q })
+      : t("searchTheCatalog")
     : isCategory
-      ? category?.name ?? "Category"
-      : "Shop Auto Parts";
+      ? getLocalizedField(category, "name") || t("categories")
+      : t("shopAutoParts");
   const description = isSearch
     ? filters.q
-      ? `We found ${products.resultCount} matching products for "${filters.q}".`
-      : "Search by part name, OEM number, or keyword to browse the catalog."
+      ? t("searchResultsDescription", { count: products.resultCount, query: filters.q })
+      : t("searchCatalogDescription")
     : isCategory
-      ? category?.description ??
-        "Browse used and reconditioned parts in this category with trusted condition details."
-      : "Browse inspected used and reconditioned auto parts by category, vehicle compatibility, condition, and price.";
+      ? getLocalizedField(category, "description") || t("categoryDefaultDescription")
+      : t("shopAutoPartsDescription");
   const highlight = isCategory
-    ? category?.highlight ?? `${products.resultCount} Parts Available`
-    : `${products.resultCount} parts available`;
+    ? getLocalizedField(category, "highlight") || t("partsAvailable", { count: products.resultCount })
+    : t("partsAvailable", { count: products.resultCount });
 
   return (
     <section className="space-y-6 rounded-[2.75rem] border border-border/80 bg-white p-6 shadow-soft sm:p-8">
       <Breadcrumbs
         items={[
-          { label: "Home", href: routes.public.home },
+          { label: t("home"), href: routes.public.home },
           isSearch
-            ? { label: "Search" }
+            ? { label: t("search") }
             : isCategory
-              ? { label: "Category", href: routes.public.products }
-              : { label: "Shop" },
-          ...(isCategory && category ? [{ label: category.name }] : []),
+              ? { label: t("categories"), href: routes.public.products }
+              : { label: t("shop") },
+          ...(isCategory && category ? [{ label: getLocalizedField(category, "name") || category.name }] : []),
         ]}
       />
       <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
@@ -200,7 +201,7 @@ function ListingHero({ mode, filters, category, products, suggestedSearches }) {
           </div>
           {isSearch && suggestedSearches.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-sm font-semibold text-foreground">Suggested searches:</p>
+              <p className="text-sm font-semibold text-foreground">{t("suggestedSearches")}</p>
               <div className="flex flex-wrap gap-2">
                 {suggestedSearches.map((suggestion) => (
                   <Link
@@ -222,13 +223,13 @@ function ListingHero({ mode, filters, category, products, suggestedSearches }) {
       </div>
       {isCategory && category ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {["Complete Engine", "Cylinder Head", "Engine Mount", "Crankshaft"].map((item) => (
+                  {["Complete Engine", "Cylinder Head", "Engine Mount", "Crankshaft"].map((item) => (
             <div
               key={item}
               className="rounded-[1.5rem] border border-border bg-[#fcfcfd] px-4 py-4 shadow-sm"
             >
               <p className="text-sm font-semibold text-foreground">{item}</p>
-              <p className="mt-1 text-sm text-muted-foreground">Inspected and cataloged parts</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t("inspectedAndCatalogedParts")}</p>
             </div>
           ))}
         </div>
@@ -267,6 +268,7 @@ function CheckboxOption({ name, option, activeValues }) {
 }
 
 function FilterSidebar({ basePath, filters, filterData, mode }) {
+  const { t } = useLanguage();
   const clearHref =
     mode === "search"
       ? createHref(basePath, { ...filters, brand: "", model: "", year: null, conditions: [], availability: [], positions: [], partsBrands: [], minPrice: null, maxPrice: null, page: 1 }, { sort: filters.sort, view: filters.view, q: filters.q })
@@ -281,24 +283,24 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             <FilterIcon className="size-5" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Filter Results</h2>
-            <p className="text-sm text-muted-foreground">Refine the listing without a cart flow.</p>
+            <h2 className="text-xl font-semibold text-foreground">{t("filterResults")}</h2>
+            <p className="text-sm text-muted-foreground">{t("refineListingDescription")}</p>
           </div>
         </div>
-        <FilterSection title="Search Within Results">
+        <FilterSection title={t("searchWithinResults")}>
           <div className="relative">
             <input
               type="search"
               name="q"
               defaultValue={filters.q}
-              placeholder="Search parts..."
+              placeholder={t("searchParts")}
               className="h-12 w-full rounded-2xl border border-border bg-white px-4 pe-11 text-sm text-foreground shadow-sm outline-none transition focus:border-brand-red focus:ring-4 focus:ring-brand-red/10"
             />
             <SearchIcon className="pointer-events-none absolute inset-block-start-1/2 inset-inline-end-4 -translate-y-1/2 text-muted-foreground" />
           </div>
         </FilterSection>
         {mode === "shop" ? (
-          <FilterSection title="Category">
+          <FilterSection title={t("category")}>
             <div className="space-y-3">
               {filterData.categories.map((option) => (
                 <CheckboxOption
@@ -311,7 +313,7 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             </div>
           </FilterSection>
         ) : null}
-        <FilterSection title="Car Brand">
+        <FilterSection title={t("carBrand")}>
           <div className="space-y-3">
             {filterData.brands.map((option) => (
               <CheckboxOption
@@ -323,7 +325,7 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             ))}
           </div>
         </FilterSection>
-        <FilterSection title="Car Model">
+        <FilterSection title={t("carModel")}>
           <div className="space-y-3">
             {filterData.models.map((option) => (
               <CheckboxOption
@@ -335,9 +337,9 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             ))}
           </div>
         </FilterSection>
-        <FilterSection title="Manufacturing Year">
+        <FilterSection title={t("manufacturingYear")}>
           <Select name="year" defaultValue={filters.year ? String(filters.year) : ""}>
-            <option value="">Any year</option>
+            <option value="">{t("anyYear")}</option>
             {[2016, 2015, 2014, 2013, 2012, 2011, 2010, 2008, 2006, 2003].map((year) => (
               <option key={year} value={year}>
                 {year}
@@ -345,7 +347,7 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             ))}
           </Select>
         </FilterSection>
-        <FilterSection title="Condition">
+        <FilterSection title={t("condition")}>
           <div className="space-y-3">
             {filterData.conditions.map((option) => (
               <CheckboxOption
@@ -357,14 +359,14 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             ))}
           </div>
         </FilterSection>
-        <FilterSection title="Price Range">
+        <FilterSection title={t("priceRange")}>
           <div className="grid gap-3 sm:grid-cols-2">
             <input
               type="number"
               min="0"
               name="minPrice"
               defaultValue={filters.minPrice !== null ? String(filters.minPrice / 100) : ""}
-              placeholder="500"
+              placeholder={t("minPricePlaceholder")}
               className="h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm text-foreground shadow-sm outline-none transition focus:border-brand-red focus:ring-4 focus:ring-brand-red/10"
             />
             <input
@@ -372,13 +374,13 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
               min="0"
               name="maxPrice"
               defaultValue={filters.maxPrice !== null ? String(filters.maxPrice / 100) : ""}
-              placeholder="25000"
+              placeholder={t("maxPricePlaceholder")}
               className="h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm text-foreground shadow-sm outline-none transition focus:border-brand-red focus:ring-4 focus:ring-brand-red/10"
             />
           </div>
-          <p className="text-xs text-muted-foreground">Enter SAR amounts without decimals.</p>
+          <p className="text-xs text-muted-foreground">{t("enterSarAmountsNoDecimals")}</p>
         </FilterSection>
-        <FilterSection title="Availability">
+        <FilterSection title={t("availability")}>
           <div className="space-y-3">
             {filterData.availability.map((option) => (
               <CheckboxOption
@@ -390,7 +392,7 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             ))}
           </div>
         </FilterSection>
-        <FilterSection title="Part Position">
+        <FilterSection title={t("partPosition")}>
           <div className="space-y-3">
             {filterData.positions.map((option) => (
               <CheckboxOption
@@ -402,7 +404,7 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             ))}
           </div>
         </FilterSection>
-        <FilterSection title="Product Brand">
+        <FilterSection title={t("productBrand")}>
           <div className="space-y-3">
             {filterData.partsBrands.map((option) => (
               <CheckboxOption
@@ -416,11 +418,11 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
         </FilterSection>
         <div className="grid gap-3">
           <Button type="submit" className="w-full">
-            Apply Filters
+            {t("applyFilters")}
           </Button>
           <Link href={clearHref} className="w-full">
             <Button variant="outline" className="w-full">
-              Clear All
+              {t("clearAll")}
             </Button>
           </Link>
         </div>
@@ -446,6 +448,7 @@ function ProductArt({ tone = "default" }) {
 }
 
 function ProductCard({ product, view = "grid" }) {
+  const { t, getLocalizedField } = useLanguage();
   const stockVariant =
     product.stockCode === "in_stock"
       ? "success"
@@ -453,6 +456,7 @@ function ProductCard({ product, view = "grid" }) {
         ? "warning"
         : "error";
   const tone = product.categorySlug === "lighting-parts" ? "lighting" : product.categorySlug === "engine-parts" ? "engine" : "default";
+  const localizedName = getLocalizedField(product, "name") || product.name;
   const detailHref = routes.public.productDetail(product.slug);
   const buyNowHref = `${routes.public.checkout}${buildQueryString({
     productId: product.slug,
@@ -468,7 +472,7 @@ function ProductCard({ product, view = "grid" }) {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="space-y-2">
                 <Link href={detailHref} className="text-2xl font-semibold text-foreground transition hover:text-brand-red">
-                  {product.name}
+                  {localizedName}
                 </Link>
                 <p className="text-sm text-muted-foreground">{product.vehicleSummary}</p>
                 <p className="text-sm text-muted-foreground">{product.identifier}</p>
@@ -476,7 +480,7 @@ function ProductCard({ product, view = "grid" }) {
               <button
                 type="button"
                 className="rounded-full border border-border bg-white/90 p-2 text-muted-foreground transition hover:text-brand-red"
-                aria-label="Wishlist placeholder"
+                aria-label={t("wishlist")}
               >
                 <HeartIcon className="size-4" />
               </button>
@@ -502,12 +506,12 @@ function ProductCard({ product, view = "grid" }) {
             </div>
             <div className="flex flex-wrap gap-3">
               <Link href={detailHref}>
-                <Button variant="outline">View Details</Button>
+                <Button variant="outline">{t("viewDetails")}</Button>
               </Link>
               <Link href={buyNowHref}>
                 <Button>
                   <BagIcon className="size-4" />
-                  Buy Now
+                  {t("buyNow")}
                 </Button>
               </Link>
             </div>
@@ -522,7 +526,7 @@ function ProductCard({ product, view = "grid" }) {
       <div className="border-b border-border p-4">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex flex-wrap gap-2">
-            <Badge variant={stockVariant}>{product.stockLabel}</Badge>
+              <Badge variant={stockVariant}>{product.stockLabel}</Badge>
             <Badge variant={product.conditionCode === "reconditioned" ? "warning" : "info"}>
               {product.conditionLabel}
             </Badge>
@@ -530,7 +534,7 @@ function ProductCard({ product, view = "grid" }) {
           <button
             type="button"
             className="rounded-full border border-border bg-white/90 p-2 text-muted-foreground transition hover:text-brand-red"
-            aria-label="Wishlist placeholder"
+                aria-label={t("wishlist")}
           >
             <HeartIcon className="size-4" />
           </button>
@@ -540,11 +544,11 @@ function ProductCard({ product, view = "grid" }) {
       <div className="space-y-4 p-5">
         <div className="space-y-2">
           <Link href={detailHref} className="line-clamp-2 text-xl font-semibold text-foreground transition hover:text-brand-red">
-            {product.name}
+            {localizedName}
           </Link>
           <p className="text-sm text-muted-foreground">{product.vehicleSummary}</p>
           <p className="text-sm text-muted-foreground">{product.identifier}</p>
-          <p className="text-sm text-muted-foreground">Condition: {product.conditionLabel}</p>
+          <p className="text-sm text-muted-foreground">{t("condition")}: {product.conditionLabel}</p>
         </div>
         <div className="flex items-end gap-3">
           <PriceDisplay amountMinor={product.priceMinor} className="text-2xl" />
@@ -560,13 +564,13 @@ function ProductCard({ product, view = "grid" }) {
         <div className="grid gap-3 sm:grid-cols-2">
           <Link href={detailHref}>
             <Button variant="outline" className="w-full">
-              View Details
+              {t("viewDetails")}
             </Button>
           </Link>
           <Link href={buyNowHref}>
             <Button className="w-full">
               <BagIcon className="size-4" />
-              Buy Now
+              {t("buyNow")}
             </Button>
           </Link>
         </div>
@@ -576,16 +580,23 @@ function ProductCard({ product, view = "grid" }) {
 }
 
 function ListingToolbar({ basePath, filters, sortOptions, products }) {
+  const { t } = useLanguage();
   return (
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-[2rem] border border-border bg-white p-4 shadow-soft">
       <div className="space-y-1">
         <p className="text-sm text-muted-foreground">
           {products.resultCount > 0
-            ? `Showing page ${products.pagination.page} of ${Math.max(products.pagination.totalPages, 1)}`
-            : "Showing 0 products"}
+            ? t("showingPageOf", {
+                page: products.pagination.page,
+                totalPages: Math.max(products.pagination.totalPages, 1),
+              })
+            : t("showingZeroProducts")}
         </p>
         <p className="text-sm font-semibold text-foreground">
-          {products.resultCount} result{products.resultCount === 1 ? "" : "s"}
+          {t("resultsCount", {
+            count: products.resultCount,
+            suffix: products.resultCount === 1 ? "" : "s",
+          })}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
@@ -619,13 +630,13 @@ function ListingToolbar({ basePath, filters, sortOptions, products }) {
             <Select name="sort" defaultValue={filters.sort} className="bg-white">
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
-                  Sort by: {option.label}
+                  {t("sortByOption", { label: option.label })}
                 </option>
               ))}
             </Select>
           </div>
           <Button type="submit" variant="outline">
-            Apply
+            {t("apply")}
           </Button>
         </form>
       </div>
@@ -634,6 +645,7 @@ function ListingToolbar({ basePath, filters, sortOptions, products }) {
 }
 
 function Pagination({ basePath, filters, products, paginationRange }) {
+  const { t } = useLanguage();
   if (!products.pagination.totalPages || products.pagination.totalPages <= 1) {
     return null;
   }
@@ -649,7 +661,7 @@ function Pagination({ basePath, filters, products, paginationRange }) {
       >
         <Button variant="outline">
           <ArrowLeftIcon className="size-4" />
-          Previous
+          {t("previous")}
         </Button>
       </Link>
       {paginationRange.map((page) => (
@@ -673,7 +685,7 @@ function Pagination({ basePath, filters, products, paginationRange }) {
         className={!products.pagination.hasNextPage ? "pointer-events-none opacity-40" : ""}
       >
         <Button variant="outline">
-          Next
+          {t("next")}
           <ArrowRightIcon className="size-4" />
         </Button>
       </Link>
@@ -682,10 +694,11 @@ function Pagination({ basePath, filters, products, paginationRange }) {
 }
 
 function NoResultsBlock({ filters, mode }) {
+  const { t } = useLanguage();
   const title =
     mode === "search" && filters.q
-      ? `No matching parts found for '${filters.q}'`
-      : "No matching parts found";
+      ? t("noMatchingPartsFoundFor", { query: filters.q })
+      : t("noMatchingPartsFound");
 
   return (
     <Card className="rounded-[2rem]">
@@ -699,13 +712,13 @@ function NoResultsBlock({ filters, mode }) {
           <div className="space-y-2">
             <h2 className="text-3xl font-semibold text-foreground">{title}</h2>
             <p className="text-sm leading-7 text-muted-foreground">
-              We could not find any parts matching your current search or filters. Try adjusting the filters or contact the parts team directly.
+              {t("noMatchingPartsDescription")}
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <Card className="rounded-[1.5rem] p-5 shadow-none">
               <CardContent className="space-y-3">
-                <h3 className="text-lg font-semibold text-foreground">Similar Categories</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("similarCategories")}</h3>
                 {["Lighting Parts", "Electrical Parts", "Body Parts"].map((item) => (
                   <p key={item} className="text-sm text-muted-foreground">
                     {item}
@@ -715,7 +728,7 @@ function NoResultsBlock({ filters, mode }) {
             </Card>
             <Card className="rounded-[1.5rem] p-5 shadow-none">
               <CardContent className="space-y-3">
-                <h3 className="text-lg font-semibold text-foreground">Related Parts</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("relatedParts")}</h3>
                 {["Headlight Assembly", "Headlight Bulb", "Tail Light"].map((item) => (
                   <p key={item} className="text-sm text-muted-foreground">
                     {item}
@@ -725,19 +738,19 @@ function NoResultsBlock({ filters, mode }) {
             </Card>
             <Card className="rounded-[1.5rem] p-5 shadow-none">
               <CardContent className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Still cannot find it?</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("stillCannotFindIt")}</h3>
                 <a
                   href="https://wa.me/966543216789"
                   className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25d366] px-4 py-3 font-semibold text-white transition hover:brightness-95"
                 >
                   <WhatsappIcon className="size-4" />
-                  Chat on WhatsApp
+                  {t("chatOnWhatsapp")}
                 </a>
                 <a
                   href="tel:+966543216789"
                   className="inline-flex w-full items-center justify-center rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:border-brand-red hover:text-brand-red"
                 >
-                  Call Us: +966 54 321 6789
+                  {t("callUsLabel", { phone: "+966 54 321 6789" })}
                 </a>
               </CardContent>
             </Card>
@@ -749,6 +762,7 @@ function NoResultsBlock({ filters, mode }) {
 }
 
 export function ListingPage({ data, basePath }) {
+  const { t } = useLanguage();
   const {
     mode,
     filters,
@@ -765,9 +779,9 @@ export function ListingPage({ data, basePath }) {
     return (
       <Container className="space-y-8 py-10">
         <EmptyState
-          title="Category not found"
-          description="The category you are looking for does not exist in the local storefront dataset yet."
-          actionLabel="Back to Shop"
+          title={t("categoryNotFound")}
+          description={t("categoryNotFoundDescription")}
+          actionLabel={t("backToShop")}
           actionHref={routes.public.products}
         />
       </Container>

@@ -20,11 +20,13 @@ function RatingStars({ rating }) {
 }
 
 function SpecsTable({ specifications }) {
+  const { t } = useLanguage();
+
   if (!specifications.length) {
     return (
       <EmptyState
-        title="Specifications coming soon"
-        description="The backend did not provide public specification rows for this part yet."
+        title={t("specificationsComingSoon")}
+        description={t("specificationsComingSoonDescription")}
       />
     );
   }
@@ -47,11 +49,13 @@ function SpecsTable({ specifications }) {
 }
 
 function CompatibilityTable({ compatibility }) {
+  const { t } = useLanguage();
+
   if (!compatibility.entries.length) {
     return (
       <EmptyState
-        title="Compatibility details unavailable"
-        description="Public compatibility rows are not available for this part yet."
+        title={t("compatibilityDetailsUnavailable")}
+        description={t("compatibilityDetailsUnavailableDescription")}
       />
     );
   }
@@ -61,12 +65,12 @@ function CompatibilityTable({ compatibility }) {
       <table className="min-w-full text-start">
         <thead className="bg-muted/50 text-sm text-foreground">
           <tr>
-            <th className="px-4 py-3 font-semibold">Brand</th>
-            <th className="px-4 py-3 font-semibold">Model</th>
-            <th className="px-4 py-3 font-semibold">Year</th>
-            <th className="px-4 py-3 font-semibold">Engine</th>
-            <th className="px-4 py-3 font-semibold">Engine Code</th>
-            <th className="px-4 py-3 font-semibold">Position</th>
+            <th className="px-4 py-3 font-semibold">{t("brand")}</th>
+            <th className="px-4 py-3 font-semibold">{t("carModel")}</th>
+            <th className="px-4 py-3 font-semibold">{t("manufacturingYear")}</th>
+            <th className="px-4 py-3 font-semibold">{t("engine")}</th>
+            <th className="px-4 py-3 font-semibold">{t("engineCode")}</th>
+            <th className="px-4 py-3 font-semibold">{t("partPosition")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border/70 bg-white text-sm text-muted-foreground">
@@ -87,14 +91,15 @@ function CompatibilityTable({ compatibility }) {
 }
 
 function DeliveryAndReturn({ deliveryNotes, returnNotes }) {
+  const { t } = useLanguage();
   const hasDelivery = deliveryNotes.length > 0;
   const hasReturn = returnNotes.length > 0;
 
   if (!hasDelivery && !hasReturn) {
     return (
       <EmptyState
-        title="Delivery and return details coming soon"
-        description="This product does not include public delivery or return notes yet."
+        title={t("deliveryAndReturnComingSoon")}
+        description={t("deliveryAndReturnComingSoonDescription")}
       />
     );
   }
@@ -102,22 +107,22 @@ function DeliveryAndReturn({ deliveryNotes, returnNotes }) {
   return (
     <div className="grid gap-5 lg:grid-cols-2">
       <Card className="rounded-[1.75rem]">
-        <h3 className="text-lg font-semibold text-foreground">Delivery Information</h3>
+        <h3 className="text-lg font-semibold text-foreground">{t("deliveryInformation")}</h3>
         <ul className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
           {hasDelivery ? (
             deliveryNotes.map((note) => <li key={note.id}>• {note.note}</li>)
           ) : (
-            <li>• Delivery timing will be confirmed at checkout.</li>
+            <li>• {t("deliveryTimingConfirmedAtCheckout")}</li>
           )}
         </ul>
       </Card>
       <Card className="rounded-[1.75rem]">
-        <h3 className="text-lg font-semibold text-foreground">Return & Warranty</h3>
+        <h3 className="text-lg font-semibold text-foreground">{t("returnAndWarranty")}</h3>
         <ul className="mt-4 space-y-3 text-sm leading-7 text-muted-foreground">
           {hasReturn ? (
             returnNotes.map((note) => <li key={note.id}>• {note.note}</li>)
           ) : (
-            <li>• Return and warranty notes will appear here when provided by the backend.</li>
+            <li>• {t("returnWarrantyNotesWillAppear")}</li>
           )}
         </ul>
       </Card>
@@ -126,11 +131,13 @@ function DeliveryAndReturn({ deliveryNotes, returnNotes }) {
 }
 
 function ReviewsPanel({ reviews }) {
+  const { t } = useLanguage();
+
   if (reviews.source !== "api" || reviews.items.length === 0) {
     return (
       <EmptyState
-        title="Reviews preview coming soon"
-        description="Public approved reviews are not available from the backend yet for this product."
+        title={t("reviewsPreviewComingSoon")}
+        description={t("reviewsPreviewComingSoonDescription")}
       />
     );
   }
@@ -143,7 +150,10 @@ function ReviewsPanel({ reviews }) {
             {reviews.averageRating?.toFixed?.(1) ?? "—"}
           </p>
           <p className="text-sm text-muted-foreground">
-            {reviews.reviewCount} review{reviews.reviewCount === 1 ? "" : "s"}
+            {t("reviewsCount", {
+              count: reviews.reviewCount,
+              suffix: reviews.reviewCount === 1 ? "" : "s",
+            })}
           </p>
         </div>
         <RatingStars rating={reviews.averageRating} />
@@ -156,7 +166,7 @@ function ReviewsPanel({ reviews }) {
                 <p className="font-semibold text-foreground">{review.reviewerName}</p>
                 {review.verifiedBuyer ? (
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-success">
-                    Verified Buyer
+                    {t("verifiedBuyer")}
                   </p>
                 ) : null}
               </div>
@@ -214,7 +224,7 @@ export function ProductTabs({
         <Card className="rounded-[2rem]">
           <h2 className="text-2xl font-semibold text-foreground">{t("description")}</h2>
           <p className="mt-4 text-sm leading-8 text-muted-foreground">
-            {description || "Detailed public product description will appear here when provided by the backend."}
+            {description || t("detailedProductDescriptionWillAppear")}
           </p>
         </Card>
       ) : null}

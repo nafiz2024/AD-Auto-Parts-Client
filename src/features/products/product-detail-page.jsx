@@ -29,10 +29,12 @@ function Breadcrumbs({ items }) {
 }
 
 export function ProductDetailPage({ data }) {
-  const { t } = useLanguage();
+  const { t, getLocalizedField } = useLanguage();
   const { product, relatedProducts, reviews } = data;
   const whatsappHref = `https://wa.me/${product.whatsappNumber}?text=${encodeURIComponent(
-    `Hi, I want to ask about ${product.name}.`,
+    t("productWhatsappQuestion", {
+      productName: getLocalizedField(product, "name") || product.name,
+    }),
   )}`;
   const breadcrumbItems = [
     { label: t("home"), href: "/" },
@@ -47,7 +49,7 @@ export function ProductDetailPage({ data }) {
 
         <section className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
           <ProductGallery
-            title={product.name}
+            title={getLocalizedField(product, "name") || product.name}
             images={product.images}
             conditionLabel={product.conditionSummary.label}
             stockLabel={product.stockLabel}

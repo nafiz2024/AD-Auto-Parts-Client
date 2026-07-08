@@ -30,7 +30,7 @@ export function PublicFooter() {
         <div className="space-y-4">
           <BrandLogo />
           <p className="max-w-md text-sm leading-7 text-muted-foreground">
-            AD Auto Parts helps drivers and workshops across Saudi Arabia source trusted used auto parts with clean communication and reliable support.
+            {t("companySupportDescription")}
           </p>
         </div>
         <div>
@@ -62,7 +62,7 @@ export function PublicFooter() {
             {t("contactUs")}
           </h3>
           <div className="text-sm leading-7 text-muted-foreground">
-            <p>Riyadh, Saudi Arabia</p>
+            <p>{t("saudiArabiaLocation")}</p>
             <p>support@adautoparts.example</p>
             <p>+966 55 234 5678</p>
           </div>

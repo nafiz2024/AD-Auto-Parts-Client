@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { APP_NAME } from "@/config/env";
+import { useLanguage } from "@/hooks/use-language";
 import { cn } from "@/lib/utils/cn";
 
 export function BrandLogo({ href = "/", compact = false, className = "" }) {
+  const { t } = useLanguage();
+
   return (
     <Link href={href} className={cn("inline-flex items-center gap-3", className)}>
       <div className="relative flex size-12 items-center justify-center rounded-full border-[6px] border-brand-navy bg-white text-brand-navy shadow-sm">
@@ -15,7 +20,7 @@ export function BrandLogo({ href = "/", compact = false, className = "" }) {
             AD Auto <span className="text-brand-red">Parts</span>
           </p>
           <p className="mt-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Quality parts, trusted service
+            {t("qualityPartsTrustedService")}
           </p>
         </div>
       ) : (
