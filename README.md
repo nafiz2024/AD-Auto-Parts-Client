@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 10 coverage
+## Current Step 11 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -91,6 +91,9 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Admin product list route with backend-driven search, filtering, status actions, responsive table/card views, and pagination controls
 - Admin add/edit product routes with shared form sections for product details, compatibility, condition, pricing, inventory, description, and visibility
 - Admin product media management UI for upload, gallery display, set-primary, reorder, and delete flows using multipart `FormData`
+- Admin categories route with backend-driven search, status filtering, responsive table/card views, right-side create/edit form, and confirmation dialogs
+- Admin brands route with vehicle-brand and parts-brand tabs, responsive list views, right-side create/edit form, and confirmation dialogs
+- Lightweight vehicle model management section under vehicle brands using backend-safe fields only
 
 ## Layout structure
 
@@ -225,7 +228,22 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Product media upload uses `FormData` through the shared API client and does not set manual JSON `Content-Type`
 - Media UI hides unsupported local filesystem details and relies on backend-confirmed responses before updating destructive state
 
-## Backend endpoints used by Step 10 admin UI
+## Admin category management behavior
+
+- `/admin/categories` loads categories from the admin API with allowlisted query params for search, status, sort, and page
+- Category create/edit uses a right-side admin form and maps backend field validation errors back to the relevant inputs
+- Category status changes and delete actions require confirmation and do not optimistically remove or mutate UI before the backend confirms
+- Category image upload is intentionally left as a deferred placeholder because the current frontend endpoint contract does not expose category media routes
+
+## Admin brand and vehicle model behavior
+
+- `/admin/brands` manages both vehicle brands and parts brands through a tabbed admin experience with preserved filter state in the URL
+- Brand create/edit uses the shared authenticated admin API client and maps backend field validation errors into the drawer form
+- Brand delete and activate/deactivate actions require confirmation and only refresh the UI after backend success
+- Brand logo upload is intentionally left as a deferred placeholder because the current frontend endpoint contract does not expose brand media routes
+- Vehicle model management is implemented as a lightweight section inside the vehicle brand tab using the existing admin vehicle model endpoint and only safe, backend-aligned fields
+
+## Backend endpoints used by Step 10 and Step 11 admin UI
 
 - `GET /admin/products`
 - `POST /admin/products`
@@ -236,20 +254,33 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - `PATCH /admin/products/:productId/media/:mediaId` for primary-image updates if supported by the backend contract
 - `PATCH /admin/products/:productId/media` for reorder updates if supported by the backend contract
 - `GET /admin/categories`
+- `POST /admin/categories`
+- `PATCH /admin/categories/:categoryId`
+- `DELETE /admin/categories/:categoryId` if supported by the backend contract
 - `GET /admin/vehicle-brands`
+- `POST /admin/vehicle-brands`
+- `PATCH /admin/vehicle-brands/:brandId`
+- `DELETE /admin/vehicle-brands/:brandId` if supported by the backend contract
 - `GET /admin/vehicle-models`
+- `POST /admin/vehicle-models`
+- `PATCH /admin/vehicle-models/:modelId`
+- `DELETE /admin/vehicle-models/:modelId` if supported by the backend contract
 - `GET /admin/parts-brands`
+- `POST /admin/parts-brands`
+- `PATCH /admin/parts-brands/:brandId`
+- `DELETE /admin/parts-brands/:brandId` if supported by the backend contract
 
-## Security notes for Step 10
+## Security notes for Step 10 and Step 11
 
 - Admin product routes continue to depend on the existing authenticated session, admin role checks, active-account checks, and TOTP completion
-- Product actions and media mutations use the shared API client with credentials instead of bypassing backend auth
+- Product, category, brand, and vehicle-model mutations use the shared API client with credentials instead of bypassing backend auth
 - The frontend does not store admin secrets, TOTP values, or manual session cookies
 - Upload validation is light on the client and limited to JPEG, PNG, and WebP; the backend remains the final validator
+- Category and brand media fields remain placeholders until explicit backend media support exists, which avoids submitting unsupported fields
 
 ## Next step
 
-Step 11 can expand deeper admin catalog management, richer order/admin modules, or tighter backend-specific DTO alignment where the product/media action contract becomes more explicit.
+Step 12 can expand deeper admin order/payment operations, richer catalog-specific backend DTO alignment, or dedicated media support for categories and brands if those backend routes become explicit.
 
 ## Validation
 
