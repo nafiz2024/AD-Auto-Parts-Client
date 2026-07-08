@@ -45,9 +45,13 @@ export const routes = {
     adminPayments: "/admin/payments",
     adminShipments: "/admin/shipments",
     adminCustomers: "/admin/customers",
+    adminCustomerDetail: (customerId) =>
+      `/admin/customers?selected=${encodeURIComponent(customerId)}`,
     adminReviews: "/admin/reviews",
     adminQuestions: "/admin/questions",
     adminEnquiries: "/admin/enquiries",
+    adminEnquiryDetail: (enquiryId) =>
+      `/admin/enquiries?selected=${encodeURIComponent(enquiryId)}`,
     adminReturns: "/admin/returns",
     adminRefunds: "/admin/refunds",
     adminInvoices: "/admin/invoices",

@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 11 coverage
+## Current Step 13 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -99,6 +99,8 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Admin order detail route with ordered items, timeline, customer and vehicle summaries, payment summary, admin notes, invoice creation, shipment creation, and guarded status transitions
 - Admin manual payments route with backend-driven filtering, detail review, proof-link display, and approve/reject status actions
 - Admin shipments route with backend-driven filtering, shipment detail review, courier context, and guarded shipment status updates
+- Admin customers route with backend-driven search, status/date filtering, responsive list views, protected detail drawer, pagination, and backend-confirmed customer status actions
+- Admin enquiries route with backend-driven search, status/date filtering, responsive list views, protected detail drawer, reply/status update form, and optional manual-enquiry creation when the backend exposes it
 
 ## Layout structure
 
@@ -291,18 +293,44 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - `GET /admin/couriers`
 - `POST /admin/invoices`
 
-## Security notes for Step 10, Step 11, and Step 12
+## Backend endpoints used by Step 13 admin customers and enquiries UI
+
+- `GET /admin/customers`
+- `GET /admin/customers/:customerId`
+- `PATCH /admin/customers/:customerId` for backend-supported status changes only
+- `GET /admin/enquiries`
+- `GET /admin/enquiries/:enquiryId`
+- `PATCH /admin/enquiries/:enquiryId`
+- `POST /admin/enquiries` only when the backend advertises manual enquiry creation support
+
+## Admin customers and enquiries behavior
+
+- `/admin/customers` stays behind the existing authenticated admin session, active-account checks, and TOTP-complete access flow
+- Customer filters sync through the URL for search, status, date range, page, and selected-customer drawer state
+- Customer detail stays in a protected drawer and only shows normalized public-safe admin fields such as contact info, order summaries, recent orders, and recent enquiries when returned by the backend
+- Customer activate/deactivate/block actions require explicit confirmation and only refresh the UI after backend success
+- `/admin/enquiries` stays behind the same authenticated admin plus TOTP-complete access rules
+- Enquiry filters sync through the URL for search, status, date range, page, and selected-enquiry drawer state
+- Enquiry detail shows normalized contact, vehicle, message, safe attachment preview, reply history, and backend-advertised admin options only
+- Enquiry reply and status updates submit only non-empty supported fields and refresh the detail/list after the backend confirms the mutation
+- Manual enquiry creation appears only when the backend advertises support for it
+- Export buttons remain placeholders until the backend confirms a download contract
+
+## Security notes for Step 10 through Step 13
 
 - Admin product routes continue to depend on the existing authenticated session, admin role checks, active-account checks, and TOTP completion
 - Product, category, brand, and vehicle-model mutations use the shared API client with credentials instead of bypassing backend auth
 - Order, payment, shipment, invoice, and admin-note actions continue to depend on the existing authenticated admin session plus TOTP-complete access
+- Customer and enquiry screens do not expose password, session, TOTP, payment-proof path, or private-auth fields in the UI
+- Customer and enquiry mutations wait for backend confirmation before the interface claims success
+- Customer detail and admin-only enquiry notes remain inside protected admin routes and are not reused on public pages
 - The frontend does not store admin secrets, TOTP values, or manual session cookies
 - Upload validation is light on the client and limited to JPEG, PNG, and WebP; the backend remains the final validator
 - Category and brand media fields remain placeholders until explicit backend media support exists, which avoids submitting unsupported fields
 
 ## Next step
 
-Step 13 can expand customer/admin translation coverage, richer order operations, or deeper audit/reporting workflows if those backend routes become explicit.
+Step 14 can expand admin reviews/questions/returns workflows, richer reporting exports, or deeper customer-support operations if those backend routes become explicit.
 
 ## Validation
 
