@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 13 coverage
+## Current Step 14 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -101,6 +101,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Admin shipments route with backend-driven filtering, shipment detail review, courier context, and guarded shipment status updates
 - Admin customers route with backend-driven search, status/date filtering, responsive list views, protected detail drawer, pagination, and backend-confirmed customer status actions
 - Admin enquiries route with backend-driven search, status/date filtering, responsive list views, protected detail drawer, reply/status update form, and optional manual-enquiry creation when the backend exposes it
+- Admin settings route with backend-driven settings load, tabbed sections, dirty-state handling, discard confirmation, backend-confirmed save flow, and protected delivery/payment/policy configuration
 
 ## Layout structure
 
@@ -303,6 +304,12 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - `PATCH /admin/enquiries/:enquiryId`
 - `POST /admin/enquiries` only when the backend advertises manual enquiry creation support
 
+## Backend endpoints used by Step 14 admin settings UI
+
+- `GET /admin/settings`
+- `PATCH /admin/settings`
+- `GET /public/settings` continues to support storefront contact/support hydration
+
 ## Admin customers and enquiries behavior
 
 - `/admin/customers` stays behind the existing authenticated admin session, active-account checks, and TOTP-complete access flow
@@ -316,7 +323,18 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Manual enquiry creation appears only when the backend advertises support for it
 - Export buttons remain placeholders until the backend confirms a download contract
 
-## Security notes for Step 10 through Step 13
+## Admin settings behavior
+
+- `/admin/settings` stays behind the existing authenticated admin session, active-account checks, and TOTP-complete access flow
+- Settings are loaded from the protected admin settings endpoint and edited through tabbed sections for general, contact, delivery, payments, social media, policies, and admin profile
+- Save is disabled until there are real unsaved changes and the UI only resets the dirty state after the backend confirms the update
+- A discard confirmation dialog restores the last backend-confirmed settings snapshot instead of silently throwing edits away
+- Currency stays SAR and country stays SA in the form experience
+- Arabic settings fields are supported alongside English content where public-facing text may be localized
+- Logo/favicon upload remains a deferred placeholder because the current frontend endpoint contract does not expose a dedicated settings media upload route
+- Admin profile actions remain conservative and avoid inventing unsupported password or secret-management flows
+
+## Security notes for Step 10 through Step 14
 
 - Admin product routes continue to depend on the existing authenticated session, admin role checks, active-account checks, and TOTP completion
 - Product, category, brand, and vehicle-model mutations use the shared API client with credentials instead of bypassing backend auth
@@ -324,13 +342,15 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Customer and enquiry screens do not expose password, session, TOTP, payment-proof path, or private-auth fields in the UI
 - Customer and enquiry mutations wait for backend confirmation before the interface claims success
 - Customer detail and admin-only enquiry notes remain inside protected admin routes and are not reused on public pages
+- Settings updates do not store admin secrets in localStorage, do not expose payment credentials, and do not invent unsupported gateway configuration fields
+- Settings save payloads stay limited to allowlisted business/contact/delivery/payment/social/policy fields and wait for backend confirmation before the UI reports success
 - The frontend does not store admin secrets, TOTP values, or manual session cookies
 - Upload validation is light on the client and limited to JPEG, PNG, and WebP; the backend remains the final validator
 - Category and brand media fields remain placeholders until explicit backend media support exists, which avoids submitting unsupported fields
 
 ## Next step
 
-Step 14 can expand admin reviews/questions/returns workflows, richer reporting exports, or deeper customer-support operations if those backend routes become explicit.
+Step 15 can expand admin reviews/questions/returns workflows, deeper account management, or richer reporting/export operations if those backend routes become explicit.
 
 ## Validation
 
