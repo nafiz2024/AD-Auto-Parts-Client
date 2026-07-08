@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 6 coverage
+## Current Step 7 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -78,6 +78,13 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Single-item checkout route with backend product reload, checkout form state, delivery estimate requests, and idempotent order submission
 - Order success route with order number summary and safe next-step messaging
 - Track order page with authenticated order-detail lookup fallback and safe public messaging when a public tracking endpoint is not exposed in the current frontend contract
+- Public contact page with support enquiry form, guest-safe submission, authenticated name/email prefill, validation handling, and Saudi-safe fallback contact details
+- About page with used-parts positioning, inspection/support messaging, and storefront/contact CTAs
+- Return policy page with compatibility responsibility, return review guidance, and refund-process copy that stays aligned with backend review workflows
+- Terms and conditions page covering used-part condition, SAR pricing, single-item order placement, supported payment methods, delivery, and refunds
+- Privacy policy placeholder page for support/account/order information handling
+- Refreshed public not-found page with branding, storefront CTA, and support CTA
+- Footer support/shop links updated for public support and policy pages
 
 ## Layout structure
 
@@ -147,6 +154,29 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Supported payment methods in the UI are `COD` and `Manual Advance Payment`
 - No external payment gateway, card form, or multi-item cart logic is implemented
 
+## Static support pages
+
+- `/contact` submits guest-safe support enquiries through the public enquiries endpoint
+- `/about` explains the used-parts storefront positioning without unsupported claims
+- `/return-policy` and `/terms` provide operational guidance that does not overstate legal promises or backend capabilities
+- `/privacy-policy` is implemented as a lightweight placeholder because the footer now exposes it
+- `app/not-found.js` uses the shared public layout and a branded 404 state
+
+## Contact and settings behavior
+
+- Public support pages use Saudi-safe fallback placeholders when live public settings are unavailable
+- The frontend contract already exposes `GET /public/settings` and `POST /enquiries`
+- This step does not assume undocumented backend field shapes; settings hydration is best-effort and non-blocking
+- Contact enquiries do not create accounts, do not store message drafts locally, and do not include admin/internal fields
+
+## Saudi and language context
+
+- Currency remains SAR
+- Country context remains Saudi Arabia / SA
+- English remains the default language
+- Arabic remains available and the new static/support labels include Arabic dictionary entries
+- Footer and support contact placeholders use Saudi-safe phone, email, and location values
+
 ## Validation
 
 - Lint: `npm run lint`
@@ -168,6 +198,11 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - `POST /customer/checkout`
 - `GET /customer/orders/:orderNumber`
 
+## Backend endpoints used by Step 7 support UI
+
+- `GET /public/settings`
+- `POST /enquiries`
+
 ## Next step
 
-Step 7 can expand customer account order pages, manual payment proof submission UI, and richer public order tracking if a dedicated public tracking endpoint is exposed by the backend contract.
+Step 8 can expand customer account order pages, manual payment proof submission UI, richer public order tracking, and deeper public settings integration if the backend contract exposes the required fields clearly.

@@ -80,7 +80,7 @@ export function PublicHeader() {
             <span>{t("customerSupport")}</span>
           </div>
           <div className="flex items-center gap-6 text-white/80">
-            <Link href={routes.public.search} className="transition hover:text-white">
+            <Link href={routes.public.trackOrder} className="transition hover:text-white">
               Track Order
             </Link>
             <Link href={routes.public.contact} className="transition hover:text-white">

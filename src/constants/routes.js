@@ -1,6 +1,7 @@
 export const routes = {
   public: {
     home: "/",
+    about: "/about",
     products: "/products",
     categories: "/products",
     categoryDetail: (categorySlug) => `/categories/${categorySlug}`,
@@ -11,6 +12,9 @@ export const routes = {
     checkoutSuccess: "/checkout/success",
     trackOrder: "/track-order",
     contact: "/contact",
+    returnPolicy: "/return-policy",
+    terms: "/terms",
+    privacyPolicy: "/privacy-policy",
   },
   customer: {
     account: "/account",
@@ -23,6 +27,7 @@ export const routes = {
     accountEnquiries: "/account/enquiries",
     accountReviews: "/account/reviews",
     accountQuestions: "/account/questions",
+    accountProfile: "/account/profile",
   },
   admin: {
     adminRoot: "/admin",

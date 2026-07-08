@@ -1,14 +1,29 @@
+"use client";
+
 import Link from "next/link";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import { ArrowLeftIcon, BagIcon, HomeIcon, SettingsIcon } from "@/components/ui/icons";
+import {
+  ArrowLeftIcon,
+  BagIcon,
+  HomeIcon,
+  MessageCircleIcon,
+  SettingsIcon,
+} from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
+import { useLanguage } from "@/hooks/use-language";
 
 export function NotFoundState() {
+  const { t } = useLanguage();
+
   return (
-    <Container className="py-16 sm:py-24">
-      <div className="mx-auto max-w-5xl rounded-[2.5rem] border border-border bg-white px-6 py-12 text-center shadow-soft sm:px-10">
-        <div className="relative mx-auto max-w-3xl">
+    <Container className="py-12 sm:py-20">
+      <div className="mx-auto max-w-5xl rounded-[2.75rem] border border-border bg-white px-6 py-10 text-center shadow-soft sm:px-10 sm:py-12">
+        <div className="flex justify-start">
+          <BrandLogo />
+        </div>
+        <div className="relative mx-auto mt-8 max-w-3xl">
           <div className="absolute inset-0 -z-10 rounded-full bg-[radial-gradient(circle_at_center,rgba(9,17,33,0.06),transparent_68%)]" />
           <div className="mb-6 flex justify-center gap-6 text-border">
             <SettingsIcon className="size-16 opacity-50" />
@@ -24,22 +39,30 @@ export function NotFoundState() {
           </div>
         </div>
         <div className="mx-auto mt-10 max-w-2xl space-y-4">
-          <h1 className="text-5xl font-semibold tracking-tight text-foreground">Page Not Found</h1>
+          <h1 className="text-5xl font-semibold tracking-tight text-foreground">
+            {t("pageNotFound")}
+          </h1>
           <p className="text-lg leading-8 text-muted-foreground">
-            Sorry, the page you are looking for doesn&apos;t exist or has been moved.
+            {t("pageNotFoundDescription")}
           </p>
         </div>
         <div className="mt-10 flex flex-wrap justify-center gap-4">
           <Link href={routes.public.home}>
             <Button variant="outline" size="lg">
               <HomeIcon className="size-5" />
-              Back to Home
+              {t("backToHome")}
             </Button>
           </Link>
           <Link href={routes.public.products}>
             <Button size="lg">
               <ArrowLeftIcon className="size-5 rotate-180" />
-              Shop Parts
+              {t("shopAutoParts")}
+            </Button>
+          </Link>
+          <Link href={routes.public.contact}>
+            <Button variant="outline" size="lg">
+              <MessageCircleIcon className="size-5" />
+              {t("contactSupport")}
             </Button>
           </Link>
         </div>

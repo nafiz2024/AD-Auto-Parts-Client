@@ -138,6 +138,288 @@ export const dictionaries = {
     placingOrder: "Placing Order",
     cancelAndGoBack: "Cancel & Go Back",
     selectCity: "Select City",
+    accountOverview: "Account Overview",
+    accountOverviewDescription:
+      "Review your orders, payments, invoices, support activity, and profile details in one place.",
+    accountAccessRequired: "Account Sign-In Required",
+    accountAccessRequiredDescription:
+      "Please sign in with a customer account to view protected order, payment, invoice, and support details.",
+    signInToContinue: "Sign In to Continue",
+    customerOnlyArea: "Customer Account Only",
+    customerOnlyAreaDescription:
+      "This account area is reserved for customer sessions and does not allow admin-only access to bypass customer ownership checks.",
+    accountQuickActions: "Quick Actions",
+    recentOrders: "Recent Orders",
+    recentActivity: "Recent Activity",
+    payments: "Payments",
+    invoices: "Invoices",
+    profile: "Profile",
+    questions: "Questions",
+    returns: "Returns",
+    viewAll: "View All",
+    orderHistoryDescription:
+      "Customer order details are loaded through customer-scoped endpoints for ownership-safe access.",
+    shipmentStatus: "Shipment Status",
+    viewOrderDetails: "View Order Details",
+    goToPayments: "Go to Payments",
+    goToInvoices: "Go to Invoices",
+    recentPayments: "Recent Payments",
+    paymentsDescription:
+      "Payment history is shown from your customer orders, and manual advance proof can be submitted here when needed.",
+    manualPaymentSupport: "Manual Payment Support",
+    paymentTimelineNote:
+      "Manual advance payment proof is submitted here without storing card data or bypassing the backend checkout and customer session rules.",
+    submitManualPaymentDescription:
+      "If your order uses manual advance payment, submit your transfer details and proof file for review.",
+    selectOrder: "Select Order",
+    proofAmount: "Proof Amount",
+    transferDate: "Transfer Date",
+    referenceNumber: "Reference Number",
+    receiptFile: "Receipt File",
+    notes: "Notes",
+    submitProof: "Submit Proof",
+    paymentProofSubmitted: "Payment Proof Submitted",
+    paymentProofSuccessDescription:
+      "Your manual payment proof was sent to the customer payment endpoint for review.",
+    noOrdersYet: "No Orders Yet",
+    noOrdersDescription:
+      "Your confirmed customer orders will appear here after checkout succeeds.",
+    noInvoicesYet: "No Invoices Yet",
+    noInvoicesDescription:
+      "Invoices will appear here when the backend exposes invoice records for your orders.",
+    issueDate: "Issue Date",
+    dueDate: "Due Date",
+    downloadingPdf: "Downloading PDF...",
+    downloadPdf: "Download PDF",
+    statusRead: "Read",
+    statusUnread: "Unread",
+    noNotificationsYet: "No Notifications Yet",
+    noNotificationsDescription:
+      "Order and support notifications will appear here when available.",
+    noEnquiriesYet: "No Enquiries Yet",
+    noEnquiriesDescription:
+      "Your customer support enquiries will appear here after you submit them.",
+    sendNewEnquiry: "Send New Enquiry",
+    noReviewsYet: "No Reviews Yet",
+    noReviewsDescription:
+      "Approved or pending customer reviews will appear here when available.",
+    noQuestionsYet: "No Questions Yet",
+    noQuestionsDescription:
+      "Your product questions and any support replies will appear here.",
+    noReturnsYet: "No Returns Yet",
+    noReturnsDescription:
+      "Return review requests will appear here once they are submitted.",
+    requestReturnReview: "Request Return Review",
+    returnReason: "Return Reason",
+    submitReturnRequest: "Submit Return Request",
+    returnRequestSubmitted: "Return Request Submitted",
+    returnRequestSubmittedDescription:
+      "Your return review request was sent to the customer returns endpoint for review.",
+    saveProfile: "Save Profile",
+    profileUpdated: "Profile Updated",
+    profileUpdatedDescription:
+      "Your customer profile foundation details were saved successfully.",
+    region: "Region",
+    address: "Address",
+    orderItems: "Order Items",
+    invoiceNumber: "Invoice Number",
+    trackingNumber: "Tracking Number",
+    rating: "Rating",
+    aboutAdAutoParts: "About AD Auto Parts",
+    support: "Support",
+    contactSupport: "Contact Support",
+    contactSupportIntro:
+      "We're here to help with product enquiries, compatibility guidance, delivery questions, and order support across Saudi Arabia.",
+    contactQuickHelp: "Need a faster answer? Reach our support team on WhatsApp.",
+    getInTouch: "Get in Touch",
+    contactSupportDescription:
+      "Send a support enquiry and our team will review it as soon as possible.",
+    location: "Location",
+    ourLocation: "Our Location",
+    locationPlaceholderNote:
+      "Map and branch details can be refined later. Showing a safe Saudi location placeholder for now.",
+    helpLinks: "Help Links",
+    helpLinksDescription:
+      "Useful support pages for tracking, returns, and purchase guidance.",
+    sendMessage: "Send Message",
+    sendMessageDescription:
+      "Use the form below for product, compatibility, order, or support questions.",
+    supportDetailsFallback: "Showing fallback support details",
+    showingSupportFallback:
+      "Live public settings are unavailable right now, so safe placeholder contact details are being shown.",
+    phoneOptional: "Phone (Optional)",
+    enquiryType: "Enquiry Type",
+    selectOptionalType: "Select an optional type",
+    generalSupport: "General Support",
+    compatibilitySupport: "Compatibility Support",
+    deliverySupport: "Delivery Support",
+    returnsSupport: "Returns Support",
+    subject: "Subject",
+    subjectPlaceholder: "Tell us what you need help with",
+    message: "Message",
+    messagePlaceholder:
+      "Share the part name, vehicle details, order number, or the question you want help with.",
+    contactPrivacyNote:
+      "Your enquiry is used only to respond to your support request and related order or product questions.",
+    sending: "Sending...",
+    validationError: "Validation Error",
+    reviewRequiredFields: "Please review the required fields and try again.",
+    enquirySent: "Enquiry Sent",
+    weWillReplySoon: "Your message has been received. We'll reply as soon as possible.",
+    failedToSendMessage: "Failed to Send Message",
+    whatsappSupport: "WhatsApp Support",
+    chatOnWhatsapp: "Chat on WhatsApp",
+    pageNotFound: "Page Not Found",
+    pageNotFoundDescription:
+      "Sorry, the page you are looking for does not exist or has been moved.",
+    backToHome: "Back to Home",
+    codAndManualAdvance: "COD and manual advance payment",
+    aboutHeadline: "Trusted used auto parts, inspected for practical reuse.",
+    aboutIntro:
+      "AD Auto Parts exists to help customers in Saudi Arabia source inspected second-hand auto parts with clearer communication, realistic expectations, and reliable support.",
+    usedPartsPositioning: "Used Parts, Clearly Presented",
+    usedPartsPositioningCopy:
+      "We focus on used and reconditioned parts with condition-aware listings so buyers can make practical decisions.",
+    inspectionFocus: "Inspection Mindset",
+    inspectionFocusCopy:
+      "Parts are reviewed for visible condition and core usability before they are listed for sale.",
+    compatibilitySupportCopy:
+      "Customers can confirm part fitment using OEM numbers, vehicle details, and support guidance before ordering.",
+    deliverySupportCopy:
+      "We coordinate order confirmation and delivery updates without promising unsupported courier automation.",
+    whoWeAre: "Who We Are",
+    whyAdAutoPartsExists: "Why AD Auto Parts Exists",
+    aboutMissionCopy:
+      "Finding the right used part should not depend on guesswork. We aim to make part sourcing more transparent by focusing on condition summaries, compatibility guidance, and straightforward support.",
+    aboutTrustCopy:
+      "Our goal is not to overpromise. We position used parts honestly, encourage compatibility checks, and keep the buying process centered on clear expectations.",
+    aboutInspectedPartsCopy:
+      "We highlight inspected parts with condition-focused product details wherever the backend data supports it.",
+    aboutCompatibilityCopy:
+      "Compatibility assistance is part of the buying journey so customers can confirm fitment before checkout.",
+    aboutDeliveryCopy:
+      "Delivery estimates and timing are handled carefully, with the backend remaining the source of truth for final order details.",
+    aboutSupportCopy:
+      "Support remains available for pre-sale questions, order follow-up, and return guidance.",
+    whatWeSell: "What We Sell",
+    whatWeSellCopy:
+      "Our storefront is built for used automotive components such as engine, electrical, body, suspension, and brake parts.",
+    engineAndMechanical: "Engine and Mechanical",
+    electricalAndLighting: "Electrical and Lighting",
+    suspensionAndBrake: "Suspension and Brake",
+    bodyAndTrim: "Body and Trim",
+    ourBusinessValues: "Our Business Values",
+    ourBusinessValuesCopy:
+      "We value honest condition communication, practical support, compatibility awareness, and a cleaner used-parts buying experience.",
+    returnPolicy: "Return Policy",
+    onThisPage: "On This Page",
+    needHelp: "Need Help?",
+    returnHelpNote:
+      "If you need help with an order or return question, contact support before sending any item back.",
+    returnPolicyIntro:
+      "This return policy is intended to explain the general review process for used auto parts orders without making unsupported legal promises.",
+    returnEligibility: "Return Eligibility",
+    compatibilityResponsibility: "Compatibility Responsibility",
+    returnCondition: "Return Condition",
+    nonReturnableCases: "Non-Returnable Cases",
+    refundReviewProcess: "Refund Review Process",
+    contactSupportBeforeReturn: "Contact Support Before Return",
+    returnEligibilityCopy:
+      "A return may be reviewed when the delivered item is materially different from the order, arrives damaged, or has a validated issue within the stated support window.",
+    returnEligibilityDamage: "The delivered part arrived damaged or materially defective.",
+    returnEligibilityWrongItem: "The delivered part does not match the confirmed order item.",
+    returnEligibilityDescriptionMismatch:
+      "The delivered part materially differs from the listing or support-confirmed details.",
+    returnCompatibilityCopy:
+      "Customers should confirm part compatibility before ordering. Support can help review available details, but the buyer should provide accurate vehicle information.",
+    returnCompatibilityVehicleDetails:
+      "Provide the vehicle brand, model, year, engine details, and OEM references whenever possible.",
+    returnCompatibilitySupport:
+      "Contact support if you are unsure whether a part is suitable before placing the order.",
+    returnCompatibilityReminder:
+      "Compatibility-related returns may depend on whether the order was placed after proper confirmation.",
+    returnConditionCopy:
+      "Returned parts should be kept in the same general condition in which they were delivered for the return review to proceed smoothly.",
+    returnConditionUnused:
+      "Do not keep using, modifying, or dismantling the part after noticing an issue.",
+    returnConditionPackaging:
+      "Keep labels, packaging, and identifying markings where reasonably possible.",
+    returnConditionNoDamage:
+      "The part should not be additionally damaged by installation attempts or storage after delivery.",
+    nonReturnableCasesCopy:
+      "Some return requests may be declined when the part has already been used in a way that prevents fair inspection.",
+    nonReturnableInstalled:
+      "Installed, altered, or tampered parts may not be eligible for return review.",
+    nonReturnableConsumables:
+      "Consumables and wear items may have more limited eligibility depending on condition.",
+    nonReturnableMisuse:
+      "Damage caused by misuse, poor handling, or incorrect installation is not eligible for refund review.",
+    nonReturnableClearance:
+      "Special clearance or explicitly final-sale items may be excluded when clearly stated.",
+    refundReviewCopy:
+      "A refund is not automatic. Returned items are reviewed first, and any approved refund then moves through the backend refund process.",
+    refundApprovedStep:
+      "An approved refund means the return review has passed and the refund can be prepared.",
+    refundCompletedStep:
+      "A completed refund means the backend refund workflow has actually finished.",
+    refundNoInstantPromise:
+      "We do not promise instant refunds, same-day refunds, or unsupported payment reversals.",
+    contactSupportBeforeReturnCopy:
+      "Always contact support first so the team can review the issue, note the order details, and guide the next step.",
+    contactSupportBeforeReturnAlert:
+      "Please contact support before returning any item. Unapproved returns may delay review.",
+    termsAndConditions: "Terms and Conditions",
+    termsOverview: "Terms Overview",
+    termsHelpNote:
+      "For clarification about checkout, delivery, or support expectations, contact the AD Auto Parts team.",
+    termsIntro:
+      "These terms describe the general use of the AD Auto Parts storefront and related support flows for used auto parts orders.",
+    productCondition: "Product Condition",
+    pricingAndCurrency: "Pricing and Currency",
+    orderPlacement: "Order Placement",
+    delivery: "Delivery",
+    returnsAndRefunds: "Returns and Refunds",
+    limitationOfLiability: "Limitation of Liability",
+    termsProductConditionCopy:
+      "Products sold through AD Auto Parts are used or second-hand parts unless clearly stated otherwise. Minor cosmetic wear may exist, and buyers should review product descriptions carefully.",
+    termsCompatibilityCopy:
+      "The customer is responsible for confirming compatibility before ordering. Product details and support guidance help this process, but they do not replace accurate vehicle information from the buyer.",
+    termsPricingCopy:
+      "Displayed prices are shown in SAR. Final payable amounts, stock status, delivery fee, and order acceptance remain subject to backend confirmation.",
+    termsOrderPlacementCopy:
+      "Orders are submitted through the single-item Buy Now flow. AD Auto Parts may decline or cancel an order if stock, data quality, pricing, or validation issues prevent fulfillment.",
+    termsPaymentsCopy:
+      "Only payment methods already supported by the current backend and frontend contract should be relied upon during checkout.",
+    termsCodOnly: "Cash on Delivery is supported where offered during checkout.",
+    termsManualAdvanceOnly:
+      "Manual Advance Payment may require follow-up instructions and proof submission after order placement.",
+    termsDeliveryCopy:
+      "Delivery timing may vary by city, stock confirmation, and operational review. Estimated delivery information is informational until the backend confirms the order.",
+    termsReturnsCopy:
+      "Returns and refunds follow the backend review workflow. Approval to review a return does not mean a refund has already been completed.",
+    termsLiabilityCopy:
+      "AD Auto Parts is not presented here as making unlimited legal warranties or liability promises. Support content should be read as operational guidance within the limits of the implemented backend workflow.",
+    privacyPolicy: "Privacy Policy",
+    privacyOverview: "Privacy Overview",
+    privacyHelpNote:
+      "If you have privacy-related questions about account, order, or enquiry information, contact support.",
+    privacyIntro:
+      "This privacy policy placeholder explains the basic information handling expected in the current storefront and support flows.",
+    privacyInformationWeCollect: "Information We Collect",
+    privacyHowWeUseInfo: "How We Use Information",
+    privacySecurity: "Security",
+    privacySharing: "Sharing",
+    privacyContact: "Privacy Contact",
+    privacyInformationCopy:
+      "We may process contact details, enquiry messages, order information, and account details that are necessary to operate the storefront and respond to support requests.",
+    privacyUsageCopy:
+      "Information is used for order fulfillment, support follow-up, compatibility assistance, and service improvement within the scope of the implemented system.",
+    privacySecurityCopy:
+      "Reasonable technical and operational measures are expected to protect data, but this page does not overpromise compliance or guarantees beyond the implemented platform.",
+    privacySharingCopy:
+      "We do not present this storefront as selling personal information. Data may still be shared with operational service providers only where needed to support the order and support process.",
+    privacyContactCopy:
+      "For privacy-related questions, contact the support team through the contact page or listed support email.",
   },
   ar: {
     home: "الرئيسية",
@@ -278,5 +560,287 @@ export const dictionaries = {
     placingOrder: "جارٍ تأكيد الطلب",
     cancelAndGoBack: "إلغاء والعودة",
     selectCity: "اختر المدينة",
+    accountOverview: "نظرة عامة على الحساب",
+    accountOverviewDescription:
+      "راجع الطلبات والمدفوعات والفواتير ونشاط الدعم وبيانات الملف الشخصي في مكان واحد.",
+    accountAccessRequired: "تسجيل الدخول مطلوب",
+    accountAccessRequiredDescription:
+      "يرجى تسجيل الدخول بحساب عميل لعرض تفاصيل الطلبات والمدفوعات والفواتير والدعم المحمية.",
+    signInToContinue: "سجل الدخول للمتابعة",
+    customerOnlyArea: "مساحة مخصصة للعملاء",
+    customerOnlyAreaDescription:
+      "هذه المنطقة مخصصة لجلسات العملاء ولا تسمح بتجاوز فحوصات الملكية الخاصة بالعميل عبر جلسة إدارية.",
+    accountQuickActions: "إجراءات سريعة",
+    recentOrders: "أحدث الطلبات",
+    recentActivity: "آخر النشاط",
+    payments: "المدفوعات",
+    invoices: "الفواتير",
+    profile: "الملف الشخصي",
+    questions: "الأسئلة",
+    returns: "الإرجاعات",
+    viewAll: "عرض الكل",
+    orderHistoryDescription:
+      "يتم تحميل تفاصيل الطلبات عبر نقاط وصول خاصة بالعميل للحفاظ على أمان الملكية.",
+    shipmentStatus: "حالة الشحنة",
+    viewOrderDetails: "عرض تفاصيل الطلب",
+    goToPayments: "الانتقال إلى المدفوعات",
+    goToInvoices: "الانتقال إلى الفواتير",
+    recentPayments: "أحدث المدفوعات",
+    paymentsDescription:
+      "يتم عرض سجل المدفوعات من طلبات العميل الحالية، ويمكن رفع إثبات الدفع المسبق اليدوي من هنا عند الحاجة.",
+    manualPaymentSupport: "دعم الدفع اليدوي",
+    paymentTimelineNote:
+      "يتم إرسال إثبات الدفع المسبق اليدوي من هنا دون تخزين بيانات بطاقات أو تجاوز قواعد الدفع وجلسة العميل في الخلفية.",
+    submitManualPaymentDescription:
+      "إذا كان طلبك يستخدم الدفع المسبق اليدوي، أرسل تفاصيل التحويل وملف الإثبات للمراجعة.",
+    selectOrder: "اختر الطلب",
+    proofAmount: "مبلغ الإثبات",
+    transferDate: "تاريخ التحويل",
+    referenceNumber: "الرقم المرجعي",
+    receiptFile: "ملف الإيصال",
+    notes: "ملاحظات",
+    submitProof: "إرسال الإثبات",
+    paymentProofSubmitted: "تم إرسال إثبات الدفع",
+    paymentProofSuccessDescription:
+      "تم إرسال إثبات الدفع اليدوي إلى نقطة دفع العميل للمراجعة.",
+    noOrdersYet: "لا توجد طلبات بعد",
+    noOrdersDescription:
+      "ستظهر طلبات العميل المؤكدة هنا بعد نجاح عملية الشراء.",
+    noInvoicesYet: "لا توجد فواتير بعد",
+    noInvoicesDescription:
+      "ستظهر الفواتير هنا عندما توفر الخلفية سجلات الفواتير الخاصة بطلباتك.",
+    issueDate: "تاريخ الإصدار",
+    dueDate: "تاريخ الاستحقاق",
+    downloadingPdf: "جارٍ تنزيل PDF...",
+    downloadPdf: "تنزيل PDF",
+    statusRead: "مقروء",
+    statusUnread: "غير مقروء",
+    noNotificationsYet: "لا توجد إشعارات بعد",
+    noNotificationsDescription:
+      "ستظهر هنا إشعارات الطلبات والدعم عندما تكون متاحة.",
+    noEnquiriesYet: "لا توجد استفسارات بعد",
+    noEnquiriesDescription:
+      "ستظهر استفسارات الدعم الخاصة بك هنا بعد إرسالها.",
+    sendNewEnquiry: "إرسال استفسار جديد",
+    noReviewsYet: "لا توجد مراجعات بعد",
+    noReviewsDescription:
+      "ستظهر هنا مراجعات العملاء المعتمدة أو المعلقة عند توفرها.",
+    noQuestionsYet: "لا توجد أسئلة بعد",
+    noQuestionsDescription:
+      "ستظهر هنا أسئلتك عن المنتجات وأي ردود من الدعم.",
+    noReturnsYet: "لا توجد طلبات إرجاع بعد",
+    noReturnsDescription:
+      "ستظهر هنا طلبات مراجعة الإرجاع بعد إرسالها.",
+    requestReturnReview: "طلب مراجعة إرجاع",
+    returnReason: "سبب الإرجاع",
+    submitReturnRequest: "إرسال طلب الإرجاع",
+    returnRequestSubmitted: "تم إرسال طلب الإرجاع",
+    returnRequestSubmittedDescription:
+      "تم إرسال طلب مراجعة الإرجاع إلى نقطة إرجاعات العميل للمراجعة.",
+    saveProfile: "حفظ الملف الشخصي",
+    profileUpdated: "تم تحديث الملف الشخصي",
+    profileUpdatedDescription:
+      "تم حفظ بيانات الملف الشخصي الأساسية للعميل بنجاح.",
+    region: "المنطقة",
+    address: "العنوان",
+    orderItems: "عناصر الطلب",
+    invoiceNumber: "رقم الفاتورة",
+    trackingNumber: "رقم التتبع",
+    rating: "التقييم",
+    aboutAdAutoParts: "من نحن - AD Auto Parts",
+    support: "الدعم",
+    contactSupport: "تواصل مع الدعم",
+    contactSupportIntro:
+      "نحن هنا للمساعدة في استفسارات القطع والتوافق والتوصيل ودعم الطلبات في السعودية.",
+    contactQuickHelp: "تحتاج ردًا أسرع؟ تواصل مع فريق الدعم عبر واتساب.",
+    getInTouch: "تواصل معنا",
+    contactSupportDescription:
+      "أرسل استفسارك وسيقوم فريقنا بمراجعته في أقرب وقت ممكن.",
+    location: "الموقع",
+    ourLocation: "موقعنا",
+    locationPlaceholderNote:
+      "يمكن تحديث الخريطة وتفاصيل الفرع لاحقًا. يتم الآن عرض موقع سعودي آمن كبديل.",
+    helpLinks: "روابط مفيدة",
+    helpLinksDescription:
+      "صفحات مفيدة للتتبع والإرجاع والمساعدة في الشراء.",
+    sendMessage: "أرسل رسالة",
+    sendMessageDescription:
+      "استخدم النموذج للأسئلة عن القطع والتوافق والطلبات والدعم.",
+    supportDetailsFallback: "تم عرض بيانات دعم احتياطية",
+    showingSupportFallback:
+      "بيانات الإعدادات العامة غير متاحة حاليًا، لذا يتم عرض بيانات تواصل آمنة بديلة.",
+    phoneOptional: "رقم الهاتف (اختياري)",
+    enquiryType: "نوع الاستفسار",
+    selectOptionalType: "اختر نوعًا اختياريًا",
+    generalSupport: "دعم عام",
+    compatibilitySupport: "دعم التوافق",
+    deliverySupport: "دعم التوصيل",
+    returnsSupport: "دعم الإرجاع",
+    subject: "الموضوع",
+    subjectPlaceholder: "اكتب باختصار ما تحتاج إليه",
+    message: "الرسالة",
+    messagePlaceholder:
+      "اذكر اسم القطعة أو بيانات السيارة أو رقم الطلب أو السؤال الذي تحتاج إلى مساعدة فيه.",
+    contactPrivacyNote:
+      "يتم استخدام استفسارك فقط للرد على طلب الدعم والأسئلة المرتبطة بالطلب أو المنتج.",
+    sending: "جارٍ الإرسال...",
+    validationError: "خطأ في التحقق",
+    reviewRequiredFields: "يرجى مراجعة الحقول المطلوبة والمحاولة مرة أخرى.",
+    enquirySent: "تم إرسال الاستفسار",
+    weWillReplySoon: "تم استلام رسالتك. سنرد عليك في أقرب وقت.",
+    failedToSendMessage: "فشل إرسال الرسالة",
+    whatsappSupport: "دعم واتساب",
+    chatOnWhatsapp: "الدردشة عبر واتساب",
+    pageNotFound: "الصفحة غير موجودة",
+    pageNotFoundDescription:
+      "عذرًا، الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
+    backToHome: "العودة إلى الرئيسية",
+    codAndManualAdvance: "الدفع عند الاستلام والدفع المسبق اليدوي",
+    aboutHeadline: "قطع غيار مستعملة موثوقة ومراجعة لإعادة الاستخدام.",
+    aboutIntro:
+      "وجدت AD Auto Parts لمساعدة العملاء في السعودية على العثور على قطع غيار مستعملة مفحوصة مع تواصل أوضح وتوقعات أكثر واقعية.",
+    usedPartsPositioning: "قطع مستعملة معروضة بوضوح",
+    usedPartsPositioningCopy:
+      "نركز على القطع المستعملة والمجددة مع وصف واضح للحالة لمساعدة المشتري في اتخاذ قرار عملي.",
+    inspectionFocus: "تركيز على الفحص",
+    inspectionFocusCopy:
+      "تتم مراجعة الحالة الظاهرية والقابلية الأساسية للاستخدام قبل إدراج القطعة للبيع.",
+    compatibilitySupportCopy:
+      "يمكن للعملاء تأكيد التوافق من خلال أرقام OEM وبيانات السيارة وإرشادات الدعم.",
+    deliverySupportCopy:
+      "ننسق تأكيد الطلب وتحديثات التوصيل دون الادعاء بوجود تكاملات لوجستية غير مدعومة.",
+    whoWeAre: "من نحن",
+    whyAdAutoPartsExists: "لماذا وجدت AD Auto Parts",
+    aboutMissionCopy:
+      "العثور على القطعة المناسبة لا يجب أن يعتمد على التخمين. نهدف إلى تقديم تجربة أكثر شفافية من خلال ملخصات الحالة وإرشادات التوافق ودعم مباشر.",
+    aboutTrustCopy:
+      "هدفنا ليس المبالغة في الوعود، بل عرض القطع المستعملة بصدق وتشجيع تأكيد التوافق قبل الطلب.",
+    aboutInspectedPartsCopy:
+      "نبرز القطع المفحوصة مع تفاصيل مرتبطة بالحالة حيثما تدعم بيانات الخلفية ذلك.",
+    aboutCompatibilityCopy:
+      "دعم التوافق جزء من رحلة الشراء لكي يتمكن العملاء من تأكيد الملاءمة قبل الدفع.",
+    aboutDeliveryCopy:
+      "يتم التعامل مع تقديرات التوصيل ومواعيده بعناية، مع بقاء الخلفية مصدر الحقيقة للتفاصيل النهائية.",
+    aboutSupportCopy:
+      "الدعم متاح للأسئلة قبل الشراء ومتابعة الطلب والإرشاد بشأن الإرجاع.",
+    whatWeSell: "ماذا نبيع",
+    whatWeSellCopy:
+      "متجرنا مبني لقطع السيارات المستعملة مثل أجزاء المحرك والكهرباء والهيكل والتعليق والفرامل.",
+    engineAndMechanical: "المحرك والأجزاء الميكانيكية",
+    electricalAndLighting: "الكهرباء والإضاءة",
+    suspensionAndBrake: "التعليق والفرامل",
+    bodyAndTrim: "الهيكل والتشطيب",
+    ourBusinessValues: "قيمنا",
+    ourBusinessValuesCopy:
+      "نؤمن بوضوح الحالة والدعم العملي والانتباه للتوافق وتجربة شراء أكثر سهولة للقطع المستعملة.",
+    returnPolicy: "سياسة الإرجاع",
+    onThisPage: "في هذه الصفحة",
+    needHelp: "تحتاج مساعدة؟",
+    returnHelpNote:
+      "إذا كان لديك سؤال بشأن الطلب أو الإرجاع، يرجى التواصل مع الدعم قبل إرسال أي عنصر.",
+    returnPolicyIntro:
+      "تهدف هذه السياسة إلى توضيح عملية مراجعة الإرجاع لطلبات قطع السيارات المستعملة دون وعود قانونية غير مدعومة.",
+    returnEligibility: "أهلية الإرجاع",
+    compatibilityResponsibility: "مسؤولية التوافق",
+    returnCondition: "حالة الإرجاع",
+    nonReturnableCases: "حالات غير قابلة للإرجاع",
+    refundReviewProcess: "آلية مراجعة الاسترداد",
+    contactSupportBeforeReturn: "تواصل مع الدعم قبل الإرجاع",
+    returnEligibilityCopy:
+      "قد يتم النظر في طلب الإرجاع عندما يكون العنصر المسلم مختلفًا جوهريًا عن الطلب أو وصل تالفًا أو عنده مشكلة مؤكدة خلال فترة الدعم المعلنة.",
+    returnEligibilityDamage: "وصلت القطعة تالفة أو بها عيب جوهري.",
+    returnEligibilityWrongItem: "العنصر المقدم لا يطابق العنصر المؤكد في الطلب.",
+    returnEligibilityDescriptionMismatch:
+      "العنصر المقدم يختلف جوهريًا عن الوصف أو التفاصيل المؤكدة من الدعم.",
+    returnCompatibilityCopy:
+      "يجب على العملاء تأكيد التوافق قبل الطلب. يمكن للدعم المساعدة في مراجعة البيانات المتاحة، لكن يجب أن يقدم العميل بيانات سيارة دقيقة.",
+    returnCompatibilityVehicleDetails:
+      "يرجى تقديم العلامة والطراز والسنة وبيانات المحرك وأرقام OEM عندما تكون متاحة.",
+    returnCompatibilitySupport:
+      "تواصل مع الدعم إذا كنت غير متأكد من ملاءمة القطعة قبل تأكيد الطلب.",
+    returnCompatibilityReminder:
+      "ربما تعتمد عملية الإرجاع المرتبطة بالتوافق على مدى تأكيد التفاصيل قبل الشراء.",
+    returnConditionCopy:
+      "يجب الاحتفاظ بالقطعة بنفس الحالة العامة التي وصلت بها حتى تتم عملية المراجعة بسلاسة.",
+    returnConditionUnused:
+      "يجب عدم الاستمرار في استخدام القطعة أو تعديلها أو تفكيكها بعد ملاحظة المشكلة.",
+    returnConditionPackaging:
+      "يفضل الاحتفاظ بالتغليف والملصقات وعلامات التعريف قدر الإمكان.",
+    returnConditionNoDamage:
+      "لا يجب أن تتعرض القطعة لتلف إضافي بسبب التركيب أو التخزين بعد التسليم.",
+    nonReturnableCasesCopy:
+      "قد يتم رفض بعض طلبات الإرجاع عندما تكون القطعة قد استخدمت بشكل يمنع تقييمها بشكل عادل.",
+    nonReturnableInstalled:
+      "القطع المركبة أو المعدلة أو المعبث بها قد لا تكون مؤهلة للإرجاع.",
+    nonReturnableConsumables:
+      "المستهلكات والقطع سريعة الاستهلاك قد تكون أهليتها أكثر حدودًا حسب حالتها.",
+    nonReturnableMisuse:
+      "التلف الناتج عن سوء الاستخدام أو التركيب غير الصحيح غير مؤهل لمراجعة الاسترداد.",
+    nonReturnableClearance:
+      "بعض العروض التصفوية أو العناصر النهائية قد تكون مستثناة عند توضيح ذلك.",
+    refundReviewCopy:
+      "الاسترداد ليس تلقائيًا. تتم مراجعة العنصر المرجع أولًا، وبعد الموافقة ينتقل الأمر إلى سير عمل الاسترداد في الخلفية.",
+    refundApprovedStep:
+      "الموافقة على الاسترداد تعني أن مراجعة الإرجاع تمت بنجاح ويمكن تجهيز الاسترداد.",
+    refundCompletedStep:
+      "اكتمال الاسترداد يعني أن سير الاسترداد في الخلفية انتهى فعليًا.",
+    refundNoInstantPromise:
+      "لا نعد باسترداد فوري أو في نفس اليوم أو بإلغاء دفع غير مدعوم.",
+    contactSupportBeforeReturnCopy:
+      "يجب التواصل مع الدعم أولًا لمراجعة المشكلة وتسجيل تفاصيل الطلب وتوضيح الخطوة التالية.",
+    contactSupportBeforeReturnAlert:
+      "يرجى التواصل مع الدعم قبل إرجاع أي عنصر. الإرجاعات غير المعتمدة قد تؤخر المراجعة.",
+    termsAndConditions: "الأحكام والشروط",
+    termsOverview: "ملخص الأحكام",
+    termsHelpNote:
+      "لتوضيح الدفع أو التوصيل أو الدعم، يرجى التواصل مع فريق AD Auto Parts.",
+    termsIntro:
+      "تصف هذه الأحكام الاستخدام العام لمتجر AD Auto Parts وتدفقات الدعم المرتبطة بطلبات قطع السيارات المستعملة.",
+    productCondition: "حالة المنتج",
+    pricingAndCurrency: "السعر والعملة",
+    orderPlacement: "تأكيد الطلب",
+    delivery: "التوصيل",
+    returnsAndRefunds: "الإرجاع والاسترداد",
+    limitationOfLiability: "حدود المسؤولية",
+    termsProductConditionCopy:
+      "المنتجات المعروضة في AD Auto Parts هي قطع مستعملة أو ثانية الاستخدام ما لم يذكر خلاف ذلك بوضوح. قد توجد علامات استخدام بسيطة.",
+    termsCompatibilityCopy:
+      "العميل مسؤول عن تأكيد التوافق قبل الطلب. تساعد بيانات المنتج وإرشادات الدعم في ذلك، لكنها لا تغني عن دقة بيانات السيارة.",
+    termsPricingCopy:
+      "الأسعار المعروضة بالريال السعودي. يظل المبلغ النهائي وتوفر المخزون ورسوم التوصيل مرهونًا بتأكيد الخلفية.",
+    termsOrderPlacementCopy:
+      "تم تصميم الطلبات على تدفق Buy Now لعنصر واحد. قد يتم رفض الطلب أو إلغاؤه إذا وجدت مشكلة في المخزون أو التسعير أو التحقق.",
+    termsPaymentsCopy:
+      "يجب الاعتماد فقط على طرق الدفع المدعومة في الخلفية والواجهة الحالية.",
+    termsCodOnly: "الدفع عند الاستلام مدعوم حيثما يظهر في الدفع.",
+    termsManualAdvanceOnly:
+      "الدفع المسبق اليدوي قد يتطلب تعليمات لاحقة وإرسال إثبات بعد الطلب.",
+    termsDeliveryCopy:
+      "قد يختلف وقت التوصيل حسب المدينة وتأكيد المخزون والمراجعة التشغيلية. تبقى تقديرات التوصيل للعرض حتى يؤكدها النظام.",
+    termsReturnsCopy:
+      "تتبع عمليات الإرجاع والاسترداد سير المراجعة في الخلفية. الموافقة على الإرجاع لا تعني أن الاسترداد اكتمل فعليًا.",
+    termsLiabilityCopy:
+      "لا يجب قراءة هذه الصفحة على أنها تقدم وعودًا قانونية مفتوحة أو ضمانات غير محددة خارج النطاق المدعوم.",
+    privacyPolicy: "سياسة الخصوصية",
+    privacyOverview: "نظرة عامة",
+    privacyHelpNote:
+      "إذا كان عندك سؤال بشأن البيانات أو الطلبات أو الاستفسارات، يرجى التواصل مع الدعم.",
+    privacyIntro:
+      "توضح هذه السياسة الأساسيات المتوقعة للتعامل مع البيانات في المتجر وتدفقات الدعم الحالية.",
+    privacyInformationWeCollect: "البيانات التي نجمعها",
+    privacyHowWeUseInfo: "كيف نستخدم البيانات",
+    privacySecurity: "الأمان",
+    privacySharing: "المشاركة",
+    privacyContact: "التواصل بشأن الخصوصية",
+    privacyInformationCopy:
+      "قد نعالج بيانات التواصل والاستفسارات والطلبات وبيانات الحساب اللازمة لتشغيل المتجر والرد على الدعم.",
+    privacyUsageCopy:
+      "تستخدم البيانات لتنفيذ الطلبات والرد على الأسئلة والمساعدة في التوافق وتحسين الخدمة ضمن حدود النظام المطبق.",
+    privacySecurityCopy:
+      "يتوقع تطبيق إجراءات تقنية وتشغيلية معقولة لحماية البيانات، مع عدم المبالغة في الوعود أو الاعتمادات.",
+    privacySharingCopy:
+      "لا يتم تقديم هذا المتجر على أنه يبيع المعلومات الشخصية. قد تشارك البيانات مع أطراف تشغيلية عند الحاجة لخدمة الطلب أو الدعم.",
+    privacyContactCopy:
+      "للاستفسارات المرتبطة بالخصوصية، يمكنك التواصل مع فريق الدعم عبر صفحة التواصل أو البريد المعلن.",
   },
 };

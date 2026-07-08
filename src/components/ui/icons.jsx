@@ -203,6 +203,27 @@ export function ShieldIcon(props) {
   );
 }
 
+export function TruckIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M3 7h11v8H3z" />
+      <path d="M14 10h3l4 3v2h-7" />
+      <circle cx="7.5" cy="17.5" r="1.5" />
+      <circle cx="17.5" cy="17.5" r="1.5" />
+    </Svg>
+  );
+}
+
+export function WalletIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M3 7a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+      <path d="M3 9h17" />
+      <path d="M16 13h4v3h-4a1.5 1.5 0 0 1 0-3Z" />
+    </Svg>
+  );
+}
+
 export function UsersIcon(props) {
   return (
     <Svg {...props}>
