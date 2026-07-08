@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 9 coverage
+## Current Step 10 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -88,6 +88,9 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Customer account area with orders, payments, invoices, notifications, enquiries, reviews, questions, returns, and profile foundations
 - Admin auth flow wired to Better Auth email sign-in, backend session checks, admin role gating, sign-out, and TOTP verification
 - Admin dashboard hydrated from available analytics, notifications, orders, payments, shipments, returns, enquiries, and products endpoints
+- Admin product list route with backend-driven search, filtering, status actions, responsive table/card views, and pagination controls
+- Admin add/edit product routes with shared form sections for product details, compatibility, condition, pricing, inventory, description, and visibility
+- Admin product media management UI for upload, gallery display, set-primary, reorder, and delete flows using multipart `FormData`
 
 ## Layout structure
 
@@ -213,6 +216,40 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - `/admin` redirects to login, TOTP, or dashboard depending on the live session state
 - `/admin/dashboard` stays protected behind authenticated admin plus TOTP-complete access checks
 - Sidebar logout uses the backend sign-out flow and then returns to `/admin/login`
+
+## Admin product management behavior
+
+- `/admin/products` loads product inventory from the admin API with allowlisted query params for search, category, condition, stock, status, sort, and page
+- `/admin/products/new` creates a product with shared admin form sections and backend field-error mapping
+- `/admin/products/[productId]` loads and updates product details, supports guarded publish/unpublish, archive, and mark-sold actions, and includes media management
+- Product media upload uses `FormData` through the shared API client and does not set manual JSON `Content-Type`
+- Media UI hides unsupported local filesystem details and relies on backend-confirmed responses before updating destructive state
+
+## Backend endpoints used by Step 10 admin UI
+
+- `GET /admin/products`
+- `POST /admin/products`
+- `GET /admin/products/:productId`
+- `PATCH /admin/products/:productId`
+- `POST /admin/products/:productId/media`
+- `DELETE /admin/products/:productId/media/:mediaId` if supported by the backend contract
+- `PATCH /admin/products/:productId/media/:mediaId` for primary-image updates if supported by the backend contract
+- `PATCH /admin/products/:productId/media` for reorder updates if supported by the backend contract
+- `GET /admin/categories`
+- `GET /admin/vehicle-brands`
+- `GET /admin/vehicle-models`
+- `GET /admin/parts-brands`
+
+## Security notes for Step 10
+
+- Admin product routes continue to depend on the existing authenticated session, admin role checks, active-account checks, and TOTP completion
+- Product actions and media mutations use the shared API client with credentials instead of bypassing backend auth
+- The frontend does not store admin secrets, TOTP values, or manual session cookies
+- Upload validation is light on the client and limited to JPEG, PNG, and WebP; the backend remains the final validator
+
+## Next step
+
+Step 11 can expand deeper admin catalog management, richer order/admin modules, or tighter backend-specific DTO alignment where the product/media action contract becomes more explicit.
 
 ## Validation
 
