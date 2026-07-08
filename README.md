@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 7 coverage
+## Current Step 9 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -62,7 +62,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Auth/session helpers for customer/admin flows with cookie-based requests
 - Runtime language provider with English/Arabic switching and RTL document updates
 - Public storefront layout with a two-row navbar and shared footer
-- Admin shell with sidebar, topbar, and dashboard placeholder routes
+- Admin shell with sidebar, topbar, protected entry routing, login, TOTP verification, and backend-aware dashboard routes
 - Shared UI components for buttons, inputs, cards, alerts, badges, dialogs, toasts, loading states, and error states
 - SAR money formatting helper for minor-unit prices
 - Homepage landing page with hero, compatibility finder preview, categories, product sections, vehicle brands, CTA, why-choose-us, how-it-works, reviews preview, and recently-viewed placeholder
@@ -85,6 +85,9 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Privacy policy placeholder page for support/account/order information handling
 - Refreshed public not-found page with branding, storefront CTA, and support CTA
 - Footer support/shop links updated for public support and policy pages
+- Customer account area with orders, payments, invoices, notifications, enquiries, reviews, questions, returns, and profile foundations
+- Admin auth flow wired to Better Auth email sign-in, backend session checks, admin role gating, sign-out, and TOTP verification
+- Admin dashboard hydrated from available analytics, notifications, orders, payments, shipments, returns, enquiries, and products endpoints
 
 ## Layout structure
 
@@ -203,6 +206,17 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - `GET /public/settings`
 - `POST /enquiries`
 
-## Next step
+## Admin auth and dashboard behavior
 
-Step 8 can expand customer account order pages, manual payment proof submission UI, richer public order tracking, and deeper public settings integration if the backend contract exposes the required fields clearly.
+- `/admin/login` uses backend email sign-in and refreshes the current session before allowing admin access
+- `/admin/totp` verifies the backend TOTP challenge and does not store TOTP codes, sessions, or cookies manually
+- `/admin` redirects to login, TOTP, or dashboard depending on the live session state
+- `/admin/dashboard` stays protected behind authenticated admin plus TOTP-complete access checks
+- Sidebar logout uses the backend sign-out flow and then returns to `/admin/login`
+
+## Validation
+
+- Lint: `npm run lint`
+- Build: `npm run build`
+
+There is currently no `npm test` script configured in `package.json`.

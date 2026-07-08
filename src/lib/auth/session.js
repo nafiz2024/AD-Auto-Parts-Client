@@ -1,8 +1,10 @@
 import {
+  getTotpStatusRequest,
   getSessionRequest,
   signInWithEmailRequest,
   signOutRequest,
   signUpWithEmailRequest,
+  verifyTotpRequest,
 } from "@/lib/auth/auth-api";
 import {
   getPrimaryRole,
@@ -31,6 +33,16 @@ export async function signUpWithEmail(payload, options) {
 
 export async function signOut(options) {
   const result = await signOutRequest(options);
+  return result.data ?? result.raw ?? null;
+}
+
+export async function getTotpStatus(options) {
+  const result = await getTotpStatusRequest(options);
+  return result.data ?? result.raw ?? null;
+}
+
+export async function verifyTotp(payload, options) {
+  const result = await verifyTotpRequest(payload, options);
   return result.data ?? result.raw ?? null;
 }
 

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import {
   getCurrentSession,
   getCurrentUser,
+  hasVerifiedTotp,
   getSessionRole,
   isAuthenticated,
   requiresTotp,
@@ -22,6 +23,7 @@ function buildState(session, isLoading) {
     isLoading,
     isAuthenticated: isAuthenticated(session),
     totpRequired: requiresTotp(session),
+    totpVerified: hasVerifiedTotp(session),
   };
 }
 

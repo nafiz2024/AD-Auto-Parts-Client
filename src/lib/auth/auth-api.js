@@ -38,6 +38,13 @@ export function signOutRequest(options) {
   );
 }
 
+export function getTotpStatusRequest(options) {
+  return apiGet(endpoints.auth.totpStatus, {
+    ...options,
+    baseUrl: AUTH_BASE_URL,
+  });
+}
+
 export function verifyTotpRequest(payload, options) {
   return apiPost(endpoints.auth.totpVerify, payload, {
     ...options,
