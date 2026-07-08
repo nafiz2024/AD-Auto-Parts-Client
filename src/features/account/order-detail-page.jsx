@@ -14,7 +14,9 @@ import { BoxIcon, WalletIcon } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
+import { useToast } from "@/hooks/use-toast";
 import { getCustomerOrderDetail } from "@/features/account/account-api";
+import { downloadCustomerInvoicePdf } from "@/features/invoices/invoice-api";
 
 function formatDate(value) {
   if (!value) {
@@ -89,9 +91,11 @@ function useOrderAccessState() {
 export function AccountOrderDetailPage({ orderNumber }) {
   const accessState = useOrderAccessState();
   const { t } = useLanguage();
+  const toast = useToast();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   useEffect(() => {
     if (!orderNumber || accessState) {
@@ -165,6 +169,22 @@ export function AccountOrderDetailPage({ orderNumber }) {
         />
       </Container>
     );
+  }
+
+  async function handleDownloadInvoice() {
+    if (!order?.invoiceNumber) {
+      return;
+    }
+
+    setDownloadingInvoice(true);
+
+    try {
+      await downloadCustomerInvoicePdf(order.invoiceNumber);
+    } catch (nextError) {
+      toast.apiError(nextError, t("failedToDownloadInvoice"));
+    } finally {
+      setDownloadingInvoice(false);
+    }
   }
 
   return (
@@ -252,6 +272,20 @@ export function AccountOrderDetailPage({ orderNumber }) {
             <p className="text-sm text-muted-foreground">{t("billingAddress")}</p>
             <p className="font-medium text-foreground">{order.billingAddress || "—"}</p>
           </div>
+          {order.invoiceNumber ? (
+            <div className="rounded-3xl border border-border p-4">
+              <p className="text-sm text-muted-foreground">{t("invoice")}</p>
+              <p className="font-medium text-foreground">{order.invoiceNumber}</p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link href={routes.customer.accountInvoiceDetail(order.invoiceNumber)}>
+                  <Button variant="outline">{t("viewInvoice")}</Button>
+                </Link>
+                <Button onClick={handleDownloadInvoice} disabled={downloadingInvoice}>
+                  {downloadingInvoice ? t("downloadingPdf") : t("downloadPdf")}
+                </Button>
+              </div>
+            </div>
+          ) : null}
           <div className="flex flex-wrap gap-3">
             <Link href={routes.customer.accountPayments}>
               <Button>

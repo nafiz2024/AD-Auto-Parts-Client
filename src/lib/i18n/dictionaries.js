@@ -734,6 +734,7 @@ export const dictionaries = {
     statusUpdatedSuccessfully: "Status updated successfully",
     backToOrders: "Back to Orders",
     invoiceCreatedSuccessfully: "Invoice created successfully",
+    invoiceVoidedSuccessfully: "Invoice voided successfully",
     shipmentCreatedSuccessfully: "Shipment created successfully",
     shipmentStatusManagedByBackend:
       "Shipment status options remain backend-driven and should only change after the server confirms the update.",
@@ -778,6 +779,10 @@ export const dictionaries = {
     paymentSummary: "Payment Summary",
     shipmentSummary: "Shipment Summary",
     createInvoice: "Create Invoice",
+    issueInvoice: "Issue Invoice",
+    voidInvoice: "Void Invoice",
+    voidInvoiceConfirmation:
+      "Void this invoice only after the backend confirms the action. This cannot be undone from the frontend alone.",
     createShipment: "Create Shipment",
     selectCourier: "Select courier",
     shipmentNote: "Shipment note",
@@ -915,10 +920,39 @@ export const dictionaries = {
     noInvoicesYet: "No Invoices Yet",
     noInvoicesDescription:
       "Invoices will appear here when the backend exposes invoice records for your orders.",
+    noInvoicesFound: "No invoices found",
+    customerInvoicesDescription:
+      "Review customer-safe invoice records and download backend-generated PDFs.",
+    adminInvoicesDescription:
+      "Review invoice records, download backend-generated PDFs, and use backend-confirmed invoice actions.",
+    adminInvoicesEmptyDescription:
+      "No admin invoice records are available for the current backend response.",
     issueDate: "Issue Date",
     dueDate: "Due Date",
+    invoice: "Invoice",
+    invoiceDate: "Invoice Date",
+    printDate: "Print Date",
+    orderNumber: "Order Number",
+    invoiceStatus: "Invoice Status",
+    deliveryAddress: "Delivery Address",
+    unitPrice: "Unit Price",
     downloadingPdf: "Downloading PDF...",
     downloadPdf: "Download PDF",
+    failedToDownloadInvoice: "Failed to download invoice",
+    viewInvoice: "View Invoice",
+    backToInvoices: "Back to Invoices",
+    invoiceNotFound: "Invoice Not Found",
+    invoiceNotFoundDescription:
+      "The requested invoice could not be found or is not available in the current backend response.",
+    customerInvoicePreviewDescription:
+      "Invoice values remain backend-authored; the frontend only previews and downloads supported invoice data.",
+    adminInvoicePreviewDescription:
+      "This admin invoice preview only shows backend-safe invoice data and backend-confirmed actions.",
+    noInvoiceItemsAvailable:
+      "No invoice line items are available for this record.",
+    taxVat: "Tax / VAT",
+    viewCustomer: "View Customer",
+    thankYouForChoosingAdAutoParts: "Thank you for choosing AD Auto Parts",
     statusRead: "Read",
     statusUnread: "Unread",
     noNotificationsYet: "No Notifications Yet",
@@ -2381,5 +2415,38 @@ export const dictionaries = {
       "لا يتم تقديم هذا المتجر على أنه يبيع المعلومات الشخصية. قد تشارك البيانات مع أطراف تشغيلية عند الحاجة لخدمة الطلب أو الدعم.",
     privacyContactCopy:
       "للاستفسارات المرتبطة بالخصوصية، يمكنك التواصل مع فريق الدعم عبر صفحة التواصل أو البريد المعلن.",
+    invoiceVoidedSuccessfully: "تم إلغاء الفاتورة بنجاح",
+    issueInvoice: "إصدار فاتورة",
+    voidInvoice: "إلغاء الفاتورة",
+    voidInvoiceConfirmation:
+      "ألغ هذه الفاتورة فقط بعد أن تؤكد الخلفية الإجراء. لا يمكن التراجع عنه من الواجهة فقط.",
+    noInvoicesFound: "لم يتم العثور على فواتير",
+    customerInvoicesDescription:
+      "راجع سجلات الفواتير الخاصة بالعميل ونزّل ملفات PDF المولدة من الخلفية.",
+    adminInvoicesDescription:
+      "راجع سجلات الفواتير ونزّل ملفات PDF المولدة من الخلفية واستخدم إجراءات الفواتير التي تؤكدها الخلفية.",
+    adminInvoicesEmptyDescription:
+      "لا توجد سجلات فواتير إدارية في استجابة الخلفية الحالية.",
+    invoice: "الفاتورة",
+    invoiceDate: "تاريخ الفاتورة",
+    printDate: "تاريخ الطباعة",
+    orderNumber: "رقم الطلب",
+    invoiceStatus: "حالة الفاتورة",
+    deliveryAddress: "عنوان التوصيل",
+    unitPrice: "سعر الوحدة",
+    failedToDownloadInvoice: "فشل تنزيل الفاتورة",
+    viewInvoice: "عرض الفاتورة",
+    backToInvoices: "العودة إلى الفواتير",
+    invoiceNotFound: "الفاتورة غير موجودة",
+    invoiceNotFoundDescription:
+      "تعذر العثور على الفاتورة المطلوبة أو أنها غير متاحة في استجابة الخلفية الحالية.",
+    customerInvoicePreviewDescription:
+      "تبقى قيم الفاتورة معتمدة من الخلفية، وتقتصر الواجهة على المعاينة والتنزيل.",
+    adminInvoicePreviewDescription:
+      "يعرض هذا التصور الإداري للفواتير بيانات آمنة من الخلفية وإجراءات مؤكدة فقط.",
+    noInvoiceItemsAvailable: "لا توجد بنود فاتورة متاحة لهذا السجل.",
+    taxVat: "الضريبة / القيمة المضافة",
+    viewCustomer: "عرض العميل",
+    thankYouForChoosingAdAutoParts: "شكراً لاختيارك AD Auto Parts",
   },
 };

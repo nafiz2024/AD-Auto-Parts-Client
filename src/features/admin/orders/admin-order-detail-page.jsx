@@ -21,6 +21,9 @@ import { routes } from "@/constants/routes";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import {
   createAdminInvoiceForOrder,
+  downloadAdminInvoicePdf,
+} from "@/features/admin/invoices/admin-invoices-api";
+import {
   createAdminShipmentFromOrder,
   getAdminCourierOptions,
   getAdminOrderDetail,
@@ -121,6 +124,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
     submitting: false,
   });
   const [refreshKey, setRefreshKey] = useState(0);
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   useEffect(() => {
     if (auth.isLoading) {
@@ -315,6 +319,25 @@ export function AdminOrderDetailPage({ orderNumber }) {
     }
   }
 
+  async function handleDownloadInvoice() {
+    if (!detail?.invoice?.url || !detail?.invoice?.invoiceNumber) {
+      return;
+    }
+
+    setDownloadingInvoice(true);
+
+    try {
+      await downloadAdminInvoicePdf({
+        invoiceNumber: detail.invoice.invoiceNumber,
+        pdfPath: detail.invoice.url,
+      });
+    } catch (error) {
+      toast.apiError(error, t("failedToDownloadInvoice"));
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  }
+
   if (state.loading) {
     return (
       <div className="space-y-6">
@@ -359,18 +382,24 @@ export function AdminOrderDetailPage({ orderNumber }) {
                 {t("backToOrders")}
               </Button>
             </Link>
-            {detail.invoice.url ? (
-              <a href={detail.invoice.url} target="_blank" rel="noopener noreferrer">
+            {detail.invoice.invoiceNumber ? (
+              <Link href={routes.admin.adminInvoiceDetail(detail.invoice.invoiceNumber)}>
                 <Button variant="outline">
                   <FileTextIcon className="size-4" />
                   {t("viewInvoice")}
                 </Button>
-              </a>
+              </Link>
             ) : null}
-            {!detail.invoice.url && detail.invoice.canCreate ? (
+            {detail.invoice.url ? (
+              <Button variant="outline" onClick={handleDownloadInvoice} disabled={downloadingInvoice}>
+                <FileTextIcon className="size-4" />
+                {downloadingInvoice ? t("downloadingPdf") : t("downloadPdf")}
+              </Button>
+            ) : null}
+            {!detail.invoice.invoiceNumber && detail.invoice.canCreate ? (
               <Button variant="outline" onClick={handleCreateInvoice}>
                 <FileTextIcon className="size-4" />
-                {t("createInvoice")}
+                {t("issueInvoice")}
               </Button>
             ) : null}
           </div>

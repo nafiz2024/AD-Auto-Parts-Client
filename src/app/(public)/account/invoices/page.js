@@ -1,5 +1,5 @@
-import { AccountRoutePage } from "@/features/account/account-page";
+import { CustomerInvoicesPage } from "@/features/invoices/customer-invoices-page";
 
 export default function AccountInvoicesRoute() {
-  return <AccountRoutePage section="invoices" />;
+  return <CustomerInvoicesPage />;
 }

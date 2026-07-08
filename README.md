@@ -87,6 +87,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Refreshed public not-found page with branding, storefront CTA, and support CTA
 - Footer support/shop links updated for public support and policy pages
 - Customer account area with orders, payments, invoices, notifications, enquiries, reviews, questions, returns, and profile foundations
+- Customer invoice list and invoice preview routes with backend-driven PDF download handling
 - Admin auth flow wired to Better Auth email sign-in, backend session checks, admin role gating, sign-out, and TOTP verification
 - Admin dashboard hydrated from available analytics, notifications, orders, payments, shipments, returns, enquiries, and products endpoints
 - Admin product list route with backend-driven search, filtering, status actions, responsive table/card views, and pagination controls
@@ -97,6 +98,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Lightweight vehicle model management section under vehicle brands using backend-safe fields only
 - Admin orders list route with backend-driven filters, status tabs, responsive list views, pagination, cancel-order confirmation, and links into payment/shipment workflow screens
 - Admin order detail route with ordered items, timeline, customer and vehicle summaries, payment summary, admin notes, invoice creation, shipment creation, and guarded status transitions
+- Admin invoice list and invoice preview routes with backend-safe download handling plus backend-confirmed void support when advertised by the API response
 - Admin manual payments route with backend-driven filtering, detail review, proof-link display, and approve/reject status actions
 - Admin shipments route with backend-driven filtering, shipment detail review, courier context, and guarded shipment status updates
 - Admin customers route with backend-driven search, status/date filtering, responsive list views, protected detail drawer, pagination, and backend-confirmed customer status actions
@@ -310,6 +312,25 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - `PATCH /admin/settings`
 - `GET /public/settings` continues to support storefront contact/support hydration
 
+## Backend endpoints used by Step 15 invoice UI
+
+- `GET /customer/invoices`
+- `GET /customer/invoices/:invoiceNumber/pdf`
+- `GET /admin/invoices`
+- `POST /admin/invoices`
+- Backend-provided secure admin invoice PDF/action paths are used only when the response advertises them; the frontend does not invent admin download or void routes
+
+## Step 15 invoice behavior
+
+- `/account/invoices` lists customer invoice records and supports invoice preview plus authenticated PDF download
+- `/account/invoices/[invoiceNumber]` renders a customer-safe invoice preview using backend-authored invoice values only
+- `/admin/invoices` stays behind the existing authenticated admin, active-account, and TOTP-complete access flow
+- `/admin/invoices/[invoiceNumber]` renders an admin invoice preview using backend-safe invoice data and only shows void/download actions when the backend advertises support
+- Customer and admin order detail screens now surface invoice actions through route constants instead of exposing raw PDF/storage paths
+- PDF downloads use the shared API client with credentials, Blob handling, `Content-Disposition` filename support, JSON-error detection, and safe fallback filenames
+- Invoice totals, delivery fees, discounts, tax/VAT, payment status, and invoice status remain backend-authored; the frontend does not calculate authoritative invoice totals
+- Arabic support covers static invoice/document labels while dynamic backend values remain unchanged unless Arabic-specific fields are provided
+
 ## Admin customers and enquiries behavior
 
 - `/admin/customers` stays behind the existing authenticated admin session, active-account checks, and TOTP-complete access flow
@@ -350,7 +371,7 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 
 ## Next step
 
-Step 15 can expand admin reviews/questions/returns workflows, deeper account management, or richer reporting/export operations if those backend routes become explicit.
+Step 16 can expand admin reviews/questions/returns workflows, deeper account management, or richer reporting/export operations if those backend routes become explicit.
 
 ## Validation
 

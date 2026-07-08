@@ -143,12 +143,12 @@ function OrderTable({ items, t, onCancelOrder }) {
                       {t("viewOrder")}
                     </Button>
                   </Link>
-                  {order.invoiceUrl ? (
-                    <a href={order.invoiceUrl} target="_blank" rel="noopener noreferrer">
+                  {order.invoiceNumber ? (
+                    <Link href={routes.admin.adminInvoiceDetail(order.invoiceNumber)}>
                       <Button size="sm" variant="outline">
                         {t("viewInvoice")}
                       </Button>
-                    </a>
+                    </Link>
                   ) : null}
                   {order.canCancel ? (
                     <Button size="sm" variant="outline" onClick={() => onCancelOrder(order)}>
@@ -204,10 +204,10 @@ function OrderCards({ items, t, onCancelOrder }) {
             <Link href={routes.admin.adminOrderDetail(order.orderNumber)}>
               <Button size="sm">{t("viewOrder")}</Button>
             </Link>
-            {order.invoiceUrl ? (
-              <a href={order.invoiceUrl} target="_blank" rel="noopener noreferrer">
+            {order.invoiceNumber ? (
+              <Link href={routes.admin.adminInvoiceDetail(order.invoiceNumber)}>
                 <Button size="sm" variant="outline">{t("viewInvoice")}</Button>
-              </a>
+              </Link>
             ) : null}
             {order.canCancel ? (
               <Button size="sm" variant="outline" onClick={() => onCancelOrder(order)}>

@@ -31,6 +31,7 @@ const adminNavItems = [
   { key: "products", href: routes.admin.adminProducts, icon: BoxIcon },
   { key: "addProduct", href: routes.admin.adminProductNew, icon: PlusCircleIcon },
   { key: "orders", href: routes.admin.adminOrders, icon: ShoppingCartIcon },
+  { key: "invoices", href: routes.admin.adminInvoices, icon: FileTextIcon },
   { key: "manualPayments", href: routes.admin.adminPayments, icon: WalletIcon },
   { key: "shipments", href: routes.admin.adminShipments, icon: TruckIcon },
   { key: "categories", href: routes.admin.adminCategories, icon: FolderIcon },
