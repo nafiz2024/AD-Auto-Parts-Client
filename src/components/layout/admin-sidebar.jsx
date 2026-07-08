@@ -16,7 +16,9 @@ import {
   SettingsIcon,
   ShieldIcon,
   ShoppingCartIcon,
+  TruckIcon,
   UsersIcon,
+  WalletIcon,
 } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import { useAuth } from "@/hooks/use-auth";
@@ -29,6 +31,8 @@ const adminNavItems = [
   { key: "products", href: routes.admin.adminProducts, icon: BoxIcon },
   { key: "addProduct", href: routes.admin.adminProductNew, icon: PlusCircleIcon },
   { key: "orders", href: routes.admin.adminOrders, icon: ShoppingCartIcon },
+  { key: "manualPayments", href: routes.admin.adminPayments, icon: WalletIcon },
+  { key: "shipments", href: routes.admin.adminShipments, icon: TruckIcon },
   { key: "categories", href: routes.admin.adminCategories, icon: FolderIcon },
   { key: "brands", href: routes.admin.adminBrands, icon: ShieldIcon },
   { key: "customers", href: routes.admin.adminCustomers, icon: UsersIcon },

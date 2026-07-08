@@ -95,6 +95,10 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Admin categories route with backend-driven search, status filtering, responsive table/card views, right-side create/edit form, and confirmation dialogs
 - Admin brands route with vehicle-brand and parts-brand tabs, responsive list views, right-side create/edit form, and confirmation dialogs
 - Lightweight vehicle model management section under vehicle brands using backend-safe fields only
+- Admin orders list route with backend-driven filters, status tabs, responsive list views, pagination, cancel-order confirmation, and links into payment/shipment workflow screens
+- Admin order detail route with ordered items, timeline, customer and vehicle summaries, payment summary, admin notes, invoice creation, shipment creation, and guarded status transitions
+- Admin manual payments route with backend-driven filtering, detail review, proof-link display, and approve/reject status actions
+- Admin shipments route with backend-driven filtering, shipment detail review, courier context, and guarded shipment status updates
 
 ## Layout structure
 
@@ -273,17 +277,32 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - `PATCH /admin/parts-brands/:brandId`
 - `DELETE /admin/parts-brands/:brandId` if supported by the backend contract
 
-## Security notes for Step 10 and Step 11
+## Backend endpoints used by Step 12 admin workflow UI
+
+- `GET /admin/orders`
+- `GET /admin/orders/:orderNumber`
+- `PATCH /admin/orders/:orderNumber`
+- `POST /admin/orders/:orderNumber/cancel` if supported by the backend contract
+- `GET /admin/payments`
+- `PATCH /admin/payments/:paymentId`
+- `GET /admin/shipments`
+- `POST /admin/shipments`
+- `PATCH /admin/shipments/:shipmentId`
+- `GET /admin/couriers`
+- `POST /admin/invoices`
+
+## Security notes for Step 10, Step 11, and Step 12
 
 - Admin product routes continue to depend on the existing authenticated session, admin role checks, active-account checks, and TOTP completion
 - Product, category, brand, and vehicle-model mutations use the shared API client with credentials instead of bypassing backend auth
+- Order, payment, shipment, invoice, and admin-note actions continue to depend on the existing authenticated admin session plus TOTP-complete access
 - The frontend does not store admin secrets, TOTP values, or manual session cookies
 - Upload validation is light on the client and limited to JPEG, PNG, and WebP; the backend remains the final validator
 - Category and brand media fields remain placeholders until explicit backend media support exists, which avoids submitting unsupported fields
 
 ## Next step
 
-Step 12 can expand deeper admin order/payment operations, richer catalog-specific backend DTO alignment, or dedicated media support for categories and brands if those backend routes become explicit.
+Step 13 can expand customer/admin translation coverage, richer order operations, or deeper audit/reporting workflows if those backend routes become explicit.
 
 ## Validation
 
