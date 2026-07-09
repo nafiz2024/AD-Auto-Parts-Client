@@ -1,4 +1,4 @@
-import { AUTH_BASE_URL } from "@/config/env";
+import { APP_URL, AUTH_BASE_URL } from "@/config/env";
 import { apiGet, apiPost } from "@/lib/api/client";
 import { isApiError } from "@/lib/api/errors";
 import { endpoints } from "@/lib/api/endpoints";
@@ -58,6 +58,56 @@ export function signUpWithEmailRequest(payload, options) {
     baseUrl: AUTH_BASE_URL,
     credentials: options?.credentials ?? "include",
   });
+}
+
+export function signInWithSocialRequest(provider, options = {}) {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    throw new Error("Social sign-in can only be started in the browser.");
+  }
+
+  const normalizedProvider = String(provider ?? "").trim().toLowerCase();
+
+  if (!normalizedProvider) {
+    throw new Error("A social auth provider is required.");
+  }
+
+  const callbackURL =
+    typeof options.callbackURL === "string" && options.callbackURL.trim()
+      ? new URL(options.callbackURL, APP_URL).toString()
+      : APP_URL;
+  const errorCallbackURL =
+    typeof options.errorCallbackURL === "string" && options.errorCallbackURL.trim()
+      ? new URL(options.errorCallbackURL, APP_URL).toString()
+      : null;
+
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = `${AUTH_BASE_URL}${endpoints.auth.signInSocial}`;
+  form.style.display = "none";
+
+  const providerInput = document.createElement("input");
+  providerInput.type = "hidden";
+  providerInput.name = "provider";
+  providerInput.value = normalizedProvider;
+  form.append(providerInput);
+
+  const callbackInput = document.createElement("input");
+  callbackInput.type = "hidden";
+  callbackInput.name = "callbackURL";
+  callbackInput.value = callbackURL;
+  form.append(callbackInput);
+
+  if (errorCallbackURL) {
+    const errorCallbackInput = document.createElement("input");
+    errorCallbackInput.type = "hidden";
+    errorCallbackInput.name = "errorCallbackURL";
+    errorCallbackInput.value = errorCallbackURL;
+    form.append(errorCallbackInput);
+  }
+
+  document.body.append(form);
+  form.submit();
+  form.remove();
 }
 
 export function signOutRequest(options) {

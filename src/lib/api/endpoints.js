@@ -24,6 +24,7 @@ export const endpoints = {
   auth: {
     signUpEmail: "/sign-up/email",
     signInEmail: "/sign-in/email",
+    signInSocial: "/sign-in/social",
     signOut: "/sign-out",
     getSession: "/session",
     refreshSession: "/session",

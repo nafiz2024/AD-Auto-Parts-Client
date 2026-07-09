@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { FcGoogle } from "react-icons/fc";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -16,7 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getCustomerPasswordError } from "@/lib/auth/customer-password";
 import { sanitizeCustomerRedirect } from "@/lib/auth/customer-auth";
 import { getErrorMessage } from "@/lib/api/error-messages";
-import { getSessionRole, signInWithEmail, signUpWithEmail } from "@/lib/auth/session";
+import { getSessionRole, signInWithEmail, signInWithSocial, signUpWithEmail } from "@/lib/auth/session";
 import { buildQueryString } from "@/lib/api/query";
 
 function AuthPageShell({ title, description, children }) {
@@ -88,6 +89,7 @@ export function CustomerAuthPage({ mode }) {
   const toast = useToast();
   const { t } = useLanguage();
   const [isPending, startTransition] = useTransition();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [form, setForm] = useState({
@@ -217,6 +219,21 @@ export function CustomerAuthPage({ mode }) {
     });
   }
 
+  function handleGoogleSignIn() {
+    setErrorMessage("");
+    setIsGoogleLoading(true);
+
+    try {
+      signInWithSocial("google", {
+        callbackURL: redirectTarget,
+        errorCallbackURL: isRegister ? registerHref : signInHref,
+      });
+    } catch {
+      setIsGoogleLoading(false);
+      setErrorMessage(t("googleSignInStartFailed"));
+    }
+  }
+
   return (
     <AuthPageShell
       title={isRegister ? t("createYourCustomerAccount") : t("loginToYourAccount")}
@@ -322,6 +339,27 @@ export function CustomerAuthPage({ mode }) {
               ? t("createAccount")
               : t("signIn")}
         </Button>
+
+        <div className="relative py-1">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center">
+            <span className="bg-background px-4 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              {isRegister ? t("orSignUpWith") : t("orContinueWith")}
+            </span>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={isGoogleLoading || isPending || auth.role === "admin"}
+          className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-900 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          <FcGoogle className="h-5 w-5 shrink-0" aria-hidden="true" />
+          <span>{isGoogleLoading ? t("connecting") : t("continueWithGoogle")}</span>
+        </button>
       </form>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3 text-sm">

@@ -2,6 +2,7 @@ import {
   getTotpStatusRequest,
   getSessionRequest,
   signInWithEmailRequest,
+  signInWithSocialRequest,
   signOutRequest,
   signUpWithEmailRequest,
   verifyTotpRequest,
@@ -24,6 +25,10 @@ export async function refreshSession(options) {
 export async function signInWithEmail(email, password, options) {
   const result = await signInWithEmailRequest(email, password, options);
   return result.data ?? result.raw ?? null;
+}
+
+export function signInWithSocial(provider, options) {
+  return signInWithSocialRequest(provider, options);
 }
 
 export async function signUpWithEmail(payload, options) {
