@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 16 coverage
+## Current Step 17 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -66,9 +66,9 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Admin shell with sidebar, topbar, protected entry routing, login, TOTP verification, and backend-aware dashboard routes
 - Shared UI components for buttons, inputs, cards, alerts, badges, dialogs, toasts, loading states, and error states
 - SAR money formatting helper for minor-unit prices
-- Homepage landing page with hero, compatibility finder preview, categories, product sections, vehicle brands, CTA, why-choose-us, how-it-works, reviews preview, and recently-viewed placeholder
+- Homepage landing page with hero, compatibility finder preview, backend-fed categories/product sections/vehicle brands, CTA, why-choose-us, and recently-viewed placeholder
 - Storefront shop page with filter sidebar, sorting, grid/list view toggle, pagination, and Buy Now focused product cards
-- Search results page with query-driven hero, suggestions, filters, sorting, pagination, and no-results support CTA
+- Search results page with query-driven hero, backend-fed filters, sorting, pagination, and no-results support CTA
 - Category detail pages that reuse the shared storefront listing experience
 - Route-level loading states for shop, search, and category listing pages
 - Product detail route with backend-first product loading
@@ -213,7 +213,7 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 
 - `GET /products` is used as the primary backend source for shop, category, and search pages
 - Safe backend filters currently used by the frontend include `q`, `page`, `limit`, `sort`, `year`, `minPriceMinor`, `maxPriceMinor`, `availability`, `position`, and supported condition values
-- When the local backend returns no products or empty taxonomy collections, the storefront falls back to clearly labeled preview content so the Step 4 UI can still be reviewed
+- When the backend returns no products or empty taxonomy collections, the storefront now shows real empty states instead of fake preview inventory
 - Wishlist buttons are visual placeholders only
 - Product cards continue to use `Buy Now` and `View Details`; no cart workflow has been introduced
 
@@ -369,6 +369,17 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Admin moderation drawers show only normalized safe fields, keep moderation/internal notes inside protected admin routes, and use confirmation dialogs for destructive or state-changing actions
 - English remains the default language, Arabic labels are available, and the review/Q&A screens remain responsive and RTL-safe without introducing cart behavior or storing sensitive moderation data in localStorage
 
+## Step 17 API integration audit
+
+- `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_AUTH_BASE_URL` remain centralized in public env config and are consumed through the shared config reader instead of being hardcoded inside components
+- The shared API client continues to own credentials, timeout handling, validation error mapping, safe blob/PDF downloads, and request normalization for storefront, customer, and admin features
+- Public catalog/settings `GET` requests now include the current frontend language through `Accept-Language` plus `?lang=` using the persisted language cookie/local value, while English remains the default fallback
+- Homepage, shop, category, and search pages no longer fall back to fake preview products/categories/brands when live backend endpoints fail or return empty results
+- Real production public pages now rely on backend APIs or explicit empty/deferred states rather than rendering mock business inventory
+- Public support settings still use safe fallback contact details only when `GET /public/settings` is unavailable, and the compatibility tools route remains an intentional deferred placeholder
+- Customer and admin routes continue to depend on backend-owned auth, role, active-account, ownership, and TOTP checks without frontend-only bypasses
+- Remaining deferred items are limited to intentionally non-business placeholders such as recently viewed, compatibility tools, and testimonial content that does not map to a live backend feed yet
+
 ## Admin customers and enquiries behavior
 
 - `/admin/customers` stays behind the existing authenticated admin session, active-account checks, and TOTP-complete access flow
@@ -409,7 +420,7 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 
 ## Next step
 
-Step 17 can add lightweight coverage tests for the new reviews/Q&A surfaces or expand returns/reporting workflows if the backend contract is ready.
+Step 18 can focus on responsive/RTL polish, broader manual backend verification, and lightweight coverage tests for the audited API flows.
 
 ## Validation
 

@@ -1,4 +1,9 @@
-import { API_BASE_URL, AUTH_BASE_URL } from "@/config/env";
+import {
+  API_BASE_URL,
+  AUTH_BASE_URL,
+  DEFAULT_LANGUAGE,
+  SUPPORTED_LANGUAGES,
+} from "@/config/env";
 import {
   createApiError,
   createNetworkError,
@@ -9,6 +14,8 @@ import { withQuery } from "@/lib/api/query";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const REQUEST_ID_HEADERS = ["x-request-id", "request-id", "x-correlation-id"];
+const LANGUAGE_STORAGE_KEY = "ad-auto-parts-language";
+const LANGUAGE_COOKIE_KEY = "ad-auto-parts-language";
 
 function joinUrl(baseUrl, path) {
   if (/^https?:\/\//i.test(path)) {
@@ -38,6 +45,62 @@ function getRequestId(headers, body) {
   }
 
   return body?.requestId ?? null;
+}
+
+function normalizeLanguage(value) {
+  return SUPPORTED_LANGUAGES.includes(value) ? value : DEFAULT_LANGUAGE;
+}
+
+function parseCookieValue(source, key) {
+  if (!source) {
+    return null;
+  }
+
+  const parts = source.split(";").map((part) => part.trim());
+  const match = parts.find((part) => part.startsWith(`${key}=`));
+
+  if (!match) {
+    return null;
+  }
+
+  return decodeURIComponent(match.slice(key.length + 1));
+}
+
+async function getRequestLanguage() {
+  if (typeof window !== "undefined") {
+    const stored =
+      window.localStorage.getItem(LANGUAGE_STORAGE_KEY) ??
+      parseCookieValue(window.document.cookie, LANGUAGE_COOKIE_KEY);
+
+    return normalizeLanguage(stored);
+  }
+
+  try {
+    const { cookies } = await import("next/headers");
+    const cookieStore = await cookies();
+    return normalizeLanguage(cookieStore.get(LANGUAGE_COOKIE_KEY)?.value);
+  } catch {
+    return DEFAULT_LANGUAGE;
+  }
+}
+
+function isLocalizedPublicRequest({ baseUrl, method, path }) {
+  if (baseUrl !== API_BASE_URL) {
+    return false;
+  }
+
+  if (method !== "GET") {
+    return false;
+  }
+
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
+  return (
+    !normalizedPath.startsWith("/admin/") &&
+    !normalizedPath.startsWith("/customer/") &&
+    !normalizedPath.startsWith("/health") &&
+    !normalizedPath.startsWith("/ready")
+  );
 }
 
 async function parseResponseBody(response, responseType) {
@@ -175,7 +238,7 @@ function createAbortSignal(timeoutMs, signal) {
   };
 }
 
-function buildHeaders(body, headers) {
+function buildHeaders(body, headers, language) {
   const requestHeaders = new Headers(headers ?? {});
 
   if (!(body instanceof FormData) && body !== undefined && !requestHeaders.has("Content-Type")) {
@@ -184,6 +247,10 @@ function buildHeaders(body, headers) {
 
   if (!requestHeaders.has("Accept")) {
     requestHeaders.set("Accept", "application/json, application/pdf");
+  }
+
+  if (language && !requestHeaders.has("Accept-Language")) {
+    requestHeaders.set("Accept-Language", language);
   }
 
   return requestHeaders;
@@ -220,14 +287,21 @@ export async function apiRequest(
     credentials = "include",
   } = {},
 ) {
-  const requestUrl = joinUrl(baseUrl, withQuery(path, query));
+  const language = isLocalizedPublicRequest({ baseUrl, method, path })
+    ? await getRequestLanguage()
+    : null;
+  const localizedQuery =
+    language && (!query || query.lang === undefined)
+      ? { ...query, lang: language }
+      : query;
+  const requestUrl = joinUrl(baseUrl, withQuery(path, localizedQuery));
   const { signal: timeoutSignal, cleanup } = createAbortSignal(timeoutMs, signal);
 
   try {
     const response = await fetch(requestUrl, {
       method,
       credentials,
-      headers: buildHeaders(body, headers),
+      headers: buildHeaders(body, headers, language),
       body:
         body === undefined || body instanceof FormData ? body : JSON.stringify(body),
       signal: timeoutSignal,

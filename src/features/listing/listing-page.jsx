@@ -221,19 +221,6 @@ function ListingHero({ mode, filters, category, products, suggestedSearches }) {
         </div>
         <HeroVisual mode={mode} />
       </div>
-      {isCategory && category ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  {["Complete Engine", "Cylinder Head", "Engine Mount", "Crankshaft"].map((item) => (
-            <div
-              key={item}
-              className="rounded-[1.5rem] border border-border bg-[#fcfcfd] px-4 py-4 shadow-sm"
-            >
-              <p className="text-sm font-semibold text-foreground">{item}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{t("inspectedAndCatalogedParts")}</p>
-            </div>
-          ))}
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -716,26 +703,6 @@ function NoResultsBlock({ filters, mode }) {
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            <Card className="rounded-[1.5rem] p-5 shadow-none">
-              <CardContent className="space-y-3">
-                <h3 className="text-lg font-semibold text-foreground">{t("similarCategories")}</h3>
-                {["Lighting Parts", "Electrical Parts", "Body Parts"].map((item) => (
-                  <p key={item} className="text-sm text-muted-foreground">
-                    {item}
-                  </p>
-                ))}
-              </CardContent>
-            </Card>
-            <Card className="rounded-[1.5rem] p-5 shadow-none">
-              <CardContent className="space-y-3">
-                <h3 className="text-lg font-semibold text-foreground">{t("relatedParts")}</h3>
-                {["Headlight Assembly", "Headlight Bulb", "Tail Light"].map((item) => (
-                  <p key={item} className="text-sm text-muted-foreground">
-                    {item}
-                  </p>
-                ))}
-              </CardContent>
-            </Card>
             <Card className="rounded-[1.5rem] p-5 shadow-none">
               <CardContent className="space-y-4">
                 <h3 className="text-lg font-semibold text-foreground">{t("stillCannotFindIt")}</h3>

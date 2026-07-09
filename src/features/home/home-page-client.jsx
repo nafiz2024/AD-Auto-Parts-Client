@@ -260,6 +260,10 @@ function BrandCard({ brand }) {
 function TestimonialsSection({ testimonials }) {
   const { t } = useLanguage();
 
+  if (testimonials.items.length === 0) {
+    return null;
+  }
+
   return (
     <section className="space-y-6">
       <SectionHeader
@@ -385,11 +389,15 @@ function CategoriesSection({ categories }) {
         description={t("shopByCategoryDescription")}
         action={<SourceAction source={categories.source} />}
       />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {categories.items.map((category) => (
-          <CategoryCard key={category.id} category={category} />
-        ))}
-      </div>
+      {categories.items.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {categories.items.map((category) => (
+            <CategoryCard key={category.id} category={category} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState title={t("shopByCategory")} description={t("shopByCategoryDescription")} />
+      )}
     </section>
   );
 }
@@ -398,18 +406,22 @@ function ProductsSection({ title, description, products, buyNowBaseHref }) {
   return (
     <section className="space-y-6">
       <SectionHeader title={title} description={description} action={<SourceAction source={products.source} />} />
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        {products.items.map((product) => (
-          <ProductCard
-            key={`${title}-${product.id}`}
-            product={product}
-            buyNowHref={`${buyNowBaseHref}${buildQueryString({
-              productId: product.slug ?? product.id,
-              qty: 1,
-            })}`}
-          />
-        ))}
-      </div>
+      {products.items.length > 0 ? (
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {products.items.map((product) => (
+            <ProductCard
+              key={`${title}-${product.id}`}
+              product={product}
+              buyNowHref={`${buyNowBaseHref}${buildQueryString({
+                productId: product.slug ?? product.id,
+                qty: 1,
+              })}`}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState title={title} description={description} />
+      )}
     </section>
   );
 }
@@ -424,11 +436,18 @@ function BrandsSection({ vehicleBrands }) {
         description={t("shopByVehicleBrandDescription")}
         action={<SourceAction source={vehicleBrands.source} />}
       />
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
-        {vehicleBrands.items.map((brand) => (
-          <BrandCard key={brand.id} brand={brand} />
-        ))}
-      </div>
+      {vehicleBrands.items.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+          {vehicleBrands.items.map((brand) => (
+            <BrandCard key={brand.id} brand={brand} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          title={t("shopByVehicleBrand")}
+          description={t("shopByVehicleBrandDescription")}
+        />
+      )}
     </section>
   );
 }

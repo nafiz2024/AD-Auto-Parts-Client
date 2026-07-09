@@ -566,6 +566,20 @@ function normalizeBrand(item) {
   };
 }
 
+function normalizeModel(item) {
+  return {
+    id: item?.id ?? item?._id ?? item?.slug ?? item?.name ?? "model",
+    slug: item?.slug ?? item?.id ?? item?._id ?? item?.name?.toLowerCase?.() ?? "model",
+    name: item?.name ?? item?.title ?? "Model",
+    brandSlug:
+      item?.brandSlug ??
+      item?.vehicleBrand?.slug ??
+      item?.brand?.slug ??
+      item?.vehicleBrandId ??
+      null,
+  };
+}
+
 function normalizeProduct(item) {
   const id = item?.id ?? item?._id ?? item?.slug ?? item?.sku ?? "product";
   const priceMinor =
@@ -651,28 +665,20 @@ function normalizeProduct(item) {
   };
 }
 
-async function fetchCollection(request, fallbackItems, normalizer) {
+async function fetchCollection(request, normalizer) {
   try {
     const response = await request();
     const items = normalizeItems(response?.data).map(normalizer);
 
-    if (items.length > 0) {
-      return {
-        items,
-        source: "api",
-        error: null,
-      };
-    }
-
     return {
-      items: fallbackItems,
-      source: "preview",
+      items,
+      source: "api",
       error: null,
     };
   } catch (error) {
     return {
-      items: fallbackItems,
-      source: "preview",
+      items: [],
+      source: "unavailable",
       error,
     };
   }
@@ -773,128 +779,6 @@ function normalizeSearchParams(searchParams, mode, categorySlug) {
   };
 }
 
-function filterPreviewProducts(products, filters) {
-  const query = filters.q.toLowerCase();
-
-  return products.filter((product) => {
-    if (filters.category && product.categorySlug !== filters.category) {
-      return false;
-    }
-
-    if (filters.brand && product.vehicleBrandSlug !== filters.brand) {
-      return false;
-    }
-
-    if (filters.model && product.vehicleModelSlug !== filters.model) {
-      return false;
-    }
-
-    if (filters.year) {
-      const from = product.yearFrom ?? 0;
-      const to = product.yearTo ?? from;
-
-      if (filters.year < from || filters.year > to) {
-        return false;
-      }
-    }
-
-    if (filters.conditions.length > 0 && !filters.conditions.includes(product.conditionCode)) {
-      return false;
-    }
-
-    if (filters.availability.length > 0 && !filters.availability.includes(product.stockCode)) {
-      return false;
-    }
-
-    if (filters.positions.length > 0 && !filters.positions.includes(product.position)) {
-      return false;
-    }
-
-    if (
-      filters.partsBrands.length > 0 &&
-      !filters.partsBrands.includes(product.partsBrandSlug)
-    ) {
-      return false;
-    }
-
-    if (filters.minPrice !== null && product.priceMinor < filters.minPrice) {
-      return false;
-    }
-
-    if (filters.maxPrice !== null && product.priceMinor > filters.maxPrice) {
-      return false;
-    }
-
-    if (!query) {
-      return true;
-    }
-
-    const haystack = [
-      product.name,
-      product.vehicleSummary,
-      product.identifier,
-      product.categoryName,
-      product.vehicleBrandName,
-      product.vehicleModelName,
-      ...(product.relevanceTerms ?? []),
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-
-    return haystack.includes(query);
-  });
-}
-
-function sortPreviewProducts(products, sort) {
-  const items = [...products];
-
-  if (sort === "price_low_to_high") {
-    return items.sort((left, right) => left.priceMinor - right.priceMinor);
-  }
-
-  if (sort === "price_high_to_low") {
-    return items.sort((left, right) => right.priceMinor - left.priceMinor);
-  }
-
-  if (sort === "most_viewed") {
-    return items.sort((left, right) => (right.featured ? 1 : 0) - (left.featured ? 1 : 0));
-  }
-
-  if (sort === "featured") {
-    return items.sort((left, right) => Number(right.featured) - Number(left.featured));
-  }
-
-  if (sort === "relevance") {
-    return items.sort((left, right) => {
-      const leftScore = left.relevanceTerms?.length ?? 0;
-      const rightScore = right.relevanceTerms?.length ?? 0;
-      return rightScore - leftScore;
-    });
-  }
-
-  return items.sort((left, right) => left.newestRank - right.newestRank);
-}
-
-function paginatePreviewProducts(products, page) {
-  const total = products.length;
-  const totalPages = total === 0 ? 0 : Math.ceil(total / PAGE_SIZE);
-  const currentPage = totalPages === 0 ? 1 : Math.min(page, totalPages);
-  const startIndex = (currentPage - 1) * PAGE_SIZE;
-
-  return {
-    items: products.slice(startIndex, startIndex + PAGE_SIZE),
-    pagination: {
-      page: currentPage,
-      limit: PAGE_SIZE,
-      total,
-      totalPages,
-      hasNextPage: totalPages > 0 && currentPage < totalPages,
-      hasPreviousPage: currentPage > 1,
-    },
-  };
-}
-
 function countBy(items, getter) {
   return items.reduce((accumulator, item) => {
     const key = getter(item);
@@ -908,7 +792,7 @@ function countBy(items, getter) {
   }, {});
 }
 
-function deriveFilterData(products, categories, vehicleBrands, partsBrands) {
+function deriveFilterData(products, categories, vehicleBrands, vehicleModels, partsBrands) {
   const categoryCounts = countBy(products, (product) => product.categorySlug);
   const brandCounts = countBy(products, (product) => product.vehicleBrandSlug);
   const modelCounts = countBy(products, (product) => product.vehicleModelSlug);
@@ -932,7 +816,7 @@ function deriveFilterData(products, categories, vehicleBrands, partsBrands) {
         label: brand.name,
         count: brandCounts[brand.slug],
       })),
-    models: previewVehicleModels
+    models: vehicleModels
       .filter((model) => modelCounts[model.slug])
       .map((model) => ({
         value: model.slug,
@@ -1066,13 +950,19 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
   const resolvedSearchParams = (await searchParams) ?? {};
   const filters = normalizeSearchParams(resolvedSearchParams, mode, categorySlug);
 
-  const [categories, vehicleBrands, partsBrands] = await Promise.all([
-    fetchCollection(() => apiGet(endpoints.public.categories), previewCategories, normalizeCategory),
-    fetchCollection(() => apiGet(endpoints.public.vehicleBrands), previewVehicleBrands, normalizeBrand),
-    fetchCollection(() => apiGet(endpoints.public.partsBrands), previewPartsBrands, normalizeBrand),
+  const [categories, vehicleBrands, vehicleModels, partsBrands] = await Promise.all([
+    fetchCollection(() => apiGet(endpoints.public.categories), normalizeCategory),
+    fetchCollection(() => apiGet(endpoints.public.vehicleBrands), normalizeBrand),
+    fetchCollection(() => apiGet(endpoints.public.vehicleModels), normalizeModel),
+    fetchCollection(() => apiGet(endpoints.public.partsBrands), normalizeBrand),
   ]);
 
-  const backendQuery = buildBackendQuery(filters, mode, { categories, vehicleBrands, partsBrands });
+  const backendQuery = buildBackendQuery(filters, mode, {
+    categories,
+    vehicleBrands,
+    vehicleModels,
+    partsBrands,
+  });
 
   let apiProducts = null;
   let productsError = null;
@@ -1103,24 +993,24 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
     productsError = error;
   }
 
-  const previewBaseProducts = filterPreviewProducts(previewProducts, {
-    ...filters,
-    page: 1,
-  });
-  const sortedPreviewProducts = sortPreviewProducts(previewBaseProducts, filters.sort);
-  const previewPagination = paginatePreviewProducts(sortedPreviewProducts, filters.page);
-
   const sourceProducts = apiProducts ?? {
-    items: previewPagination.items,
-    source: "preview",
-    pagination: previewPagination.pagination,
-    resultCount: previewBaseProducts.length,
+    items: [],
+    source: productsError ? "unavailable" : "api",
+    pagination: {
+      page: filters.page,
+      limit: PAGE_SIZE,
+      total: 0,
+      totalPages: 0,
+      hasNextPage: false,
+      hasPreviousPage: filters.page > 1,
+    },
+    resultCount: 0,
     searchMeta: null,
   };
 
   const category =
     (filters.category &&
-      [...categories.items, ...previewCategories].find(
+      categories.items.find(
         (item) => item.slug === filters.category || item.id === filters.category,
       )) ||
     null;
@@ -1128,13 +1018,14 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
   const categoryNotFound =
     mode === "category" &&
     !category &&
-    (categories.source === "preview" || productsError?.status === 404);
+    (categories.source === "api" || productsError?.status === 404);
 
-  const filterUniverse = apiProducts ? apiProducts.items : previewBaseProducts;
+  const filterUniverse = apiProducts ? apiProducts.items : [];
   const filterData = deriveFilterData(
     filterUniverse,
     categories.items,
     vehicleBrands.items,
+    vehicleModels.items,
     partsBrands.items,
   );
 
@@ -1146,6 +1037,7 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
     productsError,
     categories,
     vehicleBrands,
+    vehicleModels,
     partsBrands,
     filterData,
     category,
@@ -1155,4 +1047,12 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
   };
 }
 
-export { PAGE_SIZE, normalizeProduct, previewCategories, previewProducts };
+export {
+  PAGE_SIZE,
+  normalizeProduct,
+  previewCategories,
+  previewProducts,
+  previewVehicleBrands,
+  previewVehicleModels,
+  previewPartsBrands,
+};
