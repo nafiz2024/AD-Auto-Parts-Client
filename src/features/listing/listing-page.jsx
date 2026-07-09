@@ -356,8 +356,9 @@ function CheckboxOption({ name, option, activeValues, onChange }) {
 
 function FilterSidebar({ basePath, filters, filterData, mode }) {
   const router = useRouter();
-  const { t } = useLanguage();
+  const { direction, t } = useLanguage();
   const [draftFilters, setDraftFilters] = useState(() => createDraftFilters(filters, mode));
+  const isRtl = direction === "rtl";
 
   function updateArrayFilter(key, value, checked) {
     setDraftFilters((current) => {
@@ -421,9 +422,17 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
               value={draftFilters.q}
               onChange={(event) => updateField("q", event.target.value)}
               placeholder={t("searchParts")}
-              className="pe-12"
+              className={cn(
+                "text-slate-900 placeholder:text-slate-400",
+                isRtl ? "pl-12 pr-4" : "pl-4 pr-12",
+              )}
             />
-            <span className="pointer-events-none absolute inset-y-0 inset-inline-end-0 flex w-12 items-center justify-center text-muted-foreground">
+            <span
+              className={cn(
+                "pointer-events-none absolute top-1/2 -translate-y-1/2 text-slate-500",
+                isRtl ? "left-4" : "right-4",
+              )}
+            >
               <SearchIcon className="size-4" />
             </span>
           </div>
