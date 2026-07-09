@@ -8,29 +8,19 @@ import { cn } from "@/lib/utils/cn";
 export function BrandLogo({ href = "/", compact = false, className = "" }) {
   return (
     <Link href={href} className={cn("inline-flex items-center", className)}>
-      {compact ? (
-        <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm">
-          <Image
-            src="/ad-auto-parts-logo.png"
-            alt={APP_NAME}
-            width={48}
-            height={48}
-            className="h-12 w-12 object-contain"
-            priority
-          />
-        </div>
-      ) : (
-        <div className="relative">
-          <Image
-            src="/ad-auto-parts-wordmark.png"
-            alt={APP_NAME}
-            width={420}
-            height={120}
-            className="h-auto w-[170px] object-contain sm:w-[220px] lg:w-[260px]"
-            priority
-          />
-        </div>
-      )}
+      <div className="relative">
+        <Image
+          src="/ad-auto-parts-wordmark-removebg-preview.png"
+          alt={APP_NAME}
+          width={960}
+          height={244}
+          className={cn(
+            "w-auto object-contain",
+            compact ? "h-8 sm:h-9" : "h-10 sm:h-11 lg:h-12",
+          )}
+          priority
+        />
+      </div>
       <span className="sr-only">{APP_NAME}</span>
     </Link>
   );

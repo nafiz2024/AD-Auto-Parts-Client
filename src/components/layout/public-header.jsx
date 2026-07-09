@@ -251,7 +251,7 @@ export function PublicHeader() {
       </div>
 
       <Container>
-        <div className="flex items-center justify-between gap-4 py-3 lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center">
+        <div className="flex items-center justify-between gap-4 py-2.5 lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -321,13 +321,13 @@ export function PublicHeader() {
           </div>
         </div>
 
-        <div className="pb-3 lg:hidden">
+        <div className="pb-2 lg:hidden">
           <SearchBar />
         </div>
       </Container>
 
       <div className="hidden border-t border-border lg:block">
-        <Container className="flex items-center justify-between gap-6 py-2.5">
+        <Container className="flex items-center justify-between gap-6 py-2">
           <div className="relative" ref={categoryMenuRef}>
             <button
               type="button"
