@@ -63,6 +63,24 @@ function resolveAuthError(error, t) {
   return getErrorMessage(error);
 }
 
+function isAccountCreationPermissionError(error) {
+  if (!error) {
+    return false;
+  }
+
+  const normalizedCode = String(error.code ?? "").toUpperCase();
+  const normalizedMessage = String(error.message ?? "").toLowerCase();
+
+  return (
+    error.isForbidden ||
+    error.isTotpRequired ||
+    normalizedCode.includes("PERMISSION") ||
+    normalizedCode.includes("FORBIDDEN") ||
+    normalizedCode.includes("ADMIN") ||
+    normalizedMessage.includes("permission")
+  );
+}
+
 export function CustomerAuthPage({ mode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -160,26 +178,26 @@ export function CustomerAuthPage({ mode }) {
 
     startTransition(async () => {
       try {
-        await signUpWithEmail({
+        const result = await signUpWithEmail({
           name: form.name.trim(),
           email: form.email.trim(),
-          phone: form.phone.trim() || undefined,
           password: form.password,
         });
 
-        try {
-          await signInWithEmail(form.email.trim(), form.password);
-          const session = await auth.refresh();
+        const session = await auth.refresh().catch(() => null);
 
-          if (getSessionRole(session) === "customer") {
-            toast.success(t("createAccount"), t("accountCreatedSuccessfully"));
-            router.replace(redirectTarget);
-            return;
-          }
+        if (getSessionRole(session) === "customer") {
+          toast.success(t("createAccount"), t("accountCreatedSuccessfully"));
+          router.replace(redirectTarget);
+          return;
+        }
 
-          await auth.logout();
-        } catch {
-          // Safe fallback to login below.
+        if (auth.isAuthenticated && auth.role && auth.role !== "customer") {
+          await auth.logout().catch(() => {});
+        }
+
+        if (result) {
+          toast.success(t("createAccount"), t("accountCreatedSuccessfully"));
         }
 
         router.replace(
@@ -189,6 +207,11 @@ export function CustomerAuthPage({ mode }) {
           })}`,
         );
       } catch (error) {
+        if (isAccountCreationPermissionError(error)) {
+          setErrorMessage(t("accountCreationUnavailable"));
+          return;
+        }
+
         setErrorMessage(resolveAuthError(error, t));
       }
     });

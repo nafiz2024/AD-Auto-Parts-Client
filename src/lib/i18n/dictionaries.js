@@ -1379,6 +1379,8 @@ export const dictionaries = {
     signedInSuccessfully: "Signed in successfully.",
     signedOutSuccessfully: "Signed out successfully.",
     accountCreatedSuccessfully: "Account created successfully.",
+    accountCreationUnavailable:
+      "Account creation is currently unavailable. Please try again or contact support.",
     invalidEmailOrPassword: "Invalid email or password.",
     pleaseReviewYourDetails: "Please review your details and try again.",
     pleaseSignInWithCustomerAccount: "Please sign in with a customer account to continue.",
@@ -2727,6 +2729,8 @@ export const dictionaries = {
     signedInSuccessfully: "تم تسجيل الدخول بنجاح.",
     signedOutSuccessfully: "تم تسجيل الخروج بنجاح.",
     accountCreatedSuccessfully: "تم إنشاء الحساب بنجاح.",
+    accountCreationUnavailable:
+      "إنشاء الحساب غير متاح حاليًا. يرجى المحاولة مرة أخرى أو التواصل مع الدعم.",
     invalidEmailOrPassword: "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
     pleaseReviewYourDetails: "يرجى مراجعة بياناتك والمحاولة مرة أخرى.",
     pleaseSignInWithCustomerAccount: "يرجى تسجيل الدخول بحساب عميل للمتابعة.",
