@@ -1,7 +1,7 @@
 import { apiGet } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 
-const PAGE_SIZE = 12;
+const SHOP_PAGE_SIZE = 6;
 
 const previewCategories = [
   {
@@ -1218,7 +1218,7 @@ function createSuggestedSearches(query) {
 
 function buildBackendQuery(filters, mode, taxonomies) {
   const query = {
-    limit: PAGE_SIZE,
+    limit: SHOP_PAGE_SIZE,
     page: filters.page,
     sort: filters.sort,
   };
@@ -1333,26 +1333,51 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
 
   try {
     const response = await apiGet(endpoints.public.products, { query: backendQuery });
-    const items = normalizeItems(response?.data).map(normalizeProduct);
+    const normalizedItems = normalizeItems(response?.data).map(normalizeProduct);
+    const responsePagination = response?.data?.pagination ?? null;
+    const totalResults =
+      responsePagination?.total ??
+      response?.data?.resultCount ??
+      response?.data?.total ??
+      normalizedItems.length;
+    const totalPages = Math.max(
+      1,
+      responsePagination?.totalPages ??
+        Math.ceil(totalResults / SHOP_PAGE_SIZE),
+    );
+    const currentPage = Math.min(
+      Math.max(responsePagination?.page ?? filters.page, 1),
+      totalPages,
+    );
+    const usesBackendPagination = Boolean(responsePagination);
+    const paginatedItems = usesBackendPagination
+      ? normalizedItems
+      : normalizedItems.slice(
+          (currentPage - 1) * SHOP_PAGE_SIZE,
+          currentPage * SHOP_PAGE_SIZE,
+        );
 
-    if (items.length > 0) {
-      const pagination = response?.data?.pagination ?? {
-        page: filters.page,
-        limit: PAGE_SIZE,
-        total: items.length,
-        totalPages: Math.ceil(items.length / PAGE_SIZE),
-        hasNextPage: false,
-        hasPreviousPage: filters.page > 1,
-      };
+    const pagination = {
+      page: currentPage,
+      limit: responsePagination?.limit ?? SHOP_PAGE_SIZE,
+      total: totalResults,
+      totalPages,
+      hasNextPage:
+        responsePagination?.hasNextPage ??
+        currentPage < totalPages,
+      hasPreviousPage:
+        responsePagination?.hasPreviousPage ??
+        currentPage > 1,
+    };
 
-      apiProducts = {
-        items,
-        source: "api",
-        pagination,
-        resultCount: response?.data?.resultCount ?? items.length,
-        searchMeta: response?.data?.searchMeta ?? null,
-      };
-    }
+    apiProducts = {
+      items: paginatedItems,
+      source: "api",
+      pagination,
+      resultCount: totalResults,
+      searchMeta: response?.data?.searchMeta ?? null,
+      canonicalPage: currentPage,
+    };
   } catch (error) {
     productsError = error;
   }
@@ -1361,15 +1386,16 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
     items: [],
     source: productsError ? "unavailable" : "api",
     pagination: {
-      page: filters.page,
-      limit: PAGE_SIZE,
-      total: 0,
-      totalPages: 0,
-      hasNextPage: false,
+        page: filters.page,
+        limit: SHOP_PAGE_SIZE,
+        total: 0,
+        totalPages: 0,
+        hasNextPage: false,
       hasPreviousPage: filters.page > 1,
     },
     resultCount: 0,
     searchMeta: null,
+    canonicalPage: 1,
   };
 
   const category =
@@ -1398,6 +1424,7 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
     filters,
     sortOptions: Object.values(sortOptions),
     products: sourceProducts,
+    canonicalPage: sourceProducts.canonicalPage,
     productsError,
     categories,
     vehicleBrands,
@@ -1412,7 +1439,7 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
 }
 
 export {
-  PAGE_SIZE,
+  SHOP_PAGE_SIZE,
   normalizeProduct,
   previewCategories,
   previewProducts,

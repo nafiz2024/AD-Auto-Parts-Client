@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -761,7 +761,7 @@ function ListingToolbar({ basePath, filters, sortOptions, products }) {
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <div className="inline-flex rounded-2xl border border-border bg-muted/40 p-1">
-          <Link href={createHref(basePath, filters, { view: "grid", page: 1 })}>
+          <Link href={createHref(basePath, filters, { view: "grid" })}>
             <span
               className={`flex size-11 items-center justify-center rounded-xl transition ${
                 filters.view === "grid"
@@ -772,7 +772,7 @@ function ListingToolbar({ basePath, filters, sortOptions, products }) {
               <GridIcon className="size-4" />
             </span>
           </Link>
-          <Link href={createHref(basePath, filters, { view: "list", page: 1 })}>
+          <Link href={createHref(basePath, filters, { view: "list" })}>
             <span
               className={`flex size-11 items-center justify-center rounded-xl transition ${
                 filters.view === "list"
@@ -926,6 +926,7 @@ function NoResultsBlock({ filters, mode }) {
 
 export function ListingPage({ data, basePath }) {
   const { t } = useLanguage();
+  const router = useRouter();
   const {
     mode,
     filters,
@@ -936,7 +937,18 @@ export function ListingPage({ data, basePath }) {
     filterData,
     suggestedSearches,
     paginationRange,
+    canonicalPage,
   } = data;
+
+  useEffect(() => {
+    if (!products.resultCount || !canonicalPage || canonicalPage === filters.page) {
+      return;
+    }
+
+    router.replace(createHref(basePath, filters, { page: canonicalPage }), {
+      scroll: false,
+    });
+  }, [basePath, canonicalPage, filters, products.resultCount, router]);
 
   if (categoryNotFound) {
     return (
