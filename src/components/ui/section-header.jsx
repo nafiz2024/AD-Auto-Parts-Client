@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 
-export function SectionHeader({ eyebrow, title, description, className, action }) {
+export function SectionHeader({ eyebrow, title, description, className, descriptionClassName, action }) {
   return (
     <div className={cn("flex flex-wrap items-end justify-between gap-4", className)}>
       <div className="space-y-2">
@@ -11,7 +11,7 @@ export function SectionHeader({ eyebrow, title, description, className, action }
         ) : null}
         <h2 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h2>
         {description ? (
-          <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
+          <p className={cn("max-w-2xl text-sm leading-6 text-muted-foreground", descriptionClassName)}>{description}</p>
         ) : null}
       </div>
       {action}

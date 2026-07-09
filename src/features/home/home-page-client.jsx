@@ -343,7 +343,11 @@ function WhyChooseUsSection() {
 
   return (
     <section className="space-y-6">
-      <SectionHeader title={t("whyChooseUs")} description={t("whyChooseUsDescription")} />
+      <SectionHeader
+        title={t("whyChooseUs")}
+        description={t("whyChooseUsDescription")}
+        descriptionClassName="lg:max-w-none lg:whitespace-nowrap"
+      />
       <div className="grid gap-4 lg:grid-cols-5">
         {whyChooseUsItems.map((item) => {
           const Icon = item.icon;
@@ -374,17 +378,15 @@ function HowItWorksSection() {
       <SectionHeader title={t("howItWorks")} description={t("howItWorksDescription")} />
       <div className="grid gap-4 lg:grid-cols-4">
         {howItWorksItems.map((item, index) => (
-          <Card key={item.labelKey} className="relative h-full">
-            <CardContent className="grid items-center gap-4 sm:grid-cols-[3.5rem_minmax(0,1fr)]">
-              <div className="flex justify-center sm:self-stretch sm:items-center">
+          <Card key={item.labelKey} className="h-full">
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3 text-start">
                 <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-red text-sm font-semibold text-white">
                   {index + 1}
                 </div>
-              </div>
-              <div className="text-center sm:text-start">
                 <h3 className="text-lg font-semibold text-foreground">{t(item.labelKey)}</h3>
-                <p className="mt-2 text-sm leading-7 text-muted-foreground">{t(item.descriptionKey)}</p>
               </div>
+              <p className="text-sm leading-7 text-muted-foreground">{t(item.descriptionKey)}</p>
             </CardContent>
           </Card>
         ))}
