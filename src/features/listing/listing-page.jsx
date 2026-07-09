@@ -25,6 +25,7 @@ import { ProductCardSkeleton } from "@/components/states/loading-states";
 import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
 import { getConditionLabel, getStockLabel } from "@/lib/formatters/product-labels";
+import { cn } from "@/lib/utils/cn";
 import { buildQueryString } from "@/lib/api/query";
 import { DEFAULT_SUPPORT_DETAILS, getWhatsappHref } from "@/features/support/support-api";
 
