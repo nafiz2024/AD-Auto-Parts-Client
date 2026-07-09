@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/icons";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Select } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { ProductCardSkeleton } from "@/components/states/loading-states";
 import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
@@ -276,14 +277,16 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
         </div>
         <FilterSection title={t("searchWithinResults")}>
           <div className="relative">
-            <input
+            <Input
               type="search"
               name="q"
               defaultValue={filters.q}
               placeholder={t("searchParts")}
-              className="h-12 w-full rounded-2xl border border-border bg-white px-4 pe-11 text-sm text-foreground shadow-sm outline-none transition focus:border-brand-red focus:ring-4 focus:ring-brand-red/10"
+              className="pe-12"
             />
-            <SearchIcon className="pointer-events-none absolute inset-block-start-1/2 inset-inline-end-4 -translate-y-1/2 text-muted-foreground" />
+            <span className="pointer-events-none absolute inset-y-0 inset-inline-end-0 flex w-12 items-center justify-center text-muted-foreground">
+              <SearchIcon className="size-4" />
+            </span>
           </div>
         </FilterSection>
         {mode === "shop" ? (
@@ -611,7 +614,7 @@ function ListingToolbar({ basePath, filters, sortOptions, products }) {
             </span>
           </Link>
         </div>
-        <form action={basePath} className="flex min-w-64 items-center gap-2">
+        <form action={basePath} className="flex min-w-64 flex-wrap items-center gap-2 sm:flex-nowrap">
           <HiddenFields filters={filters} exclude={["sort", "page"]} />
           <div className="flex-1">
             <Select name="sort" defaultValue={filters.sort} className="bg-white">

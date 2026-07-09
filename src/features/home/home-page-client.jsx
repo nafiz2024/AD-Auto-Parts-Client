@@ -296,27 +296,29 @@ function HelpCtaSection() {
 
   return (
     <section className="rounded-[2.5rem] bg-[linear-gradient(135deg,#0f172a,#13213c)] p-8 text-white shadow-soft sm:p-10">
-      <div className="grid gap-6 lg:grid-cols-[1.1fr_auto_auto] lg:items-center">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
         <div>
           <h2 className="text-3xl font-semibold">{t("needHelpFindingTheRightPart")}</h2>
           <p className="mt-3 max-w-2xl text-base leading-7 text-white/70">
             {t("needHelpFindingRightPartDescription")}
           </p>
         </div>
-        <a
-          href="https://wa.me/966543216789"
-          className="inline-flex items-center justify-center gap-3 rounded-2xl bg-[#25d366] px-6 py-4 font-semibold text-white transition hover:brightness-95"
-        >
-          <WhatsappIcon className="size-5" />
-          {t("chatOnWhatsapp")}
-        </a>
-        <a
-          href="tel:+966543216789"
-          className="inline-flex items-center justify-center gap-3 rounded-2xl bg-white px-6 py-4 font-semibold text-brand-navy transition hover:bg-slate-100"
-        >
-          <MessageCircleIcon className="size-5" />
-          {t("callUs")}
-        </a>
+        <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+          <a
+            href="https://wa.me/966543216789"
+            className="inline-flex min-h-12 items-center justify-center gap-3 rounded-2xl bg-[#25d366] px-6 py-3 font-semibold text-white transition hover:brightness-95"
+          >
+            <WhatsappIcon className="size-5 shrink-0" />
+            <span>{t("chatOnWhatsapp")}</span>
+          </a>
+          <a
+            href="tel:+966543216789"
+            className="inline-flex min-h-12 items-center justify-center gap-3 rounded-2xl border border-white/15 bg-white px-6 py-3 font-semibold text-brand-navy transition hover:bg-slate-100"
+          >
+            <MessageCircleIcon className="size-5 shrink-0" />
+            <span>{t("callUs")}</span>
+          </a>
+        </div>
       </div>
     </section>
   );
@@ -359,11 +361,13 @@ function HowItWorksSection() {
       <div className="grid gap-4 lg:grid-cols-4">
         {howItWorksItems.map((item, index) => (
           <Card key={item.labelKey} className="relative h-full">
-            <CardContent className="flex items-start gap-4">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-red text-sm font-semibold text-white">
-                {index + 1}
+            <CardContent className="grid items-center gap-4 sm:grid-cols-[3.5rem_minmax(0,1fr)]">
+              <div className="flex justify-center sm:self-stretch sm:items-center">
+                <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-brand-red text-sm font-semibold text-white">
+                  {index + 1}
+                </div>
               </div>
-              <div>
+              <div className="text-center sm:text-start">
                 <h3 className="text-lg font-semibold text-foreground">{t(item.labelKey)}</h3>
                 <p className="mt-2 text-sm leading-7 text-muted-foreground">{t(item.descriptionKey)}</p>
               </div>

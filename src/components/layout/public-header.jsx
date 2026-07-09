@@ -99,17 +99,19 @@ function IconAction({ icon: Icon, label, badge, onClick, ariaLabel }) {
       type="button"
       onClick={onClick}
       aria-label={ariaLabel ?? label}
-      className="relative flex min-w-20 cursor-pointer flex-col items-center gap-1 rounded-2xl px-3 py-2 text-sm text-foreground transition hover:bg-muted"
+      className="relative flex h-14 min-w-[4.75rem] cursor-pointer items-center justify-center rounded-2xl px-3 text-sm text-foreground transition hover:bg-muted"
     >
-      <span className="relative">
-        <Icon className="size-5" />
-        {badge ? (
-          <span className="absolute -inset-block-start-2 -inset-inline-end-2 flex size-5 items-center justify-center rounded-full bg-brand-red text-[10px] font-semibold text-white">
-            {badge}
-          </span>
-        ) : null}
+      <span className="relative flex flex-col items-center justify-center gap-1 leading-none">
+        <span className="relative flex size-5 items-center justify-center">
+          <Icon className="size-5" />
+          {badge ? (
+            <span className="absolute -inset-block-start-2.5 -inset-inline-end-2.5 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-brand-red px-1 text-[10px] font-semibold text-white">
+              {badge}
+            </span>
+          ) : null}
+        </span>
+        <span className="text-xs font-medium leading-none">{label}</span>
       </span>
-      <span className="text-xs font-medium">{label}</span>
     </button>
   );
 }
@@ -278,7 +280,7 @@ export function PublicHeader() {
                 aria-expanded={accountOpen}
                 aria-haspopup="menu"
                 aria-label={t("accountMenu")}
-                className="flex min-w-28 cursor-pointer items-center gap-2 rounded-2xl px-3 py-2 text-sm text-foreground transition hover:bg-muted"
+                className="flex h-14 min-w-28 cursor-pointer items-center gap-2 rounded-2xl px-3 text-sm text-foreground transition hover:bg-muted"
               >
                 <UserIcon className="size-5" />
                 <div className="text-start">
@@ -395,9 +397,9 @@ export function PublicHeader() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${t("whatsapp")} ${whatsappNumber}`}
-              className="flex cursor-pointer items-center gap-3 rounded-2xl border border-border px-4 py-2 transition hover:border-[#25d366]/40 hover:bg-muted/40"
+              className="flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border border-border px-4 py-2 transition hover:border-[#25d366]/40 hover:bg-muted/40"
             >
-              <WhatsappIcon className="text-[#25d366]" />
+              <WhatsappIcon className="size-5 shrink-0 text-[#25d366]" />
               <div className="text-sm">
                 <p className="font-semibold text-foreground">{t("whatsapp")}</p>
                 <p className="text-muted-foreground">{whatsappNumber}</p>
@@ -505,8 +507,15 @@ export function PublicHeader() {
                 aria-label={`${t("whatsapp")} ${whatsappNumber}`}
                 className="block rounded-2xl border border-border p-4 transition hover:bg-muted"
               >
-                <p className="font-semibold text-foreground">{t("whatsapp")}</p>
-                <p className="text-sm text-muted-foreground">{whatsappNumber}</p>
+                <div className="flex items-center gap-3">
+                  <span className="flex size-10 items-center justify-center rounded-2xl bg-[#25d366]/10 text-[#25d366]">
+                    <WhatsappIcon className="size-5" />
+                  </span>
+                  <div>
+                    <p className="font-semibold text-foreground">{t("whatsapp")}</p>
+                    <p className="text-sm text-muted-foreground">{whatsappNumber}</p>
+                  </div>
+                </div>
               </a>
             ) : null}
             {partsBrands.length > 0 ? (

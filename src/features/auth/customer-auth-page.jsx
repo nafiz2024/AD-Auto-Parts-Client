@@ -13,6 +13,7 @@ import { routes } from "@/constants/routes";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
+import { getCustomerPasswordError } from "@/lib/auth/customer-password";
 import { sanitizeCustomerRedirect } from "@/lib/auth/customer-auth";
 import { getErrorMessage } from "@/lib/api/error-messages";
 import { getSessionRole, signInWithEmail, signUpWithEmail } from "@/lib/auth/session";
@@ -70,6 +71,7 @@ export function CustomerAuthPage({ mode }) {
   const { t } = useLanguage();
   const [isPending, startTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -111,12 +113,14 @@ export function CustomerAuthPage({ mode }) {
   }, [searchParams, t, toast]);
 
   function updateField(key, value) {
+    setFieldErrors((current) => ({ ...current, [key]: undefined }));
     setForm((current) => ({ ...current, [key]: value }));
   }
 
   function handleSignIn(event) {
     event.preventDefault();
     setErrorMessage("");
+    setFieldErrors({});
 
     startTransition(async () => {
       try {
@@ -140,9 +144,17 @@ export function CustomerAuthPage({ mode }) {
   function handleRegister(event) {
     event.preventDefault();
     setErrorMessage("");
+    setFieldErrors({});
+
+    const passwordErrorKey = getCustomerPasswordError(form.password);
+
+    if (passwordErrorKey) {
+      setFieldErrors({ password: t(passwordErrorKey) });
+      return;
+    }
 
     if (form.password !== form.confirmPassword) {
-      setErrorMessage(t("passwordsDoNotMatch"));
+      setFieldErrors({ confirmPassword: t("passwordsDoNotMatch") });
       return;
     }
 
@@ -205,8 +217,10 @@ export function CustomerAuthPage({ mode }) {
               value={form.name}
               onChange={(event) => updateField("name", event.target.value)}
               placeholder={t("fullName")}
+              aria-invalid={fieldErrors.name ? "true" : "false"}
               required
             />
+            {fieldErrors.name ? <p className="text-sm text-error">{fieldErrors.name}</p> : null}
           </div>
         ) : null}
 
@@ -219,8 +233,10 @@ export function CustomerAuthPage({ mode }) {
             value={form.email}
             onChange={(event) => updateField("email", event.target.value)}
             placeholder="customer@adautoparts.sa"
+            aria-invalid={fieldErrors.email ? "true" : "false"}
             required
           />
+          {fieldErrors.email ? <p className="text-sm text-error">{fieldErrors.email}</p> : null}
         </div>
 
         {isRegister ? (
@@ -233,7 +249,9 @@ export function CustomerAuthPage({ mode }) {
               value={form.phone}
               onChange={(event) => updateField("phone", event.target.value)}
               placeholder="+966 5X XXX XXXX"
+              aria-invalid={fieldErrors.phone ? "true" : "false"}
             />
+            {fieldErrors.phone ? <p className="text-sm text-error">{fieldErrors.phone}</p> : null}
           </div>
         ) : null}
 
@@ -246,8 +264,11 @@ export function CustomerAuthPage({ mode }) {
             value={form.password}
             onChange={(event) => updateField("password", event.target.value)}
             placeholder={t("enterYourPassword")}
+            aria-invalid={fieldErrors.password ? "true" : "false"}
             required
           />
+          {isRegister ? <p className="text-sm text-muted-foreground">{t("passwordMinLengthHelper")}</p> : null}
+          {fieldErrors.password ? <p className="text-sm text-error">{fieldErrors.password}</p> : null}
         </div>
 
         {isRegister ? (
@@ -260,8 +281,12 @@ export function CustomerAuthPage({ mode }) {
               value={form.confirmPassword}
               onChange={(event) => updateField("confirmPassword", event.target.value)}
               placeholder={t("confirmPassword")}
+              aria-invalid={fieldErrors.confirmPassword ? "true" : "false"}
               required
             />
+            {fieldErrors.confirmPassword ? (
+              <p className="text-sm text-error">{fieldErrors.confirmPassword}</p>
+            ) : null}
           </div>
         ) : null}
 

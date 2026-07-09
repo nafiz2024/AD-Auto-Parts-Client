@@ -531,6 +531,14 @@ export const dictionaries = {
       "COD and manual advance payment are supported without overstating gateway features.",
     howItWorksDescription:
       "A simple Buy Now journey without adding a cart workflow that the backend does not support.",
+    howItWorksStepOneDescription:
+      "Search by part name, vehicle details, OEM number, or a keyword to narrow down the right match faster.",
+    howItWorksStepTwoDescription:
+      "Review fitment details and contact our team if you want help confirming compatibility before ordering.",
+    howItWorksStepThreeDescription:
+      "Place your order through the Buy Now flow using the available checkout and payment steps.",
+    howItWorksStepFourDescription:
+      "We prepare and deliver your part with updates from our support team whenever you need them.",
     searchYourRequiredPart: "Search your required part",
     checkCompatibility: "Check compatibility",
     receiveTheProduct: "Receive the product",
@@ -1364,6 +1372,8 @@ export const dictionaries = {
     registerPageDescription:
       "Create a customer account for faster access to your orders, invoices, and support updates.",
     confirmPassword: "Confirm Password",
+    passwordMinLengthHelper: "Password must be at least 8 characters.",
+    passwordMustBeAtLeastEightCharacters: "Password must be at least 8 characters.",
     alreadyHaveAnAccount: "Already have an account?",
     doNotHaveAnAccount: "Do not have an account?",
     signedInSuccessfully: "Signed in successfully.",
@@ -1768,6 +1778,14 @@ export const dictionaries = {
       "الدفع عند الاستلام والدفع اليدوي المسبق مدعومان دون المبالغة في مزايا البوابة.",
     howItWorksDescription:
       "رحلة شراء الآن بسيطة من دون إضافة نظام سلة لا تدعمه الخلفية.",
+    howItWorksStepOneDescription:
+      "ابحث باسم القطعة أو تفاصيل المركبة أو رقم OEM أو كلمة مفتاحية للوصول إلى المطابقة المناسبة بشكل أسرع.",
+    howItWorksStepTwoDescription:
+      "راجع تفاصيل التوافق وتواصل مع فريقنا إذا كنت تريد المساعدة في تأكيد الملاءمة قبل الطلب.",
+    howItWorksStepThreeDescription:
+      "أكمل طلبك عبر مسار اشتر الآن باستخدام خطوات الدفع وإتمام الشراء المتاحة.",
+    howItWorksStepFourDescription:
+      "نجهز القطعة ونوصلها مع تحديثات من فريق الدعم كلما احتجت إلى المتابعة.",
     searchYourRequiredPart: "ابحث عن القطعة المطلوبة",
     checkCompatibility: "تحقق من التوافق",
     receiveTheProduct: "استلم المنتج",
@@ -2702,6 +2720,8 @@ export const dictionaries = {
     registerPageDescription:
       "أنشئ حساب عميل للوصول بشكل أسرع إلى طلباتك وفواتيرك وتحديثات الدعم.",
     confirmPassword: "تأكيد كلمة المرور",
+    passwordMinLengthHelper: "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
+    passwordMustBeAtLeastEightCharacters: "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.",
     alreadyHaveAnAccount: "هل لديك حساب بالفعل؟",
     doNotHaveAnAccount: "ألا تملك حساباً؟",
     signedInSuccessfully: "تم تسجيل الدخول بنجاح.",
