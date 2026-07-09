@@ -402,6 +402,114 @@ export const dictionaries = {
     compatiblePartsPreview: "Compatible parts preview",
     customerReviewsDescription:
       "Public reviews will connect to backend-safe review feeds in a later step. These cards are lightweight placeholders for now.",
+    myReviews: "My Reviews",
+    myQuestions: "My Questions",
+    productReviews: "Product Reviews",
+    customerReviews: "Customer Reviews",
+    writeAReview: "Write a Review",
+    reviewFormDescription:
+      "Share your condition, fitment, and ordering feedback. Backend eligibility and moderation rules still apply.",
+    submitReview: "Submit Review",
+    rating: "Rating",
+    reviewTitle: "Review Title",
+    reviewTitlePlaceholder: "Summarize your experience",
+    reviewComment: "Review Comment",
+    reviewCommentPlaceholder: "Tell other customers about part condition, fitment, and delivery.",
+    verifiedBuyer: "Verified Buyer",
+    pendingReview: "Pending Review",
+    published: "Published",
+    rejected: "Rejected",
+    hidden: "Hidden",
+    reviewSubmittedSuccessfully: "Review submitted successfully",
+    yourReviewIsPendingModeration:
+      "Your review is pending moderation before it can appear publicly.",
+    noReviewsYet: "No reviews yet",
+    customerReviewsEmptyDescription:
+      "You have not submitted any product reviews yet.",
+    searchReviews: "Search reviews",
+    editReview: "Edit Review",
+    deleteReview: "Delete Review",
+    deleteReviewConfirmation:
+      "Delete this review if the backend confirms the removal. This action cannot be undone.",
+    reviewUpdatedDescription:
+      "Your review has been updated and will follow the backend moderation workflow.",
+    reviewDeletedDescription: "Your review has been deleted successfully.",
+    reviewSignInRequiredDescription:
+      "Sign in to your customer account before submitting a product review.",
+    productReviewsLoadError:
+      "We could not load public product reviews right now. Please try again.",
+    productReviewsEmptyDescription:
+      "There are no approved public reviews for this product yet.",
+    loadMoreReviews: "Load More Reviews",
+    productQuestions: "Product Questions",
+    questionsAndAnswers: "Questions and Answers",
+    askAQuestion: "Ask a Question",
+    submitQuestion: "Submit Question",
+    question: "Question",
+    questionPlaceholder: "Ask about fitment, condition, warranty, or delivery details.",
+    answer: "Answer",
+    answerQuestion: "Answer Question",
+    updateAnswer: "Update Answer",
+    pendingQuestion: "Pending Question",
+    answered: "Answered",
+    unanswered: "Unanswered",
+    questionSubmittedSuccessfully: "Question submitted successfully",
+    yourQuestionIsPendingModeration:
+      "Your question is pending moderation before it can appear publicly.",
+    noQuestionsYet: "No questions yet",
+    customerQuestionsDescription:
+      "Track the questions you submitted for products and any approved answers from the admin team.",
+    customerQuestionsEmptyDescription:
+      "You have not submitted any product questions yet.",
+    searchQuestions: "Search questions",
+    editQuestion: "Edit Question",
+    deleteQuestion: "Delete Question",
+    deleteQuestionConfirmation:
+      "Delete this question if the backend confirms the removal. This action cannot be undone.",
+    questionUpdatedDescription:
+      "Your question has been updated and will continue through the backend moderation workflow.",
+    questionDeletedDescription: "Your question has been deleted successfully.",
+    questionSignInRequiredDescription:
+      "Sign in to your customer account before submitting a product question.",
+    productQuestionsDescription:
+      "Ask compatibility, condition, or delivery questions about this part. Public answers appear only after backend approval.",
+    publicQuestionsHelpText:
+      "Only approved public questions and answers are shown here. Internal moderation notes stay hidden.",
+    publicQuestionsShown: "Public questions shown",
+    productQuestionsLoadError:
+      "We could not load product questions right now. Please try again.",
+    productQuestionsEmptyDescription:
+      "There are no approved public questions for this product yet.",
+    loadMoreQuestions: "Load More Questions",
+    moderation: "Moderation",
+    moderationNote: "Moderation Note",
+    moderationConfirmation:
+      "Are you sure you want to continue? This moderation action only completes after backend confirmation.",
+    moderationUpdatedDescription:
+      "The moderation action completed after the backend confirmed the change.",
+    rejectionReason: "Rejection Reason",
+    hide: "Hide",
+    reject: "Reject",
+    adminReviewsDescription:
+      "Review, moderate, and manage customer product reviews from the protected admin area.",
+    adminReviewsLoadError:
+      "We could not load admin reviews right now. Please try again.",
+    adminReviewsEmptyDescription:
+      "No admin review records are available for the current filters.",
+    adminQuestionsDescription:
+      "Review, moderate, and answer public product questions from the protected admin area.",
+    adminQuestionsLoadError:
+      "We could not load admin product questions right now. Please try again.",
+    adminQuestionsEmptyDescription:
+      "No admin product question records are available for the current filters.",
+    answerUpdatedDescription:
+      "The answer was saved successfully and will follow the backend publication workflow.",
+    vehicleCompatibilityContext: "Vehicle / Compatibility Context",
+    vehicleCompatibilityContextPlaceholder:
+      "Optional: share vehicle year, engine, trim, OEM number, or fitment notes.",
+    viewProduct: "View Product",
+    productDeleted: "Deleted successfully",
+    deleting: "Deleting...",
     needHelpFindingRightPartDescription:
       "Send your car model, manufacturing year, and required part details so our team can guide you before you place a single-item order.",
     callUs: "Call Us",
@@ -2447,6 +2555,113 @@ export const dictionaries = {
     noInvoiceItemsAvailable: "لا توجد بنود فاتورة متاحة لهذا السجل.",
     taxVat: "الضريبة / القيمة المضافة",
     viewCustomer: "عرض العميل",
+    myReviews: "مراجعاتي",
+    myQuestions: "أسئلتي",
+    productReviews: "مراجعات المنتج",
+    customerReviews: "مراجعات العملاء",
+    writeAReview: "اكتب مراجعة",
+    reviewFormDescription:
+      "شارك رأيك حول الحالة والتوافق والطلب. تبقى قواعد الأهلية والمراجعة من الخلفية هي المعتمدة.",
+    submitReview: "إرسال المراجعة",
+    rating: "التقييم",
+    reviewTitle: "عنوان المراجعة",
+    reviewTitlePlaceholder: "الخلاصة القصيرة لتجربتك",
+    reviewComment: "تعليق المراجعة",
+    reviewCommentPlaceholder: "اذكر حالة القطعة والتوافق والتوصيل.",
+    pendingReview: "مراجعة قيد المراجعة",
+    published: "منشور",
+    rejected: "مرفوض",
+    hidden: "مخفي",
+    reviewSubmittedSuccessfully: "تم إرسال المراجعة بنجاح",
+    yourReviewIsPendingModeration:
+      "مراجعتك قيد المراجعة قبل أن تظهر بشكل عام.",
+    noReviewsYet: "لا توجد مراجعات بعد",
+    customerReviewsEmptyDescription:
+      "لم تقم بإرسال أي مراجعات للمنتجات بعد.",
+    searchReviews: "ابحث في المراجعات",
+    editReview: "تعديل المراجعة",
+    deleteReview: "حذف المراجعة",
+    deleteReviewConfirmation:
+      "احذف هذه المراجعة إذا أكدت الخلفية الإزالة. لا يمكن التراجع عن هذا الإجراء.",
+    reviewUpdatedDescription:
+      "تم تحديث مراجعتك وستتبع مسار المراجعة في الخلفية.",
+    reviewDeletedDescription: "تم حذف المراجعة بنجاح.",
+    reviewSignInRequiredDescription:
+      "سجل الدخول إلى حسابك لإرسال مراجعة للمنتج.",
+    productReviewsLoadError:
+      "تعذر تحميل مراجعات المنتج العامة الآن. حاول مرة أخرى.",
+    productReviewsEmptyDescription:
+      "لا توجد مراجعات عامة معتمدة لهذا المنتج بعد.",
+    loadMoreReviews: "عرض المزيد من المراجعات",
+    productQuestions: "أسئلة المنتج",
+    questionsAndAnswers: "الأسئلة والأجوبة",
+    askAQuestion: "اطرح سؤالًا",
+    submitQuestion: "إرسال السؤال",
+    question: "السؤال",
+    questionPlaceholder: "اسأل عن التوافق أو الحالة أو الضمان أو التوصيل.",
+    answer: "الإجابة",
+    answerQuestion: "الإجابة على السؤال",
+    updateAnswer: "تحديث الإجابة",
+    pendingQuestion: "سؤال قيد المراجعة",
+    answered: "تمت الإجابة",
+    unanswered: "بدون إجابة",
+    questionSubmittedSuccessfully: "تم إرسال السؤال بنجاح",
+    yourQuestionIsPendingModeration:
+      "سؤالك قيد المراجعة قبل أن يظهر بشكل عام.",
+    noQuestionsYet: "لا توجد أسئلة بعد",
+    customerQuestionsDescription:
+      "تابع الأسئلة التي أرسلتها للمنتجات وأي إجابات معتمدة من فريق الإدارة.",
+    customerQuestionsEmptyDescription:
+      "لم تقم بإرسال أي أسئلة للمنتجات بعد.",
+    searchQuestions: "ابحث في الأسئلة",
+    editQuestion: "تعديل السؤال",
+    deleteQuestion: "حذف السؤال",
+    deleteQuestionConfirmation:
+      "احذف هذا السؤال إذا أكدت الخلفية الإزالة. لا يمكن التراجع عن هذا الإجراء.",
+    questionUpdatedDescription:
+      "تم تحديث سؤالك وسيستمر في مسار المراجعة في الخلفية.",
+    questionDeletedDescription: "تم حذف السؤال بنجاح.",
+    questionSignInRequiredDescription:
+      "سجل الدخول إلى حسابك لإرسال سؤال حول المنتج.",
+    productQuestionsDescription:
+      "اطرح أسئلة عن التوافق أو الحالة أو التوصيل لهذا المنتج. لا تظهر الإجابات العامة إلا بعد اعتماد الخلفية.",
+    publicQuestionsHelpText:
+      "يتم عرض الأسئلة والأجوبة العامة المعتمدة فقط هنا. تبقى ملاحظات المراجعة الداخلية مخفية.",
+    publicQuestionsShown: "الأسئلة العامة المعروضة",
+    productQuestionsLoadError:
+      "تعذر تحميل أسئلة المنتج الآن. حاول مرة أخرى.",
+    productQuestionsEmptyDescription:
+      "لا توجد أسئلة عامة معتمدة لهذا المنتج بعد.",
+    loadMoreQuestions: "عرض المزيد من الأسئلة",
+    moderation: "المراجعة",
+    moderationNote: "ملاحظة المراجعة",
+    moderationConfirmation:
+      "هل أنت متأكد من المتابعة؟ لن يكتمل إجراء المراجعة إلا بعد تأكيد الخلفية.",
+    moderationUpdatedDescription:
+      "اكتمل إجراء المراجعة بعد تأكيد الخلفية للتغيير.",
+    rejectionReason: "سبب الرفض",
+    hide: "إخفاء",
+    reject: "رفض",
+    adminReviewsDescription:
+      "راجع مراجعات المنتجات واعتمدها أو ارفضها أو أخفها من المنطقة الإدارية المحمية.",
+    adminReviewsLoadError:
+      "تعذر تحميل مراجعات الإدارة الآن. حاول مرة أخرى.",
+    adminReviewsEmptyDescription:
+      "لا توجد سجلات مراجعات إدارية للفلاتر الحالية.",
+    adminQuestionsDescription:
+      "راجع أسئلة المنتجات العامة وأجب عليها من المنطقة الإدارية المحمية.",
+    adminQuestionsLoadError:
+      "تعذر تحميل أسئلة المنتجات الإدارية الآن. حاول مرة أخرى.",
+    adminQuestionsEmptyDescription:
+      "لا توجد سجلات أسئلة منتجات إدارية للفلاتر الحالية.",
+    answerUpdatedDescription:
+      "تم حفظ الإجابة بنجاح وستتبع مسار النشر في الخلفية.",
+    vehicleCompatibilityContext: "بيانات المركبة / التوافق",
+    vehicleCompatibilityContextPlaceholder:
+      "اختياري: اذكر السنة أو المحرك أو الفئة أو رقم OEM أو ملاحظات الملاءمة.",
+    viewProduct: "عرض المنتج",
+    productDeleted: "تم الحذف بنجاح",
+    deleting: "جارٍ الحذف...",
     thankYouForChoosingAdAutoParts: "شكراً لاختيارك AD Auto Parts",
   },
 };

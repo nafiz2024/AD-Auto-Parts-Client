@@ -53,7 +53,7 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Runtime providers: [src/providers](src/providers)
 - Homepage feature: [src/features/home](src/features/home)
 
-## Current Step 14 coverage
+## Current Step 16 coverage
 
 - Centralized validated public env reader
 - Shared API request, upload, download, query, and error normalization utilities
@@ -87,7 +87,11 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Refreshed public not-found page with branding, storefront CTA, and support CTA
 - Footer support/shop links updated for public support and policy pages
 - Customer account area with orders, payments, invoices, notifications, enquiries, reviews, questions, returns, and profile foundations
+- Public product reviews section with backend review loading, rating summary, verified-buyer badge support, load-more pagination, guarded review submission, and moderation-safe success states
+- Public product Q&A section with backend question loading, approved answer display, load-more pagination, guarded question submission, and moderation-safe success states
 - Customer invoice list and invoice preview routes with backend-driven PDF download handling
+- Customer reviews page with backend-owned review records, status badges, guarded edit/delete actions, loading/error/empty states, and product links
+- Customer questions page with backend-owned question records, answer visibility, guarded edit/delete actions, loading/error/empty states, and product links
 - Admin auth flow wired to Better Auth email sign-in, backend session checks, admin role gating, sign-out, and TOTP verification
 - Admin dashboard hydrated from available analytics, notifications, orders, payments, shipments, returns, enquiries, and products endpoints
 - Admin product list route with backend-driven search, filtering, status actions, responsive table/card views, and pagination controls
@@ -104,6 +108,8 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 - Admin customers route with backend-driven search, status/date filtering, responsive list views, protected detail drawer, pagination, and backend-confirmed customer status actions
 - Admin enquiries route with backend-driven search, status/date filtering, responsive list views, protected detail drawer, reply/status update form, and optional manual-enquiry creation when the backend exposes it
 - Admin settings route with backend-driven settings load, tabbed sections, dirty-state handling, discard confirmation, backend-confirmed save flow, and protected delivery/payment/policy configuration
+- Admin reviews route with protected moderation table/cards, status/rating/product/date filters, review detail drawer, confirmation flows, and backend-confirmed publish/reject/hide/delete actions
+- Admin product questions route with protected moderation table/cards, status/product/answered/date filters, question detail drawer, answer form, confirmation flows, and backend-confirmed publish/reject/hide/delete actions
 
 ## Layout structure
 
@@ -320,6 +326,27 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - `POST /admin/invoices`
 - Backend-provided secure admin invoice PDF/action paths are used only when the response advertises them; the frontend does not invent admin download or void routes
 
+## Backend endpoints used by Step 16 reviews and Q&A UI
+
+- `GET /reviews`
+- `GET /product-questions`
+- `GET /customer/reviews`
+- `POST /customer/reviews`
+- `PATCH /customer/reviews/:reviewId`
+- `DELETE /customer/reviews/:reviewId` when the backend advertises support
+- `GET /customer/product-questions`
+- `POST /customer/product-questions`
+- `PATCH /customer/product-questions/:questionId`
+- `DELETE /customer/product-questions/:questionId` when the backend advertises support
+- `GET /admin/reviews`
+- `GET /admin/reviews/:reviewId`
+- `PATCH /admin/reviews/:reviewId` or backend-advertised moderation action paths
+- `DELETE /admin/reviews/:reviewId` when the backend advertises support
+- `GET /admin/questions`
+- `GET /admin/questions/:questionId`
+- `PATCH /admin/questions/:questionId` or backend-advertised moderation/answer action paths
+- `DELETE /admin/questions/:questionId` when the backend advertises support
+
 ## Step 15 invoice behavior
 
 - `/account/invoices` lists customer invoice records and supports invoice preview plus authenticated PDF download
@@ -330,6 +357,17 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - PDF downloads use the shared API client with credentials, Blob handling, `Content-Disposition` filename support, JSON-error detection, and safe fallback filenames
 - Invoice totals, delivery fees, discounts, tax/VAT, payment status, and invoice status remain backend-authored; the frontend does not calculate authoritative invoice totals
 - Arabic support covers static invoice/document labels while dynamic backend values remain unchanged unless Arabic-specific fields are provided
+
+## Step 16 reviews and Q&A behavior
+
+- `/products/[id]` now loads public reviews and public product questions from backend endpoints and defensively hides non-public or moderation-only entries in the UI
+- Public review cards show backend-approved reviewer display names, rating, title/comment, created date, verified-buyer badge only when provided, loading/error/empty states, and load-more pagination
+- Public Q&A cards show backend-approved customer names, question text, optional vehicle context, approved answers, loading/error/empty states, and load-more pagination
+- Product review and question forms require the current auth state when the backend requires it, prevent double-submit, surface backend field errors, and show pending-moderation messaging instead of claiming immediate public publication
+- `/account/reviews` and `/account/questions` are wired into the customer sidebar and render backend-owned customer-only records with status badges, product links, and guarded edit/delete actions when advertised by the API
+- `/admin/reviews` and `/admin/questions` stay behind admin auth, active-account rules, and mandatory TOTP, and do not claim moderation success until the backend confirms the mutation
+- Admin moderation drawers show only normalized safe fields, keep moderation/internal notes inside protected admin routes, and use confirmation dialogs for destructive or state-changing actions
+- English remains the default language, Arabic labels are available, and the review/Q&A screens remain responsive and RTL-safe without introducing cart behavior or storing sensitive moderation data in localStorage
 
 ## Admin customers and enquiries behavior
 
@@ -371,7 +409,7 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 
 ## Next step
 
-Step 16 can expand admin reviews/questions/returns workflows, deeper account management, or richer reporting/export operations if those backend routes become explicit.
+Step 17 can add lightweight coverage tests for the new reviews/Q&A surfaces or expand returns/reporting workflows if the backend contract is ready.
 
 ## Validation
 

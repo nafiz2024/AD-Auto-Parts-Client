@@ -36,12 +36,14 @@ import {
   getCustomerOrders,
   getCustomerPayments,
   getCustomerProfile,
-  getCustomerQuestions,
   getCustomerReturns,
-  getCustomerReviews,
   submitManualPayment,
   updateCustomerProfile,
 } from "@/features/account/account-api";
+import { CustomerQuestionsPage } from "@/features/questions/customer-questions-page";
+import { getCustomerQuestions } from "@/features/questions/question-api";
+import { CustomerReviewsPage } from "@/features/reviews/customer-reviews-page";
+import { getCustomerReviews } from "@/features/reviews/review-api";
 
 const sections = [
   { key: "accountOverview", href: routes.customer.account, icon: BoxIcon },
@@ -50,8 +52,8 @@ const sections = [
   { key: "invoices", href: routes.customer.accountInvoices, icon: FileTextIcon },
   { key: "notifications", href: routes.customer.accountNotifications, icon: MessageCircleIcon },
   { key: "enquiries", href: routes.customer.accountEnquiries, icon: MessageCircleIcon },
-  { key: "reviews", href: routes.customer.accountReviews, icon: FileTextIcon },
-  { key: "questions", href: routes.customer.accountQuestions, icon: MessageCircleIcon },
+  { key: "reviews", labelKey: "myReviews", href: routes.customer.accountReviews, icon: FileTextIcon },
+  { key: "questions", labelKey: "myQuestions", href: routes.customer.accountQuestions, icon: MessageCircleIcon },
   { key: "returns", href: routes.customer.accountReturns, icon: RefreshCcwIcon },
   { key: "profile", href: routes.customer.accountProfile, icon: UserIcon },
 ];
@@ -167,7 +169,7 @@ function AccountShell({ activeSection, children }) {
                 }`}
               >
                 <Icon className="size-5" />
-                {t(section.key)}
+                {t(section.labelKey || section.key)}
               </Link>
             );
           })}
@@ -1437,8 +1439,8 @@ export function AccountRoutePage({ section = "accountOverview" }) {
       {section === "invoices" ? <InvoicesSection /> : null}
       {section === "notifications" ? <NotificationsSection /> : null}
       {section === "enquiries" ? <EnquiriesSection /> : null}
-      {section === "reviews" ? <ReviewsSection /> : null}
-      {section === "questions" ? <QuestionsSection /> : null}
+      {section === "reviews" ? <CustomerReviewsPage /> : null}
+      {section === "questions" ? <CustomerQuestionsPage /> : null}
       {section === "returns" ? <ReturnsSection /> : null}
       {section === "profile" ? <ProfileSection /> : null}
     </AccountShell>

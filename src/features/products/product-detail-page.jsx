@@ -30,7 +30,7 @@ function Breadcrumbs({ items }) {
 
 export function ProductDetailPage({ data }) {
   const { t, getLocalizedField } = useLanguage();
-  const { product, relatedProducts, reviews } = data;
+  const { product, relatedProducts, reviews, questions } = data;
   const whatsappHref = `https://wa.me/${product.whatsappNumber}?text=${encodeURIComponent(
     t("productWhatsappQuestion", {
       productName: getLocalizedField(product, "name") || product.name,
@@ -68,12 +68,15 @@ export function ProductDetailPage({ data }) {
         </section>
 
         <ProductTabs
+          productId={product.id}
+          productName={getLocalizedField(product, "name") || product.name}
           description={product.description}
           specifications={product.specifications}
           compatibility={product.compatibility}
           deliveryNotes={product.deliveryNotes}
           returnNotes={product.returnNotes}
           reviews={reviews}
+          questions={questions}
         />
 
         <RelatedProducts relatedProducts={relatedProducts} />

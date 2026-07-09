@@ -37,6 +37,8 @@ const adminNavItems = [
   { key: "categories", href: routes.admin.adminCategories, icon: FolderIcon },
   { key: "brands", href: routes.admin.adminBrands, icon: ShieldIcon },
   { key: "customers", href: routes.admin.adminCustomers, icon: UsersIcon },
+  { key: "reviews", href: routes.admin.adminReviews, icon: FileTextIcon },
+  { key: "productQuestions", href: routes.admin.adminQuestions, icon: MessageCircleIcon },
   { key: "enquiries", href: routes.admin.adminEnquiries, icon: MessageCircleIcon },
   { key: "settings", href: routes.admin.adminSettings, icon: SettingsIcon },
   { key: "notifications", href: routes.admin.adminNotifications, icon: MessageCircleIcon },

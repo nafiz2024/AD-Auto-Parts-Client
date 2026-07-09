@@ -2,9 +2,12 @@ import { cache } from "react";
 import { apiGet } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { normalizeProduct } from "@/features/listing/listing-api";
+import { getPublicProductQuestions } from "@/features/questions/question-api";
+import { getPublicProductReviews } from "@/features/reviews/review-api";
 
 const RELATED_PRODUCTS_LIMIT = 4;
-const REVIEW_PREVIEW_LIMIT = 3;
+const REVIEW_PREVIEW_LIMIT = 6;
+const QUESTION_PREVIEW_LIMIT = 6;
 const DEFAULT_WHATSAPP_NUMBER = "966543216789";
 
 function asArray(value) {
@@ -555,28 +558,15 @@ async function getRelatedProducts(productId) {
 
 async function getReviewsPreview(product) {
   try {
-    const response = await apiGet(endpoints.public.reviews, {
-      query: {
-        productId: product.id,
-        limit: REVIEW_PREVIEW_LIMIT,
-      },
+    const response = await getPublicProductReviews(product.id, {
+      limit: REVIEW_PREVIEW_LIMIT,
     });
-    const items = normalizeItems(response?.data)
-      .map(normalizeReview)
-      .filter((review) => review.comment || review.rating !== null);
-    const reviewSummary = response?.data?.summary ?? response?.meta ?? null;
 
     return {
-      items,
-      averageRating:
-        firstNumber(
-          reviewSummary?.averageRating,
-          reviewSummary?.ratingAverage,
-          product.ratingAverage,
-        ) ?? null,
-      reviewCount:
-        firstNumber(reviewSummary?.reviewCount, reviewSummary?.totalReviews, product.reviewCount) ??
-        0,
+      ...response,
+      averageRating: response.summary.averageRating ?? product.ratingAverage,
+      reviewCount: response.summary.reviewCount ?? product.reviewCount,
+      ratingBreakdown: response.summary.ratingBreakdown,
       source: "api",
       error: null,
     };
@@ -585,6 +575,49 @@ async function getReviewsPreview(product) {
       items: [],
       averageRating: product.ratingAverage,
       reviewCount: product.reviewCount,
+      ratingBreakdown: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        pageSize: REVIEW_PREVIEW_LIMIT,
+      },
+      capabilities: {
+        canSubmit: true,
+        requiresAuthToSubmit: true,
+        supportsTitle: true,
+      },
+      source: "unavailable",
+      error,
+    };
+  }
+}
+
+async function getQuestionsPreview(productId) {
+  try {
+    const response = await getPublicProductQuestions(productId, {
+      limit: QUESTION_PREVIEW_LIMIT,
+    });
+
+    return {
+      ...response,
+      source: "api",
+      error: null,
+    };
+  } catch (error) {
+    return {
+      items: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 1,
+        totalItems: 0,
+        pageSize: QUESTION_PREVIEW_LIMIT,
+      },
+      capabilities: {
+        canSubmit: true,
+        requiresAuthToSubmit: false,
+        supportsVehicleContext: true,
+      },
       source: "unavailable",
       error,
     };
@@ -595,15 +628,17 @@ export const getProductDetailPageData = cache(async (productId) => {
   try {
     const response = await apiGet(endpoints.public.productDetail(productId));
     const product = normalizeProductDetail(normalizeDetailPayload(response?.data));
-    const [relatedProducts, reviews] = await Promise.all([
+    const [relatedProducts, reviews, questions] = await Promise.all([
       getRelatedProducts(productId),
       getReviewsPreview(product),
+      getQuestionsPreview(productId),
     ]);
 
     return {
       product,
       relatedProducts,
       reviews,
+      questions,
       notFound: false,
     };
   } catch (error) {
@@ -615,6 +650,34 @@ export const getProductDetailPageData = cache(async (productId) => {
           items: [],
           averageRating: null,
           reviewCount: 0,
+          ratingBreakdown: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0,
+            pageSize: REVIEW_PREVIEW_LIMIT,
+          },
+          capabilities: {
+            canSubmit: true,
+            requiresAuthToSubmit: true,
+            supportsTitle: true,
+          },
+          source: "unavailable",
+          error: null,
+        },
+        questions: {
+          items: [],
+          pagination: {
+            currentPage: 1,
+            totalPages: 1,
+            totalItems: 0,
+            pageSize: QUESTION_PREVIEW_LIMIT,
+          },
+          capabilities: {
+            canSubmit: true,
+            requiresAuthToSubmit: false,
+            supportsVehicleContext: true,
+          },
           source: "unavailable",
           error: null,
         },
