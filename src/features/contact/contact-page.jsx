@@ -255,7 +255,7 @@ export function ContactPage() {
                 <span>{t("returnPolicy")}</span>
                 <ArrowRightIcon className="size-4" />
               </Link>
-              <Link href={routes.public.terms} className="flex items-center justify-between rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-brand-red hover:text-brand-red">
+              <Link href={routes.public.termsAndConditions} className="flex items-center justify-between rounded-2xl border border-border px-4 py-3 text-sm font-medium text-foreground transition hover:border-brand-red hover:text-brand-red">
                 <span>{t("termsAndConditions")}</span>
                 <ArrowRightIcon className="size-4" />
               </Link>
@@ -400,7 +400,7 @@ export function ContactPage() {
                   {t("chatOnWhatsapp")}
                 </Button>
               </a>
-              <Link href={routes.public.products}>
+              <Link href={routes.public.shop}>
                 <Button type="button" variant="ghost" size="lg">
                   {t("shopAutoParts")}
                   <ExternalLinkIcon className="size-4" />

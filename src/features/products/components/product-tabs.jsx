@@ -13,6 +13,7 @@ import { routes } from "@/constants/routes";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
+import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 import { getPublicProductQuestions, createCustomerQuestion } from "@/features/questions/question-api";
 import { getPublicProductReviews, createCustomerReview } from "@/features/reviews/review-api";
 
@@ -256,7 +257,7 @@ function ReviewComposer({ productId, onCreated, supportsTitle }) {
         <Alert className="mt-5" variant="info" title={t("accountAccessRequired")}>
           <div className="space-y-3">
             <p>{t("reviewSignInRequiredDescription")}</p>
-            <Link href={routes.customer.account}>
+            <Link href={buildCustomerLoginHref(routes.public.productDetail(productId))}>
               <Button size="sm" variant="outline">{t("signInToContinue")}</Button>
             </Link>
           </div>
@@ -519,7 +520,7 @@ function QuestionComposer({ productId, supportsVehicleContext, requiresAuth, onC
         <Alert className="mt-5" variant="info" title={t("accountAccessRequired")}>
           <div className="space-y-3">
             <p>{t("questionSignInRequiredDescription")}</p>
-            <Link href={routes.customer.account}>
+            <Link href={buildCustomerLoginHref(routes.public.productDetail(productId))}>
               <Button size="sm" variant="outline">{t("signInToContinue")}</Button>
             </Link>
           </div>

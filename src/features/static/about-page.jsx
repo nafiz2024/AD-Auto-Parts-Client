@@ -63,7 +63,7 @@ export function AboutPage() {
                 {t("aboutIntro")}
               </p>
               <div className="flex flex-wrap gap-3 pt-2">
-                <Link href={routes.public.products}>
+                <Link href={routes.public.shop}>
                   <Button size="lg">
                     {t("shopAutoParts")}
                     <ArrowRightIcon className="size-4" />
@@ -178,7 +178,7 @@ export function AboutPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Link href={routes.public.products}>
+              <Link href={routes.public.shop}>
                 <Button size="lg" className="bg-brand-red hover:bg-brand-red/90">
                   {t("shopAutoParts")}
                 </Button>

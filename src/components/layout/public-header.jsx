@@ -24,15 +24,16 @@ import { getPublicSupportSettings } from "@/features/support/support-api";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
+import { buildCustomerLoginHref, buildCustomerRegisterHref } from "@/lib/auth/customer-auth";
 import { buildQueryString } from "@/lib/api/query";
 import { cn } from "@/lib/utils/cn";
 
 const navLinks = [
-  { key: "shop", href: routes.public.products },
+  { key: "shop", href: routes.public.shop },
   { key: "categories", href: routes.public.categories },
-  { key: "brands", href: routes.public.products },
-  { key: "featuredParts", href: `${routes.public.products}?sort=featured` },
-  { key: "latestArrivals", href: `${routes.public.products}?sort=newest` },
+  { key: "brands", href: routes.public.brands },
+  { key: "featuredParts", href: `${routes.public.shop}?sort=featured` },
+  { key: "latestArrivals", href: `${routes.public.shop}?sort=newest` },
   { key: "contactUs", href: routes.public.contact },
 ];
 
@@ -68,37 +69,6 @@ function normalizeBrand(item) {
 function getWhatsappHref(number) {
   const digits = String(number ?? "").replace(/\D/g, "");
   return digits ? `https://wa.me/${digits}` : null;
-}
-
-function getHeaderMessage(language, key) {
-  const messages = {
-    wishlistUnavailableTitle: {
-      en: "Wishlist",
-      ar: "المفضلة",
-    },
-    wishlistUnavailableDescription: {
-      en: "Wishlist is not available yet.",
-      ar: "المفضلة غير متاحة بعد.",
-    },
-    cartUnavailableTitle: {
-      en: "Cart",
-      ar: "السلة",
-    },
-    cartUnavailableDescription: {
-      en: "Cart is not available. Please use Buy Now for a single item checkout.",
-      ar: "السلة غير متاحة. يرجى استخدام اشتر الآن لطلب عنصر واحد.",
-    },
-    accountMenuLabel: {
-      en: "Account menu",
-      ar: "قائمة الحساب",
-    },
-    logoutSuccess: {
-      en: "You have been signed out successfully.",
-      ar: "تم تسجيل الخروج بنجاح.",
-    },
-  };
-
-  return messages[key]?.[language] ?? messages[key]?.en ?? "";
 }
 
 function SearchBar() {
@@ -155,7 +125,9 @@ export function PublicHeader() {
   const accountMenuRef = useRef(null);
   const auth = useAuth();
   const toast = useToast();
-  const { language, t, getLocalizedField } = useLanguage();
+  const { t, getLocalizedField } = useLanguage();
+
+  const isCustomerAuthenticated = auth.isAuthenticated && auth.role === "customer";
 
   useEffect(() => {
     let active = true;
@@ -215,7 +187,8 @@ export function PublicHeader() {
       await auth.logout();
       setAccountOpen(false);
       setMobileOpen(false);
-      toast.success(t("logout"), getHeaderMessage(language, "logoutSuccess"));
+      await auth.refresh().catch(() => null);
+      toast.success(t("logout"), t("signedOutSuccessfully"));
       window.location.assign(routes.public.home);
     } catch (error) {
       toast.apiError(error, t("logout"));
@@ -223,17 +196,11 @@ export function PublicHeader() {
   }
 
   function handleWishlistClick() {
-    toast.info(
-      getHeaderMessage(language, "wishlistUnavailableTitle"),
-      getHeaderMessage(language, "wishlistUnavailableDescription"),
-    );
+    toast.info(t("wishlist"), t("wishlistUnavailable"));
   }
 
   function handleCartClick() {
-    toast.info(
-      getHeaderMessage(language, "cartUnavailableTitle"),
-      getHeaderMessage(language, "cartUnavailableDescription"),
-    );
+    toast.info(t("cart"), t("cartUnavailable"));
   }
 
   const desktopNavLinks = navLinks.map((link) =>
@@ -241,23 +208,22 @@ export function PublicHeader() {
       ? {
           ...link,
           href: partsBrands[0]
-            ? `${routes.public.products}${buildQueryString({
+            ? `${routes.public.brands}${buildQueryString({
                 partsBrand: partsBrands[0].slug ?? partsBrands[0].id,
               })}`
-            : routes.public.products,
+            : routes.public.brands,
         }
       : link,
   );
-  const accountLinks = auth.isAuthenticated
+  const accountLinks = isCustomerAuthenticated
     ? [
-        { key: "account", label: t("myAccount"), href: routes.customer.account },
-        { key: "orders", label: t("orders"), href: routes.customer.accountOrders },
-        { key: "track", label: t("trackOrder"), href: routes.public.trackOrder },
+        { key: "dashboard", label: t("accountDashboard"), href: routes.customer.account },
+        { key: "orders", label: t("myOrders"), href: routes.customer.accountOrders },
         { key: "profile", label: t("profile"), href: routes.customer.accountProfile },
       ]
     : [
-        { key: "account", label: t("myAccount"), href: routes.customer.account },
-        { key: "orders", label: t("orders"), href: routes.customer.accountOrders },
+        { key: "login", label: t("signIn"), href: buildCustomerLoginHref() },
+        { key: "register", label: t("createAccount"), href: buildCustomerRegisterHref() },
         { key: "track", label: t("trackOrder"), href: routes.public.trackOrder },
       ];
   const whatsappHref = getWhatsappHref(whatsappNumber);
@@ -311,7 +277,7 @@ export function PublicHeader() {
                 onClick={() => setAccountOpen((current) => !current)}
                 aria-expanded={accountOpen}
                 aria-haspopup="menu"
-                aria-label={getHeaderMessage(language, "accountMenuLabel")}
+                aria-label={t("accountMenu")}
                 className="flex min-w-28 cursor-pointer items-center gap-2 rounded-2xl px-3 py-2 text-sm text-foreground transition hover:bg-muted"
               >
                 <UserIcon className="size-5" />
@@ -337,13 +303,13 @@ export function PublicHeader() {
                         {link.label}
                       </Link>
                     ))}
-                    {auth.isAuthenticated ? (
+                    {isCustomerAuthenticated ? (
                       <button
                         type="button"
                         onClick={handleLogout}
                         className="rounded-2xl px-4 py-3 text-start text-sm font-medium text-foreground transition hover:bg-muted"
                       >
-                        {t("logout")}
+                        {t("signOut")}
                       </button>
                     ) : null}
                   </div>
@@ -399,7 +365,7 @@ export function PublicHeader() {
 
                   <div className="border-t border-border pt-2">
                     <Link
-                      href={routes.public.categories}
+                      href={routes.public.shop}
                       className="rounded-2xl px-4 py-3 text-sm font-medium text-brand-red transition hover:bg-muted"
                       onClick={() => setCategoriesOpen(false)}
                     >
@@ -518,13 +484,13 @@ export function PublicHeader() {
                 {link.label}
               </Link>
             ))}
-            {auth.isAuthenticated ? (
+            {isCustomerAuthenticated ? (
               <button
                 type="button"
                 onClick={handleLogout}
                 className="w-full rounded-2xl px-4 py-3 text-start text-base font-medium text-foreground transition hover:bg-muted"
               >
-                {t("logout")}
+                {t("signOut")}
               </button>
             ) : null}
           </div>
@@ -550,7 +516,7 @@ export function PublicHeader() {
                   {partsBrands.map((brand) => (
                     <Link
                       key={brand.id}
-                      href={`${routes.public.products}${buildQueryString({
+                      href={`${routes.public.brands}${buildQueryString({
                         partsBrand: brand.slug ?? brand.id,
                       })}`}
                       className="rounded-xl bg-muted px-3 py-2 text-sm text-foreground transition hover:text-brand-red"

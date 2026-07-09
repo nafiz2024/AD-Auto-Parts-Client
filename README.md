@@ -123,10 +123,22 @@ Do not place backend secrets, database URLs, OAuth secrets, JWT secrets, TOTP se
 ## Public navbar behavior
 
 - Two-row storefront header inspired by the provided reference
-- Main row includes logo, large search bar, language toggle, wishlist, cart placeholder, and account placeholder
+- Main row includes logo, large search bar, language toggle, wishlist placeholder, cart placeholder, and an auth-aware customer account menu
 - Top utility row includes inspected parts, delivery, customer support, and support shortcuts
 - Second row includes categories trigger, main navigation links, and Saudi WhatsApp placeholder contact
 - Mobile layout collapses into a slide-in menu
+- Unauthenticated account menus expose `Sign In`, `Create Account`, and `Track Order`
+- Authenticated customer account menus expose `Account Dashboard`, `My Orders`, `Profile`, and `Sign Out`
+- Public navbar links now prefer the dedicated storefront aliases `/shop`, `/categories`, `/brands`, and `/terms-and-conditions`
+
+## Customer authentication
+
+- Customer sign-in route: `/login`
+- Customer registration route: `/register`
+- Public storefront alias routes: `/shop`, `/categories`, `/brands`, and `/terms-and-conditions`
+- Customer auth uses the existing Better Auth-backed frontend helpers through `NEXT_PUBLIC_AUTH_BASE_URL`
+- Customer auth remains separate from admin login and admin TOTP verification
+- Public auth pages do not store passwords or manual auth tokens in localStorage and continue relying on backend cookie/session handling
 
 ## Homepage sections
 
@@ -180,12 +192,13 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Delivery estimate is requested from the backend and shown as informational until order placement confirms the final total
 - Supported payment methods in the UI are `COD` and `Manual Advance Payment`
 - No external payment gateway, card form, or multi-item cart logic is implemented
+- Guest checkout remains allowed only when the backend checkout/session rules allow it; protected customer account routes now point unauthenticated users to `/login?redirect=...`
 
 ## Static support pages
 
 - `/contact` submits guest-safe support enquiries through the public enquiries endpoint
 - `/about` explains the used-parts storefront positioning without unsupported claims
-- `/return-policy` and `/terms` provide operational guidance that does not overstate legal promises or backend capabilities
+- `/return-policy`, `/terms`, and `/terms-and-conditions` provide operational guidance that does not overstate legal promises or backend capabilities
 - `/privacy-policy` is implemented as a lightweight placeholder because the footer now exposes it
 - `app/not-found.js` uses the shared public layout and a branded 404 state
 
@@ -195,6 +208,23 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - The frontend contract already exposes `GET /public/settings` and `POST /enquiries`
 - This step does not assume undocumented backend field shapes; settings hydration is best-effort and non-blocking
 - Contact enquiries do not create accounts, do not store message drafts locally, and do not include admin/internal fields
+
+## Customer protected routes
+
+- `/account`
+- `/account/orders`
+- `/account/orders/[orderNumber]`
+- `/account/payments`
+- `/account/invoices`
+- `/account/invoices/[invoiceNumber]`
+- `/account/notifications`
+- `/account/enquiries`
+- `/account/reviews`
+- `/account/questions`
+- `/account/returns`
+- `/account/profile`
+
+Unauthenticated visitors are shown a safe sign-in-required state with a redirect-aware link back to the customer login route. Backend ownership and authorization remain the source of truth for protected customer data.
 
 ## Saudi and language context
 
@@ -431,6 +461,10 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 ## Next step
 
 Step 19 can focus on broader manual backend verification, device-level QA screenshots, and lightweight coverage tests for the audited API flows.
+
+## Known compatibility note
+
+- The legacy `/products` and `/terms` routes are still preserved for compatibility, but primary public navigation now points to `/shop` and `/terms-and-conditions`
 
 ## Validation
 

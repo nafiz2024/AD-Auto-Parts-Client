@@ -33,7 +33,7 @@ export function ProductNotFoundState() {
                   Sorry, the product you are looking for doesn&apos;t exist or may have been removed.
                 </p>
               </div>
-              <Link href={routes.public.products}>
+              <Link href={routes.public.shop}>
                 <Button size="lg">
                   <ArrowLeftIcon className="size-5" />
                   {t("backToShop")}

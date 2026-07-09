@@ -53,7 +53,7 @@ export function NotFoundState() {
               {t("backToHome")}
             </Button>
           </Link>
-          <Link href={routes.public.products}>
+          <Link href={routes.public.shop}>
             <Button size="lg">
               <ArrowLeftIcon className="size-5 rotate-180" />
               {t("shopAutoParts")}

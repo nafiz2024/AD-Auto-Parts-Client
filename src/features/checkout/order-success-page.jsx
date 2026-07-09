@@ -78,7 +78,7 @@ export function OrderSuccessPage({ searchParams }) {
                 {isAuthenticated ? t("viewOrder") : t("trackOrder")}
               </Button>
             </a>
-            <a href={routes.public.products}>
+            <a href={routes.public.shop}>
               <Button variant="outline" className="w-full" size="lg">
                 {t("continueShopping")}
               </Button>

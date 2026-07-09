@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { routes } from "@/constants/routes";
+import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 import {
   downloadCustomerInvoicePdf,
   getCustomerInvoices,
@@ -50,7 +51,7 @@ function useCustomerAccessState() {
           title={t("accountAccessRequired")}
           description={t("accountAccessRequiredDescription")}
           actionLabel={t("signInToContinue")}
-          actionHref={routes.public.contact}
+          actionHref={buildCustomerLoginHref(routes.customer.accountInvoices)}
         />
       </Container>
     );

@@ -2,8 +2,12 @@ export const routes = {
   public: {
     home: "/",
     about: "/about",
+    login: "/login",
+    register: "/register",
+    shop: "/shop",
     products: "/products",
-    categories: "/products",
+    categories: "/categories",
+    brands: "/brands",
     categoryDetail: (categorySlug) => `/categories/${categorySlug}`,
     productDetail: (productId) => `/products/${productId}`,
     search: "/search",
@@ -14,6 +18,7 @@ export const routes = {
     contact: "/contact",
     returnPolicy: "/return-policy",
     terms: "/terms",
+    termsAndConditions: "/terms-and-conditions",
     privacyPolicy: "/privacy-policy",
   },
   customer: {

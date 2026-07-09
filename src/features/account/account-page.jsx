@@ -26,6 +26,7 @@ import { routes } from "@/constants/routes";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
+import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 import {
   createCustomerEnquiry,
   createCustomerReturn,
@@ -104,7 +105,7 @@ function LoadingCard() {
   );
 }
 
-function useAccountAccessState() {
+function useAccountAccessState(redirectPath) {
   const { isLoading, isAuthenticated, role } = useAuth();
   const { t } = useLanguage();
 
@@ -124,7 +125,7 @@ function useAccountAccessState() {
           title={t("accountAccessRequired")}
           description={t("accountAccessRequiredDescription")}
           actionLabel={t("signInToContinue")}
-          actionHref={routes.public.contact}
+          actionHref={buildCustomerLoginHref(redirectPath)}
         />
       </Container>
     );
@@ -1425,7 +1426,19 @@ function ProfileSection() {
 }
 
 export function AccountRoutePage({ section = "accountOverview" }) {
-  const accessState = useAccountAccessState();
+  const sectionRouteMap = {
+    accountOverview: routes.customer.account,
+    orders: routes.customer.accountOrders,
+    payments: routes.customer.accountPayments,
+    invoices: routes.customer.accountInvoices,
+    notifications: routes.customer.accountNotifications,
+    enquiries: routes.customer.accountEnquiries,
+    reviews: routes.customer.accountReviews,
+    questions: routes.customer.accountQuestions,
+    returns: routes.customer.accountReturns,
+    profile: routes.customer.accountProfile,
+  };
+  const accessState = useAccountAccessState(sectionRouteMap[section] ?? routes.customer.account);
 
   if (accessState) {
     return accessState;

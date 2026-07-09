@@ -8,8 +8,8 @@ import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
 
 const shopLinks = [
-  { key: "shopAutoParts", href: routes.public.products },
-  { key: "latestArrivals", href: `${routes.public.products}?sort=newest` },
+  { key: "shopAutoParts", href: routes.public.shop },
+  { key: "latestArrivals", href: `${routes.public.shop}?sort=newest` },
   { key: "trackOrder", href: routes.public.trackOrder },
 ];
 
@@ -17,7 +17,7 @@ const supportLinks = [
   { key: "aboutAdAutoParts", href: routes.public.about },
   { key: "contactUs", href: routes.public.contact },
   { key: "returnPolicy", href: routes.public.returnPolicy },
-  { key: "termsAndConditions", href: routes.public.terms },
+  { key: "termsAndConditions", href: routes.public.termsAndConditions },
   { key: "privacyPolicy", href: routes.public.privacyPolicy },
 ];
 

@@ -17,6 +17,7 @@ import {
   getCustomerInvoiceDetail,
 } from "@/features/invoices/invoice-api";
 import { InvoicePreview } from "@/features/invoices/invoice-ui";
+import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 
 function LoadingState() {
   return (
@@ -27,7 +28,7 @@ function LoadingState() {
   );
 }
 
-function useCustomerInvoiceAccessState() {
+function useCustomerInvoiceAccessState(invoiceNumber) {
   const { isLoading, isAuthenticated, role } = useAuth();
   const { t } = useLanguage();
 
@@ -47,7 +48,7 @@ function useCustomerInvoiceAccessState() {
           title={t("accountAccessRequired")}
           description={t("accountAccessRequiredDescription")}
           actionLabel={t("signInToContinue")}
-          actionHref={routes.public.contact}
+          actionHref={buildCustomerLoginHref(routes.customer.accountInvoiceDetail(invoiceNumber))}
         />
       </Container>
     );
@@ -67,7 +68,7 @@ function useCustomerInvoiceAccessState() {
 }
 
 export function CustomerInvoiceDetailPage({ invoiceNumber }) {
-  const accessState = useCustomerInvoiceAccessState();
+  const accessState = useCustomerInvoiceAccessState(invoiceNumber);
   const { t, locale } = useLanguage();
   const toast = useToast();
   const [state, setState] = useState({

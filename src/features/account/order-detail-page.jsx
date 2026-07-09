@@ -17,6 +17,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { getCustomerOrderDetail } from "@/features/account/account-api";
 import { downloadCustomerInvoicePdf } from "@/features/invoices/invoice-api";
+import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 
 function formatDate(value) {
   if (!value) {
@@ -46,7 +47,7 @@ function StatusPill({ value }) {
   return <Badge variant={variant}>{value}</Badge>;
 }
 
-function useOrderAccessState() {
+function useOrderAccessState(orderNumber) {
   const { isLoading, isAuthenticated, role } = useAuth();
   const { t } = useLanguage();
 
@@ -69,7 +70,7 @@ function useOrderAccessState() {
           title={t("accountAccessRequired")}
           description={t("accountAccessRequiredDescription")}
           actionLabel={t("signInToContinue")}
-          actionHref={routes.public.contact}
+          actionHref={buildCustomerLoginHref(routes.customer.accountOrderDetail(orderNumber))}
         />
       </Container>
     );
@@ -89,7 +90,7 @@ function useOrderAccessState() {
 }
 
 export function AccountOrderDetailPage({ orderNumber }) {
-  const accessState = useOrderAccessState();
+  const accessState = useOrderAccessState(orderNumber);
   const { t } = useLanguage();
   const toast = useToast();
   const [order, setOrder] = useState(null);
