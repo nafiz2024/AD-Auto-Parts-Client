@@ -69,7 +69,7 @@ export function ConfirmationDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-brand-navy/45 p-4 backdrop-blur-sm">
-      <Card className="relative w-full max-w-2xl p-8">
+      <Card className="relative max-h-[calc(100vh-2rem)] w-full max-w-2xl overflow-y-auto p-6 sm:p-8">
         <button
           type="button"
           onClick={onCancel}
@@ -83,7 +83,7 @@ export function ConfirmationDialog({
             <Icon className="size-9" />
           </div>
           <div className="space-y-3">
-            <h2 className="text-4xl font-semibold text-foreground">{title}</h2>
+            <h2 className="text-3xl font-semibold text-foreground sm:text-4xl">{title}</h2>
             <p className="mx-auto max-w-xl text-base leading-7 text-muted-foreground">{description}</p>
           </div>
           {itemPreview ? (

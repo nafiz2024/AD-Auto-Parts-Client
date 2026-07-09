@@ -60,6 +60,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
+  overflow-x: clip;
 }
 
 a {
@@ -85,6 +86,34 @@ textarea {
 
 .shadow-soft {
   box-shadow: var(--shadow-soft);
+}
+
+.toast-accent-success,
+.toast-accent-info,
+.toast-accent-warning,
+.toast-accent-error,
+.toast-accent-neutral {
+  border-inline-start-width: 4px;
+}
+
+.toast-accent-success {
+  border-inline-start-color: var(--success);
+}
+
+.toast-accent-info {
+  border-inline-start-color: #3b82f6;
+}
+
+.toast-accent-warning {
+  border-inline-start-color: var(--warning);
+}
+
+.toast-accent-error {
+  border-inline-start-color: var(--error);
+}
+
+.toast-accent-neutral {
+  border-inline-start-color: #94a3b8;
 }
 
 [dir="rtl"] .flip-in-rtl {

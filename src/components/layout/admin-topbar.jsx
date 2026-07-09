@@ -22,7 +22,7 @@ import { getAdminNotificationPreview } from "@/features/admin/dashboard-api";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 
-export function AdminTopbar() {
+export function AdminTopbar({ onMenuClick }) {
   const auth = useAuth();
   const { t } = useLanguage();
   const [unreadCount, setUnreadCount] = useState(0);
@@ -69,6 +69,7 @@ export function AdminTopbar() {
       <div className="flex flex-1 items-center gap-4">
         <button
           type="button"
+          onClick={onMenuClick}
           className="rounded-2xl border border-border p-3 text-foreground lg:hidden"
           aria-label={t("openAdminNavigation")}
         >

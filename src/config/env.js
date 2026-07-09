@@ -77,6 +77,8 @@ export const DEFAULT_LANGUAGE = readPublicEnv("NEXT_PUBLIC_DEFAULT_LANGUAGE", {
   fallback: LOCAL_FALLBACKS.NEXT_PUBLIC_DEFAULT_LANGUAGE,
 });
 
+export const LANGUAGE_COOKIE_NAME = "ad-auto-parts-language";
+
 export const SUPPORTED_LANGUAGES = parseList(
   readPublicEnv("NEXT_PUBLIC_SUPPORTED_LANGUAGES", {
     fallback: LOCAL_FALLBACKS.NEXT_PUBLIC_SUPPORTED_LANGUAGES,

@@ -19,6 +19,7 @@ import {
   TruckIcon,
   UsersIcon,
   WalletIcon,
+  XIcon,
 } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import { useAuth } from "@/hooks/use-auth";
@@ -53,7 +54,7 @@ function isNavActive(pathname, href) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ mobileOpen = false, onClose }) {
   const pathname = usePathname();
   const auth = useAuth();
   const toast = useToast();
@@ -79,51 +80,82 @@ export function AdminSidebar() {
   }
 
   return (
-    <aside className="hidden w-72 shrink-0 bg-admin-sidebar px-5 py-6 text-white lg:flex lg:flex-col">
-      <BrandLogo
-        href={routes.admin.adminDashboard}
-        className="[&_p:first-child]:text-white [&_.text-brand-red]:text-brand-red [&_.text-muted-foreground]:text-white/70"
+    <>
+      <div
+        className={cn(
+          "fixed inset-0 z-40 bg-brand-navy/45 transition lg:hidden",
+          mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0",
+        )}
+        onClick={onClose}
+        aria-hidden="true"
       />
-      <div className="mt-8 space-y-2">
-        {adminNavItems.map((item) => {
-          const Icon = item.icon;
-          const active = isNavActive(pathname, item.href);
+      <aside
+        className={cn(
+          "fixed inset-y-0 inset-inline-start-0 z-50 flex w-[min(20rem,calc(100vw-1.5rem))] shrink-0 flex-col bg-admin-sidebar px-5 py-6 text-white shadow-soft transition lg:static lg:z-auto lg:w-72 lg:opacity-100 lg:shadow-none",
+          mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0 lg:pointer-events-auto",
+        )}
+      >
+        <div className="mb-6 flex items-center justify-between lg:hidden">
+          <BrandLogo
+            href={routes.admin.adminDashboard}
+            className="[&_p:first-child]:text-white [&_.text-brand-red]:text-brand-red [&_.text-muted-foreground]:text-white/70"
+          />
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-white/70 transition hover:bg-white/8 hover:text-white"
+            aria-label={t("closeNavigationMenu")}
+          >
+            <XIcon />
+          </button>
+        </div>
+        <BrandLogo
+          href={routes.admin.adminDashboard}
+          className="hidden lg:block [&_p:first-child]:text-white [&_.text-brand-red]:text-brand-red [&_.text-muted-foreground]:text-white/70"
+        />
+        <div className="mt-8 space-y-2">
+          {adminNavItems.map((item) => {
+            const Icon = item.icon;
+            const active = isNavActive(pathname, item.href);
 
-          return (
-            <Link
-              key={item.key}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
-                active
-                  ? "bg-[linear-gradient(135deg,#ef4444,#f96048)] text-white shadow-lg shadow-brand-red/20"
-                  : "text-white/80 hover:bg-white/8 hover:text-white",
-              )}
-            >
-              <Icon className="size-5" />
-              {t(item.key)}
-            </Link>
-          );
-        })}
-      </div>
-      <div className="mt-auto space-y-2 border-t border-white/10 pt-6">
-        <Link
-          href={routes.public.home}
-          className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-white/80 transition hover:bg-white/8 hover:text-white"
-        >
-          <ExternalLinkIcon className="size-5" />
-          {t("viewStore")}
-        </Link>
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-white/80 transition hover:bg-white/8 hover:text-white"
-        >
-          <LogOutIcon className="size-5" />
-          {isLoggingOut ? t("loggingOut") : t("logout")}
-        </button>
-      </div>
-    </aside>
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                onClick={onClose}
+                className={cn(
+                  "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition",
+                  active
+                    ? "bg-[linear-gradient(135deg,#ef4444,#f96048)] text-white shadow-lg shadow-brand-red/20"
+                    : "text-white/80 hover:bg-white/8 hover:text-white",
+                )}
+              >
+                <Icon className="size-5" />
+                {t(item.key)}
+              </Link>
+            );
+          })}
+        </div>
+        <div className="mt-auto space-y-2 border-t border-white/10 pt-6">
+          <Link
+            href={routes.public.home}
+            onClick={onClose}
+            className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-white/80 transition hover:bg-white/8 hover:text-white"
+          >
+            <ExternalLinkIcon className="size-5" />
+            {t("viewStore")}
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-white/80 transition hover:bg-white/8 hover:text-white"
+          >
+            <LogOutIcon className="size-5" />
+            {isLoggingOut ? t("loggingOut") : t("logout")}
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

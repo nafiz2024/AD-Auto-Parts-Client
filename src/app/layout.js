@@ -1,5 +1,6 @@
 import "./globals.css";
-import { APP_NAME, DEFAULT_LANGUAGE } from "@/config/env";
+import { cookies } from "next/headers";
+import { APP_NAME, DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME, isSupportedLanguage } from "@/config/env";
 import { getDirection } from "@/lib/i18n/direction";
 import { AppProviders } from "@/providers/app-providers";
 
@@ -8,9 +9,13 @@ export const metadata = {
   description: "AD Auto Parts frontend foundation for customer and admin experiences.",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const cookieStore = await cookies();
+  const cookieLanguage = cookieStore.get(LANGUAGE_COOKIE_NAME)?.value;
+  const initialLanguage = isSupportedLanguage(cookieLanguage) ? cookieLanguage : DEFAULT_LANGUAGE;
+
   return (
-    <html lang={DEFAULT_LANGUAGE} dir={getDirection(DEFAULT_LANGUAGE)} className="h-full antialiased">
+    <html lang={initialLanguage} dir={getDirection(initialLanguage)} className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <AppProviders>{children}</AppProviders>
       </body>

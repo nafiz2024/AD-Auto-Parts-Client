@@ -119,7 +119,7 @@ function CustomerTable({ items, locale, t, onView }) {
     <div className="hidden overflow-x-auto xl:block">
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-muted-foreground">
+          <tr className="border-b border-border text-start text-muted-foreground">
             <th className="pb-3">{t("customerName")}</th>
             <th className="pb-3">{t("phone")}</th>
             <th className="pb-3">{t("email")}</th>

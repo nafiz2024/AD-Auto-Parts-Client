@@ -96,7 +96,7 @@ function OrderTable({ items, t, onCancelOrder }) {
     <div className="hidden overflow-x-auto lg:block">
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-muted-foreground">
+          <tr className="border-b border-border text-start text-muted-foreground">
             <th className="pb-3">{t("orderNumber")}</th>
             <th className="pb-3">{t("customer")}</th>
             <th className="pb-3">{t("productCount")}</th>

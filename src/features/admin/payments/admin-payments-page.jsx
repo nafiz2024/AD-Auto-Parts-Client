@@ -295,7 +295,7 @@ export function AdminPaymentsPage() {
                   key={item.id}
                   type="button"
                   onClick={() => setState((current) => ({ ...current, selectedId: item.id }))}
-                  className={`w-full rounded-[1.75rem] border p-4 text-left transition ${
+                  className={`w-full rounded-[1.75rem] border p-4 text-start transition ${
                     state.selectedId === item.id
                       ? "border-brand-red bg-brand-red/5"
                       : "border-border hover:border-brand-red/40"

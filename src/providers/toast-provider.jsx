@@ -9,16 +9,16 @@ let toastId = 0;
 
 function ToastItem({ toast, onDismiss }) {
   const styles = {
-    success: "border-l-success bg-white",
-    info: "border-l-blue-500 bg-white",
-    warning: "border-l-warning bg-white",
-    error: "border-l-error bg-white",
-    neutral: "border-l-slate-400 bg-white",
+    success: "toast-accent-success bg-white",
+    info: "toast-accent-info bg-white",
+    warning: "toast-accent-warning bg-white",
+    error: "toast-accent-error bg-white",
+    neutral: "toast-accent-neutral bg-white",
   };
 
   return (
     <div
-      className={`pointer-events-auto w-full max-w-md rounded-3xl border border-border/70 ${styles[toast.variant] ?? styles.neutral} border-l-4 px-5 py-4 shadow-soft`}
+      className={`pointer-events-auto w-full rounded-3xl border border-border/70 ${styles[toast.variant] ?? styles.neutral} px-5 py-4 shadow-soft`}
       role="status"
       aria-live="polite"
     >
@@ -81,7 +81,7 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="pointer-events-none fixed inset-block-start-5 inset-inline-end-4 z-50 flex w-full max-w-lg flex-col gap-3">
+      <div className="pointer-events-none fixed inset-block-start-5 inset-inline-end-4 z-50 flex w-[min(calc(100%-2rem),28rem)] flex-col gap-3">
         {toasts.map((toast) => (
           <ToastItem key={toast.id} toast={toast} onDismiss={dismissToast} />
         ))}

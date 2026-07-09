@@ -380,6 +380,16 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 - Customer and admin routes continue to depend on backend-owned auth, role, active-account, ownership, and TOTP checks without frontend-only bypasses
 - Remaining deferred items are limited to intentionally non-business placeholders such as recently viewed, compatibility tools, and testimonial content that does not map to a live backend feed yet
 
+## Step 18 responsive, RTL, and layout audit
+
+- Root HTML language and direction now initialize from the persisted language cookie so Arabic sessions no longer first-paint in default LTR before the client provider hydrates
+- Public and admin shells keep using shared layouts, but mobile behavior was tightened so the storefront drawer uses logical start/end spacing and the admin navigation is reachable on phones through a working overlay drawer
+- Shared feedback components were polished for smaller screens: confirmation dialogs now scroll safely within the viewport, and empty/error states use less aggressive mobile spacing and heading sizes
+- Toast notifications now use a logical inline-start accent border so success/warning/error indicators stay on the correct side in both LTR and RTL layouts
+- Admin tables and list/detail selectors were normalized from physical `text-left` styling to logical `text-start` styling across dashboards, orders, products, customers, reviews, questions, enquiries, categories, brands, shipments, payments, and invoice preview tables
+- Global overflow handling was tightened with horizontal clipping at the shell level to reduce accidental cross-device x-axis scroll caused by wide content, drawers, or fixed overlays
+- No API contracts, auth rules, TOTP gating, payment flows, or backend-owned business logic were changed during Step 18; the work stayed limited to layout, responsiveness, and presentation safety
+
 ## Admin customers and enquiries behavior
 
 - `/admin/customers` stays behind the existing authenticated admin session, active-account checks, and TOTP-complete access flow
@@ -420,7 +430,7 @@ When those endpoints return empty local data, the homepage shows clearly labeled
 
 ## Next step
 
-Step 18 can focus on responsive/RTL polish, broader manual backend verification, and lightweight coverage tests for the audited API flows.
+Step 19 can focus on broader manual backend verification, device-level QA screenshots, and lightweight coverage tests for the audited API flows.
 
 ## Validation
 

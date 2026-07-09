@@ -423,7 +423,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="border-b border-border text-left text-muted-foreground">
+                    <tr className="border-b border-border text-start text-muted-foreground">
                       <th className="pb-3">{t("product")}</th>
                       <th className="pb-3">{t("price")}</th>
                       <th className="pb-3">{t("quantity")}</th>

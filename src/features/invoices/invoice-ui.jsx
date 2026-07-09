@@ -259,7 +259,7 @@ export function InvoicePreview({
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="border-b border-border text-left text-muted-foreground">
+                  <tr className="border-b border-border text-start text-muted-foreground">
                     <th className="pb-3 pe-4">{t("product")}</th>
                     <th className="pb-3 pe-4">{t("sku")}</th>
                     <th className="pb-3 pe-4">{t("unitPrice")}</th>

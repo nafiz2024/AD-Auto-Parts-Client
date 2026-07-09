@@ -156,7 +156,7 @@ function ProductTable({ products, t, onAction }) {
     <div className="hidden overflow-x-auto lg:block">
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-muted-foreground">
+          <tr className="border-b border-border text-start text-muted-foreground">
             <th className="pb-3">{t("product")}</th>
             <th className="pb-3">{t("sku")}</th>
             <th className="pb-3">{t("category")}</th>

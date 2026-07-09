@@ -17,12 +17,12 @@ export function ErrorState({
   const resolvedActionLabel = actionLabel ?? t("tryAgain");
 
   return (
-    <Card className="flex min-h-72 flex-col items-center justify-center gap-5 text-center">
+    <Card className="flex min-h-72 flex-col items-center justify-center gap-5 px-4 py-8 text-center sm:px-6">
       <div className="rounded-full bg-error/10 p-5 text-error">
         <AlertTriangleIcon className="size-10" />
       </div>
       <div className="space-y-2">
-        <h2 className="text-3xl font-semibold text-foreground">{title}</h2>
+        <h2 className="text-2xl font-semibold text-foreground sm:text-3xl">{title}</h2>
         <p className="max-w-xl text-sm leading-6 text-muted-foreground">{description}</p>
       </div>
       {actionHref ? (

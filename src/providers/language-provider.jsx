@@ -3,13 +3,14 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import {
   DEFAULT_LANGUAGE,
+  LANGUAGE_COOKIE_NAME,
   getDirection,
   getLocaleForLanguage,
   isSupportedLanguage,
 } from "@/config/env";
 import { dictionaries } from "@/lib/i18n/dictionaries";
 
-const STORAGE_KEY = "ad-auto-parts-language";
+const STORAGE_KEY = LANGUAGE_COOKIE_NAME;
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 const LanguageContext = createContext(null);
 const missingTranslationWarnings = new Set();
@@ -112,7 +113,7 @@ export function LanguageProvider({ children }) {
     document.documentElement.lang = normalizedLanguage;
     document.documentElement.dir = direction;
     window.localStorage.setItem(STORAGE_KEY, normalizedLanguage);
-    document.cookie = `${STORAGE_KEY}=${encodeURIComponent(normalizedLanguage)}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
+    document.cookie = `${LANGUAGE_COOKIE_NAME}=${encodeURIComponent(normalizedLanguage)}; path=/; max-age=${COOKIE_MAX_AGE}; samesite=lax`;
   }, [language]);
 
   const value = useMemo(() => {
