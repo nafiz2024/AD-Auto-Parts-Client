@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,6 +30,23 @@ import { getConditionLabel, getStockLabel } from "@/lib/formatters/product-label
 import { cn } from "@/lib/utils/cn";
 import { buildQueryString } from "@/lib/api/query";
 import { DEFAULT_SUPPORT_DETAILS, getWhatsappHref } from "@/features/support/support-api";
+
+const EMPTY_SHOP_FILTERS = {
+  q: "",
+  category: "",
+  brand: "",
+  model: "",
+  year: "",
+  sort: "newest",
+  view: "grid",
+  page: 1,
+  minPrice: "",
+  maxPrice: "",
+  conditions: [],
+  availability: [],
+  positions: [],
+  partsBrands: [],
+};
 
 function createQueryObject(filters, overrides = {}) {
   const query = {
@@ -57,6 +76,71 @@ function createHref(basePath, filters, overrides = {}) {
   const query = createQueryObject(filters, overrides);
   const search = buildQueryString(query);
   return `${basePath}${search}`;
+}
+
+function getDefaultSort(mode) {
+  return mode === "search" ? "relevance" : "newest";
+}
+
+function createDraftFilters(filters, mode) {
+  return {
+    ...EMPTY_SHOP_FILTERS,
+    q: filters.q ?? "",
+    category: filters.category ?? "",
+    brand: filters.brand ?? "",
+    model: filters.model ?? "",
+    year: filters.year ? String(filters.year) : "",
+    sort: filters.sort || getDefaultSort(mode),
+    view: filters.view || "grid",
+    page: filters.page ?? 1,
+    minPrice: filters.minPrice !== null ? String(filters.minPrice / 100) : "",
+    maxPrice: filters.maxPrice !== null ? String(filters.maxPrice / 100) : "",
+    conditions: [...filters.conditions],
+    availability: [...filters.availability],
+    positions: [...filters.positions],
+    partsBrands: [...filters.partsBrands],
+  };
+}
+
+function createEmptyFilters(mode, view = "grid") {
+  return {
+    ...EMPTY_SHOP_FILTERS,
+    sort: getDefaultSort(mode),
+    view,
+  };
+}
+
+function parsePriceToMinor(value) {
+  if (!value) {
+    return null;
+  }
+
+  const numericValue = Number.parseFloat(String(value).replace(/[^\d.]/g, ""));
+
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    return null;
+  }
+
+  return Math.round(numericValue * 100);
+}
+
+function createFiltersFromDraft(draftFilters) {
+  return {
+    q: draftFilters.q.trim(),
+    category: draftFilters.category,
+    brand: draftFilters.brand,
+    model: draftFilters.model,
+    year: draftFilters.year ? Number.parseInt(draftFilters.year, 10) || null : null,
+    sort: draftFilters.sort || "newest",
+    view: draftFilters.view || "grid",
+    page: 1,
+    minPrice: parsePriceToMinor(draftFilters.minPrice),
+    maxPrice: parsePriceToMinor(draftFilters.maxPrice),
+    conditions: draftFilters.conditions,
+    availability: draftFilters.availability,
+    positions: draftFilters.positions,
+    partsBrands: draftFilters.partsBrands,
+  };
 }
 
 function hasActiveFilters(filters, mode) {
@@ -240,7 +324,7 @@ function FilterSection({ title, children }) {
   );
 }
 
-function CheckboxOption({ name, option, activeValues }) {
+function CheckboxOption({ name, option, activeValues, onChange }) {
   return (
     <label className="flex items-center justify-between gap-3 text-sm text-foreground">
       <span className="flex items-center gap-3">
@@ -248,7 +332,8 @@ function CheckboxOption({ name, option, activeValues }) {
           type="checkbox"
           name={name}
           value={option.value}
-          defaultChecked={activeValues.includes(option.value)}
+          checked={activeValues.includes(option.value)}
+          onChange={(event) => onChange(option.value, event.target.checked)}
           className="size-4 rounded border-border text-brand-red focus:ring-brand-red/20"
         />
         <span>{option.label}</span>
@@ -259,16 +344,55 @@ function CheckboxOption({ name, option, activeValues }) {
 }
 
 function FilterSidebar({ basePath, filters, filterData, mode }) {
+  const router = useRouter();
   const { t } = useLanguage();
-  const clearHref =
-    mode === "search"
-      ? createHref(basePath, { ...filters, brand: "", model: "", year: null, conditions: [], availability: [], positions: [], partsBrands: [], minPrice: null, maxPrice: null, page: 1 }, { sort: filters.sort, view: filters.view, q: filters.q })
-      : createHref(basePath, { ...filters, q: mode === "shop" ? "" : filters.q, brand: "", model: "", year: null, conditions: [], availability: [], positions: [], partsBrands: [], minPrice: null, maxPrice: null, page: 1 }, { sort: filters.sort, view: filters.view });
+  const [draftFilters, setDraftFilters] = useState(() => createDraftFilters(filters, mode));
+
+  function updateArrayFilter(key, value, checked) {
+    setDraftFilters((current) => {
+      const nextValues = checked
+        ? [...current[key], value]
+        : current[key].filter((item) => item !== value);
+
+      return {
+        ...current,
+        [key]: nextValues,
+        page: 1,
+      };
+    });
+  }
+
+  function updateSingleFilter(key, value) {
+    setDraftFilters((current) => ({
+      ...current,
+      [key]: current[key] === value ? "" : value,
+      page: 1,
+    }));
+  }
+
+  function updateField(key, value) {
+    setDraftFilters((current) => ({
+      ...current,
+      [key]: value,
+      page: 1,
+    }));
+  }
+
+  function handleApplyFilters(event) {
+    event.preventDefault();
+
+    const nextFilters = createFiltersFromDraft(draftFilters);
+    router.push(createHref(basePath, nextFilters), { scroll: false });
+  }
+
+  function handleClearAll() {
+    setDraftFilters(createEmptyFilters(mode, filters.view));
+    router.replace(basePath, { scroll: false });
+  }
 
   return (
     <Card className="rounded-[2rem] p-5">
-      <form action={basePath} className="space-y-5">
-        <HiddenFields filters={filters} exclude={["q", "category", "brand", "model", "year", "condition", "availability", "position", "partsBrand", "minPrice", "maxPrice", "page"]} />
+      <form onSubmit={handleApplyFilters} className="space-y-5">
         <div className="flex items-center gap-3">
           <div className="rounded-2xl bg-brand-navy/5 p-2 text-brand-navy">
             <FilterIcon className="size-5" />
@@ -283,7 +407,8 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             <Input
               type="search"
               name="q"
-              defaultValue={filters.q}
+              value={draftFilters.q}
+              onChange={(event) => updateField("q", event.target.value)}
               placeholder={t("searchParts")}
               className="pe-12"
             />
@@ -296,12 +421,23 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
           <FilterSection title={t("category")}>
             <div className="space-y-3">
               {filterData.categories.map((option) => (
-                <CheckboxOption
+                <label
                   key={option.value}
-                  name="category"
-                  option={option}
-                  activeValues={filters.category ? [filters.category] : []}
-                />
+                  className="flex items-center justify-between gap-3 text-sm text-foreground"
+                >
+                  <span className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      name="category"
+                      value={option.value}
+                      checked={draftFilters.category === option.value}
+                      onChange={(event) => updateSingleFilter("category", event.target.value)}
+                      className="size-4 rounded border-border text-brand-red focus:ring-brand-red/20"
+                    />
+                    <span>{option.label}</span>
+                  </span>
+                  <span className="text-muted-foreground">({option.count})</span>
+                </label>
               ))}
             </div>
           </FilterSection>
@@ -309,29 +445,55 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
         <FilterSection title={t("carBrand")}>
           <div className="space-y-3">
             {filterData.brands.map((option) => (
-              <CheckboxOption
+              <label
                 key={option.value}
-                name="brand"
-                option={option}
-                activeValues={filters.brand ? [filters.brand] : []}
-              />
+                className="flex items-center justify-between gap-3 text-sm text-foreground"
+              >
+                <span className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    name="brand"
+                    value={option.value}
+                    checked={draftFilters.brand === option.value}
+                    onChange={(event) => updateSingleFilter("brand", event.target.value)}
+                    className="size-4 rounded border-border text-brand-red focus:ring-brand-red/20"
+                  />
+                  <span>{option.label}</span>
+                </span>
+                <span className="text-muted-foreground">({option.count})</span>
+              </label>
             ))}
           </div>
         </FilterSection>
         <FilterSection title={t("carModel")}>
           <div className="space-y-3">
             {filterData.models.map((option) => (
-              <CheckboxOption
+              <label
                 key={option.value}
-                name="model"
-                option={option}
-                activeValues={filters.model ? [filters.model] : []}
-              />
+                className="flex items-center justify-between gap-3 text-sm text-foreground"
+              >
+                <span className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    name="model"
+                    value={option.value}
+                    checked={draftFilters.model === option.value}
+                    onChange={(event) => updateSingleFilter("model", event.target.value)}
+                    className="size-4 rounded border-border text-brand-red focus:ring-brand-red/20"
+                  />
+                  <span>{option.label}</span>
+                </span>
+                <span className="text-muted-foreground">({option.count})</span>
+              </label>
             ))}
           </div>
         </FilterSection>
         <FilterSection title={t("manufacturingYear")}>
-          <Select name="year" defaultValue={filters.year ? String(filters.year) : ""}>
+          <Select
+            name="year"
+            value={draftFilters.year}
+            onChange={(event) => updateField("year", event.target.value)}
+          >
             <option value="">{t("anyYear")}</option>
             {[2016, 2015, 2014, 2013, 2012, 2011, 2010, 2008, 2006, 2003].map((year) => (
               <option key={year} value={year}>
@@ -347,7 +509,8 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
                 key={option.value}
                 name="condition"
                 option={option}
-                activeValues={filters.conditions}
+                activeValues={draftFilters.conditions}
+                onChange={(value, checked) => updateArrayFilter("conditions", value, checked)}
               />
             ))}
           </div>
@@ -358,7 +521,8 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
               type="number"
               min="0"
               name="minPrice"
-              defaultValue={filters.minPrice !== null ? String(filters.minPrice / 100) : ""}
+              value={draftFilters.minPrice}
+              onChange={(event) => updateField("minPrice", event.target.value)}
               placeholder={t("minPricePlaceholder")}
               className="h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm text-foreground shadow-sm outline-none transition focus:border-brand-red focus:ring-4 focus:ring-brand-red/10"
             />
@@ -366,7 +530,8 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
               type="number"
               min="0"
               name="maxPrice"
-              defaultValue={filters.maxPrice !== null ? String(filters.maxPrice / 100) : ""}
+              value={draftFilters.maxPrice}
+              onChange={(event) => updateField("maxPrice", event.target.value)}
               placeholder={t("maxPricePlaceholder")}
               className="h-12 w-full rounded-2xl border border-border bg-white px-4 text-sm text-foreground shadow-sm outline-none transition focus:border-brand-red focus:ring-4 focus:ring-brand-red/10"
             />
@@ -380,7 +545,8 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
                 key={option.value}
                 name="availability"
                 option={option}
-                activeValues={filters.availability}
+                activeValues={draftFilters.availability}
+                onChange={(value, checked) => updateArrayFilter("availability", value, checked)}
               />
             ))}
           </div>
@@ -392,7 +558,8 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
                 key={option.value}
                 name="position"
                 option={option}
-                activeValues={filters.positions}
+                activeValues={draftFilters.positions}
+                onChange={(value, checked) => updateArrayFilter("positions", value, checked)}
               />
             ))}
           </div>
@@ -404,7 +571,8 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
                 key={option.value}
                 name="partsBrand"
                 option={option}
-                activeValues={filters.partsBrands}
+                activeValues={draftFilters.partsBrands}
+                onChange={(value, checked) => updateArrayFilter("partsBrands", value, checked)}
               />
             ))}
           </div>
@@ -413,11 +581,9 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
           <Button type="submit" className="w-full">
             {t("applyFilters")}
           </Button>
-          <Link href={clearHref} className="w-full">
-            <Button variant="outline" className="w-full">
-              {t("clearAll")}
-            </Button>
-          </Link>
+          <Button type="button" variant="outline" className="w-full" onClick={handleClearAll}>
+            {t("clearAll")}
+          </Button>
         </div>
       </form>
     </Card>
@@ -800,6 +966,7 @@ export function ListingPage({ data, basePath }) {
         />
         <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
           <FilterSidebar
+            key={`${basePath}:${JSON.stringify(filters)}`}
             basePath={basePath}
             filters={filters}
             filterData={filterData}
