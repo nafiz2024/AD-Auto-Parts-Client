@@ -51,7 +51,9 @@ function updateSearchParams(current, updates) {
   return params.toString();
 }
 
-function buildFilters(searchParams) {
+function buildFilters(searchParamsValue) {
+  const searchParams = new URLSearchParams(searchParamsValue);
+
   return {
     page: Math.max(Number.parseInt(searchParams.get("page") || "1", 10) || 1, 1),
     q: searchParams.get("q") || "",
@@ -355,7 +357,8 @@ export function AdminCategoryPage() {
   const searchParams = useSearchParams();
   const toast = useToast();
   const { t } = useLanguage();
-  const filters = useMemo(() => buildFilters(searchParams), [searchParams]);
+  const searchKey = searchParams.toString();
+  const filters = useMemo(() => buildFilters(searchKey), [searchKey]);
   const [state, setState] = useState({
     loading: true,
     error: null,
@@ -439,7 +442,12 @@ export function AdminCategoryPage() {
 
   function replaceFilters(updates) {
     const query = updateSearchParams(searchParams.toString(), updates);
-    router.replace(query ? `${pathname}?${query}` : pathname);
+    const nextHref = query ? `${pathname}?${query}` : pathname;
+    const currentHref = searchKey ? `${pathname}?${searchKey}` : pathname;
+
+    if (nextHref !== currentHref) {
+      router.replace(nextHref);
+    }
   }
 
   function openCreateDrawer() {

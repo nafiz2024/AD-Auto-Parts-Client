@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TableRowSkeleton } from "@/components/states/loading-states";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +67,9 @@ function getStatusVariant(status) {
   return "warning";
 }
 
-function buildFilters(searchParams) {
+function buildFilters(searchParamsValue) {
+  const searchParams = new URLSearchParams(searchParamsValue);
+
   return {
     page: Math.max(Number.parseInt(searchParams.get("page") || "1", 10) || 1, 1),
     status: searchParams.get("status") || "",
@@ -84,8 +86,8 @@ export function AdminPaymentsPage() {
   const searchParams = useSearchParams();
   const { t } = useLanguage();
   const toast = useToast();
-  const filters = buildFilters(searchParams);
   const searchKey = searchParams.toString();
+  const filters = useMemo(() => buildFilters(searchKey), [searchKey]);
   const [draftState, setDraftState] = useState({
     key: searchKey,
     values: filters,
@@ -180,7 +182,12 @@ export function AdminPaymentsPage() {
 
   function replaceFilters(updates) {
     const query = updateSearchParams(searchParams.toString(), updates);
-    router.replace(query ? `${pathname}?${query}` : pathname);
+    const nextHref = query ? `${pathname}?${query}` : pathname;
+    const currentHref = searchKey ? `${pathname}?${searchKey}` : pathname;
+
+    if (nextHref !== currentHref) {
+      router.replace(nextHref);
+    }
   }
 
   async function handleConfirm() {
@@ -275,7 +282,19 @@ export function AdminPaymentsPage() {
           />
           <div className="flex flex-wrap gap-3 xl:col-span-4">
             <Button type="submit">{t("applyFilters")}</Button>
-            <Button type="button" variant="outline" onClick={() => router.replace(pathname)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                replaceFilters({
+                  page: null,
+                  status: null,
+                  orderNumber: null,
+                  dateFrom: null,
+                  dateTo: null,
+                })
+              }
+            >
               {t("clearFilters")}
             </Button>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { AdminTopbar } from "@/components/layout/admin-topbar";
 import { routes } from "@/constants/routes";
@@ -12,34 +12,35 @@ import { useLanguage } from "@/hooks/use-language";
 export function AdminLayoutShell({ children }) {
   const auth = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useLanguage();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-
-  useEffect(() => {
+  const access = useMemo(() => getAdminAccessState(auth.session), [auth.session]);
+  const redirectTarget = useMemo(() => {
     if (auth.isLoading) {
-      return;
+      return null;
     }
 
-    const access = getAdminAccessState(auth.session);
-
-    if (!access.isAuthenticated) {
-      router.replace(routes.admin.adminLogin);
-      return;
-    }
-
-    if (access.forbidden) {
-      router.replace(routes.admin.adminLogin);
-      return;
+    if (!access.isAuthenticated || access.forbidden) {
+      return routes.admin.adminLogin;
     }
 
     if (access.totpPending) {
-      router.replace(routes.admin.adminTotp);
+      return routes.admin.adminTotp;
     }
-  }, [auth.isLoading, auth.session, router]);
 
-  const access = getAdminAccessState(auth.session);
+    return null;
+  }, [access, auth.isLoading]);
 
-  if (auth.isLoading || !access.canAccessDashboard) {
+  useEffect(() => {
+    if (!redirectTarget || pathname === redirectTarget) {
+      return;
+    }
+
+    router.replace(redirectTarget);
+  }, [pathname, redirectTarget, router]);
+
+  if (auth.isLoading || redirectTarget || !access.canAccessDashboard) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4">
         <div className="w-full max-w-xl rounded-[2rem] border border-border bg-white px-6 py-8 text-center shadow-soft">
