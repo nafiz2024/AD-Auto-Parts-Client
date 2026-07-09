@@ -328,10 +328,10 @@ function HelpCtaSection() {
           <a
             href={`tel:${supportPhone.replace(/\D/g, "")}`}
             aria-label={t("contactSupport")}
-            className="inline-flex h-12 min-w-[148px] items-center justify-center gap-2 rounded-2xl bg-white px-5 text-sm font-bold text-slate-950 shadow-sm ring-1 ring-white/20 transition hover:bg-slate-100"
+            className="inline-flex h-12 min-w-[176px] items-center justify-center gap-2 rounded-2xl bg-white px-5 text-sm font-bold text-slate-950 shadow-sm ring-1 ring-white/20 transition hover:bg-slate-100"
           >
             <FaPhoneAlt className="h-4 w-4 shrink-0 text-slate-900" aria-hidden="true" />
-            <span className="whitespace-nowrap">{t("contactSupport")}</span>
+            <span className="shrink-0 whitespace-nowrap text-slate-950">{t("contactSupport")}</span>
           </a>
         </div>
       </div>
