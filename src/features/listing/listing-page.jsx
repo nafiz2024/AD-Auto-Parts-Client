@@ -325,6 +325,17 @@ function FilterSection({ title, children }) {
 }
 
 function CheckboxOption({ name, option, activeValues, onChange }) {
+  const { t, getLocalizedField } = useLanguage();
+  const localizedLabel =
+    (option.translationKey ? t(option.translationKey) : null) ||
+    getLocalizedField(
+      {
+        name: option.label,
+        nameAr: option.labelAr ?? "",
+      },
+      "name",
+    ) || option.label;
+
   return (
     <label className="flex items-center justify-between gap-3 text-sm text-foreground">
       <span className="flex items-center gap-3">
@@ -336,7 +347,7 @@ function CheckboxOption({ name, option, activeValues, onChange }) {
           onChange={(event) => onChange(option.value, event.target.checked)}
           className="size-4 rounded border-border text-brand-red focus:ring-brand-red/20"
         />
-        <span>{option.label}</span>
+        <span>{localizedLabel}</span>
       </span>
       <span className="text-muted-foreground">({option.count})</span>
     </label>
@@ -442,52 +453,36 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
             </div>
           </FilterSection>
         ) : null}
-        <FilterSection title={t("carBrand")}>
-          <div className="space-y-3">
-            {filterData.brands.map((option) => (
-              <label
-                key={option.value}
-                className="flex items-center justify-between gap-3 text-sm text-foreground"
-              >
-                <span className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    name="brand"
-                    value={option.value}
-                    checked={draftFilters.brand === option.value}
-                    onChange={(event) => updateSingleFilter("brand", event.target.value)}
-                    className="size-4 rounded border-border text-brand-red focus:ring-brand-red/20"
-                  />
-                  <span>{option.label}</span>
-                </span>
-                <span className="text-muted-foreground">({option.count})</span>
-              </label>
-            ))}
-          </div>
-        </FilterSection>
-        <FilterSection title={t("carModel")}>
-          <div className="space-y-3">
-            {filterData.models.map((option) => (
-              <label
-                key={option.value}
-                className="flex items-center justify-between gap-3 text-sm text-foreground"
-              >
-                <span className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    name="model"
-                    value={option.value}
-                    checked={draftFilters.model === option.value}
-                    onChange={(event) => updateSingleFilter("model", event.target.value)}
-                    className="size-4 rounded border-border text-brand-red focus:ring-brand-red/20"
-                  />
-                  <span>{option.label}</span>
-                </span>
-                <span className="text-muted-foreground">({option.count})</span>
-              </label>
-            ))}
-          </div>
-        </FilterSection>
+        {filterData.brands.length > 0 ? (
+          <FilterSection title={t("carBrand")}>
+            <div className="space-y-3">
+              {filterData.brands.map((option) => (
+                <CheckboxOption
+                  key={option.value}
+                  name="brand"
+                  option={option}
+                  activeValues={draftFilters.brand ? [draftFilters.brand] : []}
+                  onChange={(value) => updateSingleFilter("brand", value)}
+                />
+              ))}
+            </div>
+          </FilterSection>
+        ) : null}
+        {filterData.models.length > 0 ? (
+          <FilterSection title={t("carModel")}>
+            <div className="space-y-3">
+              {filterData.models.map((option) => (
+                <CheckboxOption
+                  key={option.value}
+                  name="model"
+                  option={option}
+                  activeValues={draftFilters.model ? [draftFilters.model] : []}
+                  onChange={(value) => updateSingleFilter("model", value)}
+                />
+              ))}
+            </div>
+          </FilterSection>
+        ) : null}
         <FilterSection title={t("manufacturingYear")}>
           <Select
             name="year"
@@ -538,19 +533,21 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
           </div>
           <p className="text-xs text-muted-foreground">{t("enterSarAmountsNoDecimals")}</p>
         </FilterSection>
-        <FilterSection title={t("availability")}>
-          <div className="space-y-3">
-            {filterData.availability.map((option) => (
-              <CheckboxOption
-                key={option.value}
-                name="availability"
-                option={option}
-                activeValues={draftFilters.availability}
-                onChange={(value, checked) => updateArrayFilter("availability", value, checked)}
-              />
-            ))}
-          </div>
-        </FilterSection>
+        {filterData.availability.length > 0 ? (
+          <FilterSection title={t("availability")}>
+            <div className="space-y-3">
+              {filterData.availability.map((option) => (
+                <CheckboxOption
+                  key={option.value}
+                  name="availability"
+                  option={option}
+                  activeValues={draftFilters.availability}
+                  onChange={(value, checked) => updateArrayFilter("availability", value, checked)}
+                />
+              ))}
+            </div>
+          </FilterSection>
+        ) : null}
         <FilterSection title={t("partPosition")}>
           <div className="space-y-3">
             {filterData.positions.map((option) => (

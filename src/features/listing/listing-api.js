@@ -563,6 +563,7 @@ function normalizeBrand(item) {
     id: item?.id ?? item?._id ?? item?.slug ?? item?.name ?? "brand",
     slug: item?.slug ?? item?.id ?? item?._id ?? item?.name?.toLowerCase?.() ?? "brand",
     name: item?.name ?? item?.title ?? "Brand",
+    nameAr: item?.nameAr ?? item?.titleAr ?? "",
   };
 }
 
@@ -571,12 +572,247 @@ function normalizeModel(item) {
     id: item?.id ?? item?._id ?? item?.slug ?? item?.name ?? "model",
     slug: item?.slug ?? item?.id ?? item?._id ?? item?.name?.toLowerCase?.() ?? "model",
     name: item?.name ?? item?.title ?? "Model",
+    nameAr: item?.nameAr ?? item?.titleAr ?? "",
     brandSlug:
       item?.brandSlug ??
       item?.vehicleBrand?.slug ??
       item?.brand?.slug ??
       item?.vehicleBrandId ??
       null,
+  };
+}
+
+function firstString(...values) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return null;
+}
+
+function firstNumber(...values) {
+  for (const value of values) {
+    const numericValue = Number(value);
+
+    if (Number.isFinite(numericValue)) {
+      return numericValue;
+    }
+  }
+
+  return null;
+}
+
+function normalizeBoolean(value) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return ["true", "yes", "1", "in_stock", "available"].includes(normalized);
+  }
+
+  if (typeof value === "number") {
+    return value > 0;
+  }
+
+  return false;
+}
+
+function normalizeSlugValue(...values) {
+  const raw = firstString(...values);
+
+  if (!raw) {
+    return null;
+  }
+
+  return raw
+    .toLowerCase()
+    .trim()
+    .replace(/[_\s]+/g, "-");
+}
+
+function getCompatibilityEntries(item) {
+  return [
+    ...asArray(item?.compatibility),
+    ...asArray(item?.compatibilities),
+    ...asArray(item?.vehicleCompatibility),
+    ...asArray(item?.vehicleCompatibilities),
+    ...asArray(item?.fitments),
+    ...asArray(item?.vehicles),
+  ];
+}
+
+function normalizeNamedEntity(rawEntity, fallbacks = {}) {
+  const id = firstString(
+    rawEntity?.id,
+    rawEntity?._id,
+    fallbacks.id,
+  );
+  const slug = normalizeSlugValue(
+    rawEntity?.slug,
+    id,
+    rawEntity?.name,
+    fallbacks.slug,
+    fallbacks.name,
+  );
+  const name = firstString(
+    rawEntity?.name,
+    rawEntity?.title,
+    fallbacks.name,
+  );
+  const nameAr = firstString(
+    rawEntity?.nameAr,
+    rawEntity?.titleAr,
+    fallbacks.nameAr,
+  );
+
+  if (!id && !slug && !name && !nameAr) {
+    return null;
+  }
+
+  return {
+    id: id ?? slug ?? name ?? "entity",
+    slug: slug ?? id ?? normalizeSlugValue(name) ?? "entity",
+    name: name ?? nameAr ?? "Unknown",
+    nameAr: nameAr ?? "",
+  };
+}
+
+function normalizeAvailability(item) {
+  const numericStock = firstNumber(
+    item?.stock,
+    item?.quantity,
+    item?.stockQuantity,
+    item?.inventory,
+    item?.inventoryCount,
+    item?.availableQuantity,
+    item?.qty,
+  );
+  const rawStatus = normalizeSlugValue(
+    item?.stockStatus,
+    item?.availability,
+    item?.inventoryStatus,
+    item?.status,
+  );
+  const isAvailable =
+    normalizeBoolean(item?.inStock) ||
+    normalizeBoolean(item?.isInStock) ||
+    normalizeBoolean(item?.available);
+
+  if (
+    numericStock !== null ||
+    rawStatus === "in-stock" ||
+    rawStatus === "available" ||
+    rawStatus === "limited-stock" ||
+    rawStatus === "low-stock" ||
+    isAvailable
+  ) {
+    if (numericStock !== null) {
+      return numericStock > 0
+        ? { code: "in_stock", label: "In Stock" }
+        : { code: "out_of_stock", label: "Out of Stock" };
+    }
+
+    if (rawStatus === "out-of-stock" || rawStatus === "sold-out" || rawStatus === "unavailable") {
+      return { code: "out_of_stock", label: "Out of Stock" };
+    }
+
+    return { code: "in_stock", label: "In Stock" };
+  }
+
+  return { code: "check_availability", label: "Check Availability" };
+}
+
+function normalizeProductEntities(item) {
+  const compatibilityEntries = getCompatibilityEntries(item);
+  const brandEntries = [];
+  const modelEntries = [];
+
+  const primaryBrand = normalizeNamedEntity(item?.vehicleBrand, {
+    id: item?.vehicleBrandId,
+    slug: item?.vehicleBrandSlug,
+    name: item?.vehicleBrandName ?? item?.carBrand ?? item?.brandName,
+    nameAr: item?.vehicleBrandNameAr ?? item?.carBrandAr,
+  });
+  const fallbackBrand = normalizeNamedEntity(item?.brand, {
+    id: item?.brandId,
+    slug: item?.brandSlug,
+    name: item?.brandName ?? item?.carBrand,
+    nameAr: item?.brandNameAr ?? item?.carBrandAr,
+  });
+  const primaryModel = normalizeNamedEntity(item?.vehicleModel, {
+    id: item?.vehicleModelId,
+    slug: item?.vehicleModelSlug,
+    name: item?.vehicleModelName ?? item?.carModel ?? item?.modelName,
+    nameAr: item?.vehicleModelNameAr ?? item?.carModelAr,
+  });
+  const fallbackModel = normalizeNamedEntity(item?.model, {
+    id: item?.modelId,
+    slug: item?.modelSlug,
+    name: item?.modelName ?? item?.carModel,
+    nameAr: item?.modelNameAr ?? item?.carModelAr,
+  });
+
+  if (primaryBrand) {
+    brandEntries.push(primaryBrand);
+  }
+
+  if (fallbackBrand) {
+    brandEntries.push(fallbackBrand);
+  }
+
+  if (primaryModel) {
+    modelEntries.push(primaryModel);
+  }
+
+  if (fallbackModel) {
+    modelEntries.push(fallbackModel);
+  }
+
+  compatibilityEntries.forEach((entry) => {
+    const compatibilityBrand = normalizeNamedEntity(entry?.vehicleBrand ?? entry?.brand, {
+      id: entry?.vehicleBrandId ?? entry?.brandId,
+      slug: entry?.vehicleBrandSlug ?? entry?.brandSlug,
+      name: entry?.vehicleBrandName ?? entry?.brandName ?? entry?.carBrand,
+      nameAr: entry?.vehicleBrandNameAr ?? entry?.brandNameAr ?? entry?.carBrandAr,
+    });
+    const compatibilityModel = normalizeNamedEntity(entry?.vehicleModel, {
+      id: entry?.vehicleModelId,
+      slug: entry?.vehicleModelSlug,
+      name: entry?.vehicleModelName ?? entry?.model ?? entry?.carModel,
+      nameAr: entry?.vehicleModelNameAr ?? entry?.modelNameAr ?? entry?.carModelAr,
+    });
+
+    if (compatibilityBrand) {
+      brandEntries.push(compatibilityBrand);
+    }
+
+    if (compatibilityModel) {
+      modelEntries.push(compatibilityModel);
+    }
+  });
+
+  const uniqueByValue = (items) => {
+    const seen = new Set();
+
+    return items.filter((entry) => {
+      const key = entry.slug ?? entry.id ?? entry.name;
+
+      if (!key || seen.has(key)) {
+        return false;
+      }
+
+      seen.add(key);
+      return true;
+    });
+  };
+
+  return {
+    brands: uniqueByValue(brandEntries),
+    models: uniqueByValue(modelEntries),
   };
 }
 
@@ -588,13 +824,12 @@ function normalizeProduct(item) {
     item?.currentPriceMinor ??
     item?.price?.amount ??
     0;
-
-  const vehicleBrand =
-    item?.vehicleBrand ?? item?.vehicle?.brand ?? item?.compatibility?.vehicleBrand;
-  const vehicleModel =
-    item?.vehicleModel ?? item?.vehicle?.model ?? item?.compatibility?.vehicleModel;
   const partsBrand =
     item?.partsBrand ?? item?.brand ?? item?.manufacturer ?? item?.maker;
+  const productEntities = normalizeProductEntities(item);
+  const primaryBrand = productEntities.brands[0] ?? null;
+  const primaryModel = productEntities.models[0] ?? null;
+  const availability = normalizeAvailability(item);
 
   return {
     id,
@@ -618,14 +853,11 @@ function normalizeProduct(item) {
       item?.conditionDisplay ??
       item?.condition ??
       "Used",
-    stockCode: item?.stockStatus ?? item?.availability ?? null,
+    stockCode: availability.code,
     stockLabel:
-      item?.inStock === true
-        ? "In Stock"
-        : item?.stockStatusLabel ??
-          item?.availabilityLabel ??
-          item?.stockStatus ??
-          "Out of Stock",
+      item?.stockStatusLabel ??
+      item?.availabilityLabel ??
+      availability.label,
     priceMinor,
     compareAtMinor:
       item?.compareAtPriceMinor ??
@@ -634,14 +866,16 @@ function normalizeProduct(item) {
       null,
     categorySlug: item?.category?.slug ?? item?.categorySlug ?? item?.categoryId ?? null,
     categoryName: item?.category?.name ?? item?.categoryName ?? "Products",
-    vehicleBrandSlug:
-      vehicleBrand?.slug ?? vehicleBrand?.id ?? item?.vehicleBrandId ?? null,
-    vehicleBrandName:
-      vehicleBrand?.name ?? item?.vehicleBrandName ?? null,
-    vehicleModelSlug:
-      vehicleModel?.slug ?? vehicleModel?.id ?? item?.vehicleModelId ?? null,
-    vehicleModelName:
-      vehicleModel?.name ?? item?.vehicleModelName ?? null,
+    vehicleBrandSlug: primaryBrand?.slug ?? null,
+    vehicleBrandId: primaryBrand?.id ?? item?.vehicleBrandId ?? null,
+    vehicleBrandName: primaryBrand?.name ?? null,
+    vehicleBrandNameAr: primaryBrand?.nameAr ?? "",
+    vehicleBrands: productEntities.brands,
+    vehicleModelSlug: primaryModel?.slug ?? null,
+    vehicleModelId: primaryModel?.id ?? item?.vehicleModelId ?? null,
+    vehicleModelName: primaryModel?.name ?? null,
+    vehicleModelNameAr: primaryModel?.nameAr ?? "",
+    vehicleModels: productEntities.models,
     yearFrom:
       item?.yearFrom ??
       item?.startYear ??
@@ -792,14 +1026,111 @@ function countBy(items, getter) {
   }, {});
 }
 
+function countByMany(items, getter) {
+  return items.reduce((accumulator, item) => {
+    const values = asArray(getter(item)).filter(Boolean);
+    const seen = new Set();
+
+    values.forEach((value) => {
+      if (seen.has(value)) {
+        return;
+      }
+
+      seen.add(value);
+      accumulator[value] = (accumulator[value] ?? 0) + 1;
+    });
+
+    return accumulator;
+  }, {});
+}
+
+function createOptionsFromProducts(items, getEntries) {
+  const optionsByValue = new Map();
+
+  items.forEach((item) => {
+    const seen = new Set();
+
+    asArray(getEntries(item)).forEach((entry) => {
+      if (!entry) {
+        return;
+      }
+
+      const value = entry.slug ?? entry.id ?? null;
+      const label = entry.name ?? entry.nameAr ?? null;
+
+      if (!value || !label || seen.has(value)) {
+        return;
+      }
+
+      seen.add(value);
+
+      const current = optionsByValue.get(value);
+
+      if (current) {
+        current.count += 1;
+        return;
+      }
+
+      optionsByValue.set(value, {
+        value,
+        label,
+        labelAr: entry.nameAr ?? "",
+        count: 1,
+      });
+    });
+  });
+
+  return [...optionsByValue.values()].sort((left, right) => left.label.localeCompare(right.label));
+}
+
 function deriveFilterData(products, categories, vehicleBrands, vehicleModels, partsBrands) {
   const categoryCounts = countBy(products, (product) => product.categorySlug);
-  const brandCounts = countBy(products, (product) => product.vehicleBrandSlug);
-  const modelCounts = countBy(products, (product) => product.vehicleModelSlug);
+  const brandCounts = countByMany(products, (product) =>
+    product.vehicleBrands.map((brand) => brand.slug ?? brand.id),
+  );
+  const modelCounts = countByMany(products, (product) =>
+    product.vehicleModels.map((model) => model.slug ?? model.id),
+  );
   const conditionCounts = countBy(products, (product) => product.conditionCode);
   const availabilityCounts = countBy(products, (product) => product.stockCode);
   const positionCounts = countBy(products, (product) => product.position);
   const partsBrandCounts = countBy(products, (product) => product.partsBrandSlug);
+  const productBrandOptions = createOptionsFromProducts(products, (product) => product.vehicleBrands);
+  const productModelOptions = createOptionsFromProducts(products, (product) => product.vehicleModels);
+  const taxonomyBrandOptions = vehicleBrands
+    .filter((brand) => brandCounts[brand.slug] || brandCounts[brand.id])
+    .map((brand) => ({
+      value: brand.slug,
+      label: brand.name,
+      labelAr: brand.nameAr ?? "",
+      count: brandCounts[brand.slug] ?? brandCounts[brand.id] ?? 0,
+    }));
+  const taxonomyModelOptions = vehicleModels
+    .filter((model) => modelCounts[model.slug] || modelCounts[model.id])
+    .map((model) => ({
+      value: model.slug,
+      label: model.name,
+      labelAr: model.nameAr ?? "",
+      count: modelCounts[model.slug] ?? modelCounts[model.id] ?? 0,
+    }));
+  const mergeOptions = (primary, secondary) => {
+    const merged = new Map();
+
+    [...primary, ...secondary].forEach((option) => {
+      const existing = merged.get(option.value);
+
+      if (existing) {
+        existing.count = Math.max(existing.count, option.count);
+        existing.label = existing.label || option.label;
+        existing.labelAr = existing.labelAr || option.labelAr || "";
+        return;
+      }
+
+      merged.set(option.value, { ...option });
+    });
+
+    return [...merged.values()].filter((option) => option.count > 0);
+  };
 
   return {
     categories: categories
@@ -809,20 +1140,8 @@ function deriveFilterData(products, categories, vehicleBrands, vehicleModels, pa
         label: category.name,
         count: categoryCounts[category.slug],
       })),
-    brands: vehicleBrands
-      .filter((brand) => brandCounts[brand.slug])
-      .map((brand) => ({
-        value: brand.slug,
-        label: brand.name,
-        count: brandCounts[brand.slug],
-      })),
-    models: vehicleModels
-      .filter((model) => modelCounts[model.slug])
-      .map((model) => ({
-        value: model.slug,
-        label: model.name,
-        count: modelCounts[model.slug],
-      })),
+    brands: mergeOptions(productBrandOptions, taxonomyBrandOptions),
+    models: mergeOptions(productModelOptions, taxonomyModelOptions),
     conditions: [
       { value: "used_excellent", label: "Used - Excellent", count: conditionCounts.used_excellent ?? 0 },
       { value: "used_good", label: "Used - Good", count: conditionCounts.used_good ?? 0 },
@@ -830,10 +1149,25 @@ function deriveFilterData(products, categories, vehicleBrands, vehicleModels, pa
       { value: "reconditioned", label: "Reconditioned", count: conditionCounts.reconditioned ?? 0 },
     ].filter((item) => item.count > 0),
     availability: [
-      { value: "in_stock", label: "In Stock", count: availabilityCounts.in_stock ?? 0 },
-      { value: "limited_stock", label: "Limited Stock", count: availabilityCounts.limited_stock ?? 0 },
-      { value: "sold_out", label: "Sold Out", count: availabilityCounts.sold_out ?? 0 },
-    ].filter((item) => item.count > 0),
+      {
+        value: "in_stock",
+        label: "In Stock",
+        translationKey: "inStock",
+        count: availabilityCounts.in_stock ?? 0,
+      },
+      {
+        value: "out_of_stock",
+        label: "Out of Stock",
+        translationKey: "outOfStock",
+        count: availabilityCounts.out_of_stock ?? 0,
+      },
+      {
+        value: "check_availability",
+        label: "Check Availability",
+        translationKey: "checkAvailability",
+        count: availabilityCounts.check_availability ?? 0,
+      },
+    ],
     positions: [
       { value: "front", label: "Front", count: positionCounts.front ?? 0 },
       { value: "rear", label: "Rear", count: positionCounts.rear ?? 0 },
@@ -927,16 +1261,46 @@ function buildBackendQuery(filters, mode, taxonomies) {
     }
   }
 
-  if (filters.brand && matchesBackendId(filters.brand)) {
-    query.vehicleBrandId = filters.brand;
+  if (filters.brand) {
+    const vehicleBrand = taxonomies.vehicleBrands.items.find(
+      (brand) => brand.id === filters.brand || brand.slug === filters.brand,
+    );
+
+    if (matchesBackendId(filters.brand)) {
+      query.vehicleBrandId = filters.brand;
+    } else if (vehicleBrand?.id && matchesBackendId(vehicleBrand.id)) {
+      query.vehicleBrandId = vehicleBrand.id;
+    } else {
+      query.vehicleBrandSlug = vehicleBrand?.slug ?? filters.brand;
+    }
   }
 
-  if (filters.model && matchesBackendId(filters.model)) {
-    query.vehicleModelId = filters.model;
+  if (filters.model) {
+    const vehicleModel = taxonomies.vehicleModels.items.find(
+      (model) => model.id === filters.model || model.slug === filters.model,
+    );
+
+    if (matchesBackendId(filters.model)) {
+      query.vehicleModelId = filters.model;
+    } else if (vehicleModel?.id && matchesBackendId(vehicleModel.id)) {
+      query.vehicleModelId = vehicleModel.id;
+    } else {
+      query.vehicleModelSlug = vehicleModel?.slug ?? filters.model;
+    }
   }
 
-  if (filters.partsBrands[0] && matchesBackendId(filters.partsBrands[0])) {
-    query.partsBrandId = filters.partsBrands[0];
+  if (filters.partsBrands[0]) {
+    const partsBrand = taxonomies.partsBrands.items.find(
+      (brand) => brand.id === filters.partsBrands[0] || brand.slug === filters.partsBrands[0],
+    );
+
+    if (matchesBackendId(filters.partsBrands[0])) {
+      query.partsBrandId = filters.partsBrands[0];
+    } else if (partsBrand?.id && matchesBackendId(partsBrand.id)) {
+      query.partsBrandId = partsBrand.id;
+    } else {
+      query.partsBrandSlug = partsBrand?.slug ?? filters.partsBrands[0];
+    }
   }
 
   if (mode !== "search" && query.sort === "relevance") {
