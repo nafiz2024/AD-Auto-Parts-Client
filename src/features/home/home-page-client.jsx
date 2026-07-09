@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { FaPhoneAlt, FaWhatsappSquare } from "react-icons/fa";
 import { CompatibilityFinder } from "@/features/home/compatibility-finder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,6 @@ import {
   ShieldIcon,
   ShoppingCartIcon,
   UserIcon,
-  WhatsappIcon,
 } from "@/components/ui/icons";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { SectionHeader } from "@/components/ui/section-header";
@@ -320,17 +320,18 @@ function HelpCtaSection() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`${t("chatOnWhatsapp")} ${supportPhone}`}
-            className="inline-flex min-h-12 items-center justify-center gap-3 rounded-2xl bg-[#25d366] px-6 py-3 font-semibold text-white transition hover:brightness-95"
+            className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#25d366] px-5 text-sm font-bold text-white shadow-sm transition hover:bg-[#1fbe5b]"
           >
-            <WhatsappIcon className="size-5 shrink-0" />
-            <span>{t("chatOnWhatsapp")}</span>
+            <FaWhatsappSquare className="h-5 w-5 shrink-0" aria-hidden="true" />
+            <span className="whitespace-nowrap">{t("chatOnWhatsapp")}</span>
           </a>
           <a
             href={`tel:${supportPhone.replace(/\D/g, "")}`}
-            className="inline-flex min-h-12 items-center justify-center gap-3 rounded-2xl border border-white/15 bg-white px-6 py-3 font-semibold text-brand-navy transition hover:bg-slate-100"
+            aria-label={t("contactSupport")}
+            className="inline-flex h-12 min-w-[148px] items-center justify-center gap-2 rounded-2xl bg-white px-5 text-sm font-bold text-slate-950 shadow-sm ring-1 ring-white/20 transition hover:bg-slate-100"
           >
-            <MessageCircleIcon className="size-5 shrink-0" />
-            <span>{t("callUs")}</span>
+            <FaPhoneAlt className="h-4 w-4 shrink-0 text-slate-900" aria-hidden="true" />
+            <span className="whitespace-nowrap">{t("contactSupport")}</span>
           </a>
         </div>
       </div>
