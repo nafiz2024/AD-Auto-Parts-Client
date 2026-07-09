@@ -16,6 +16,20 @@ export const DEFAULT_SUPPORT_DETAILS = {
   source: "fallback",
 };
 
+export function getWhatsappHref(phone, message = "") {
+  const digits = String(phone ?? "").replace(/\D/g, "");
+
+  if (!digits) {
+    return null;
+  }
+
+  if (!message) {
+    return `https://wa.me/${digits}`;
+  }
+
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
+
 function coalesceString(...values) {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) {

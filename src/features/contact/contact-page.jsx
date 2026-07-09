@@ -27,6 +27,7 @@ import { getErrorMessage, getRequestId } from "@/lib/api/error-messages";
 import {
   DEFAULT_SUPPORT_DETAILS,
   getPublicSupportSettings,
+  getWhatsappHref,
   submitPublicEnquiry,
 } from "@/features/support/support-api";
 
@@ -93,7 +94,10 @@ export function ContactPage() {
 
   const whatsappHref = useMemo(
     () =>
-      `https://wa.me/${supportDetails.whatsapp.replace(/\D/g, "")}?text=${encodeURIComponent("Hello, I need help with AD Auto Parts.")}`,
+      getWhatsappHref(
+        supportDetails.whatsapp,
+        "Hello, I need help with AD Auto Parts.",
+      ),
     [supportDetails.whatsapp],
   );
 
@@ -187,7 +191,13 @@ export function ContactPage() {
               </CardDescription>
               <div className="mt-5 space-y-3">
                 <p className="text-lg font-semibold">{supportDetails.whatsapp}</p>
-                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex">
+                <a
+                  href={whatsappHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${t("chatOnWhatsapp")} ${supportDetails.whatsapp}`}
+                  className="inline-flex"
+                >
                   <Button className="bg-brand-red hover:bg-brand-red/90">
                     <WhatsappIcon className="size-5 shrink-0" />
                     {t("chatOnWhatsapp")}
@@ -403,7 +413,13 @@ export function ContactPage() {
                   </>
                 )}
               </Button>
-              <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex">
+              <a
+                href={whatsappHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${t("chatOnWhatsapp")} ${supportDetails.whatsapp}`}
+                className="inline-flex"
+              >
                 <Button type="button" variant="outline" size="lg">
                   <WhatsappIcon className="size-5 shrink-0 text-[#25d366]" />
                   {t("chatOnWhatsapp")}

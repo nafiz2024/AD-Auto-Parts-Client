@@ -7,6 +7,11 @@ import { AppProviders } from "@/providers/app-providers";
 export const metadata = {
   title: APP_NAME,
   description: "AD Auto Parts frontend foundation for customer and admin experiences.",
+  icons: {
+    icon: "/ad-auto-parts-logo.png",
+    shortcut: "/ad-auto-parts-logo.png",
+    apple: "/ad-auto-parts-logo.png",
+  },
 };
 
 export default async function RootLayout({ children }) {

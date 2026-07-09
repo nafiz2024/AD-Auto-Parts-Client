@@ -26,6 +26,7 @@ import { SectionHeader } from "@/components/ui/section-header";
 import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
 import { buildQueryString } from "@/lib/api/query";
+import { DEFAULT_SUPPORT_DETAILS, getWhatsappHref } from "@/features/support/support-api";
 
 const whyChooseUsItems = [
   { titleKey: "inspectedParts", descriptionKey: "everyListedPartChecked", icon: ShieldIcon },
@@ -293,6 +294,11 @@ function TestimonialsSection({ testimonials }) {
 
 function HelpCtaSection() {
   const { t } = useLanguage();
+  const supportPhone = DEFAULT_SUPPORT_DETAILS.whatsapp;
+  const whatsappHref = getWhatsappHref(
+    supportPhone,
+    "Hello, I need help finding the right part for my vehicle.",
+  );
 
   return (
     <section className="rounded-[2.5rem] bg-[linear-gradient(135deg,#0f172a,#13213c)] p-8 text-white shadow-soft sm:p-10">
@@ -305,14 +311,17 @@ function HelpCtaSection() {
         </div>
         <div className="flex flex-wrap items-center gap-3 lg:justify-end">
           <a
-            href="https://wa.me/966543216789"
+            href={whatsappHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${t("chatOnWhatsapp")} ${supportPhone}`}
             className="inline-flex min-h-12 items-center justify-center gap-3 rounded-2xl bg-[#25d366] px-6 py-3 font-semibold text-white transition hover:brightness-95"
           >
             <WhatsappIcon className="size-5 shrink-0" />
             <span>{t("chatOnWhatsapp")}</span>
           </a>
           <a
-            href="tel:+966543216789"
+            href={`tel:${supportPhone.replace(/\D/g, "")}`}
             className="inline-flex min-h-12 items-center justify-center gap-3 rounded-2xl border border-white/15 bg-white px-6 py-3 font-semibold text-brand-navy transition hover:bg-slate-100"
           >
             <MessageCircleIcon className="size-5 shrink-0" />

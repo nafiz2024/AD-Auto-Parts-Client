@@ -399,7 +399,9 @@ export function PublicHeader() {
               aria-label={`${t("whatsapp")} ${whatsappNumber}`}
               className="flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border border-border px-4 py-2 transition hover:border-[#25d366]/40 hover:bg-muted/40"
             >
-              <WhatsappIcon className="size-5 shrink-0 text-[#25d366]" />
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#25d366]/10 text-[#25d366]">
+                <WhatsappIcon className="size-5 shrink-0" />
+              </span>
               <div className="text-sm">
                 <p className="font-semibold text-foreground">{t("whatsapp")}</p>
                 <p className="text-muted-foreground">{whatsappNumber}</p>

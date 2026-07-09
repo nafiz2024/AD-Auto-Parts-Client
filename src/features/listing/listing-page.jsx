@@ -25,6 +25,7 @@ import { ProductCardSkeleton } from "@/components/states/loading-states";
 import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
 import { buildQueryString } from "@/lib/api/query";
+import { DEFAULT_SUPPORT_DETAILS, getWhatsappHref } from "@/features/support/support-api";
 
 function createQueryObject(filters, overrides = {}) {
   const query = {
@@ -689,39 +690,62 @@ function NoResultsBlock({ filters, mode }) {
     mode === "search" && filters.q
       ? t("noMatchingPartsFoundFor", { query: filters.q })
       : t("noMatchingPartsFound");
+  const supportPhone = DEFAULT_SUPPORT_DETAILS.whatsapp;
+  const whatsappHref = getWhatsappHref(
+    supportPhone,
+    "Hello, I need help finding the right part for my vehicle.",
+  );
+  const callHref = `tel:${supportPhone.replace(/\D/g, "")}`;
 
   return (
     <Card className="rounded-[2rem]">
-      <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
-        <div className="flex items-center justify-center">
-          <div className="flex size-40 items-center justify-center rounded-full bg-[radial-gradient(circle_at_top,#ffffff_0%,#eef4fb_60%,#dce5f2_100%)]">
+      <div className="grid gap-8 lg:grid-cols-[240px_1fr] lg:items-center">
+        <div className="flex items-center justify-center lg:justify-start">
+          <div className="flex size-40 items-center justify-center rounded-full bg-[radial-gradient(circle_at_top,#ffffff_0%,#eef4fb_60%,#dce5f2_100%)] shadow-soft">
             <SearchIcon className="size-14 text-muted-foreground" />
           </div>
         </div>
-        <div className="space-y-5">
-          <div className="space-y-2">
+        <div className="space-y-6">
+          <div className="space-y-3 text-center lg:text-start">
             <h2 className="text-3xl font-semibold text-foreground">{title}</h2>
-            <p className="text-sm leading-7 text-muted-foreground">
+            <p className="max-w-2xl text-sm leading-7 text-muted-foreground">
               {t("noMatchingPartsDescription")}
             </p>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="rounded-[1.5rem] p-5 shadow-none">
-              <CardContent className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">{t("stillCannotFindIt")}</h3>
-                <a
-                  href="https://wa.me/966543216789"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25d366] px-4 py-3 font-semibold text-white transition hover:brightness-95"
-                >
-                  <WhatsappIcon className="size-4" />
-                  {t("chatOnWhatsapp")}
-                </a>
-                <a
-                  href="tel:+966543216789"
-                  className="inline-flex w-full items-center justify-center rounded-2xl border border-border px-4 py-3 text-sm font-semibold text-foreground transition hover:border-brand-red hover:text-brand-red"
-                >
-                  {t("callUsLabel", { phone: "+966 54 321 6789" })}
-                </a>
+          <div className="flex justify-center lg:justify-start">
+            <Card className="w-full max-w-[29rem] rounded-[1.75rem] border-border/90 bg-[#f8fafc] p-6 shadow-none">
+              <CardContent className="space-y-5">
+                <div className="space-y-2 text-center lg:text-start">
+                  <h3 className="text-xl font-semibold text-foreground">{t("stillCannotFindIt")}</h3>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    {t("contactQuickHelp")}
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,0.92fr)]">
+                  {whatsappHref ? (
+                    <a
+                      href={whatsappHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${t("chatOnWhatsapp")} ${supportPhone}`}
+                      className="inline-flex w-full"
+                    >
+                      <span className="inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl bg-[#25d366] px-5 py-3 text-center font-semibold text-white transition hover:brightness-95">
+                        <WhatsappIcon className="size-5 shrink-0" />
+                        <span>{t("chatOnWhatsapp")}</span>
+                      </span>
+                    </a>
+                  ) : null}
+                  <a
+                    href={callHref}
+                    aria-label={t("callUsLabel", { phone: supportPhone })}
+                    className="inline-flex w-full"
+                  >
+                    <span className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl border border-border bg-white px-5 py-3 text-center text-sm font-semibold text-foreground transition hover:border-brand-red hover:text-brand-red">
+                      {t("callUsLabel", { phone: supportPhone })}
+                    </span>
+                  </a>
+                </div>
               </CardContent>
             </Card>
           </div>
