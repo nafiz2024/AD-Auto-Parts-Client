@@ -10,6 +10,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { routes } from "@/constants/routes";
 import { buildQueryString } from "@/lib/api/query";
+import { getStockLabel } from "@/lib/formatters/product-labels";
 import { BagIcon, ExternalLinkIcon, WhatsappIcon } from "@/components/ui/icons";
 
 function RatingStars({ ratingAverage, reviewCount }) {
@@ -56,6 +57,7 @@ export function ProductInfoPanel({ product }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const localizedProductName = getLocalizedField(product, "name") || product.name;
+  const stockLabel = getStockLabel(t, product.stockCode ?? product.stockLabel, product.stockLabel);
   const checkoutHref = `${routes.public.checkout}${buildQueryString({
     productId: product.slug ?? product.id,
     qty: 1,
@@ -186,7 +188,7 @@ export function ProductInfoPanel({ product }) {
         <InfoMiniCard title={t("paymentMethod")} value={t("finalTotalsPaymentOptionsBackend")} />
         <InfoMiniCard
           title={t("stock")}
-          value={product.isPurchasable ? product.stockLabel : t("currentlyUnavailable")}
+          value={product.isPurchasable ? stockLabel : t("currentlyUnavailable")}
         />
       </div>
 

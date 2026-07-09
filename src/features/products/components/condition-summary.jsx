@@ -3,6 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useLanguage } from "@/hooks/use-language";
+import { getConditionLabel } from "@/lib/formatters/product-labels";
 
 function ConditionMetric({ label, value }) {
   if (!value && value !== 0) {
@@ -30,6 +31,9 @@ export function ConditionSummary({ conditionSummary }) {
     conditionSummary.score !== null && conditionSummary.score !== undefined
       ? `${conditionSummary.score}/10`
       : null;
+  const conditionLabel = conditionSummary.label
+    ? getConditionLabel(t, conditionSummary.code ?? conditionSummary.label, conditionSummary.label)
+    : null;
 
   return (
     <Card className="space-y-5 rounded-[2rem]">
@@ -40,7 +44,7 @@ export function ConditionSummary({ conditionSummary }) {
             {t("usedSecondHandTransparentNotes")}
           </p>
         </div>
-        {conditionSummary.label ? <Badge variant="success">{conditionSummary.label}</Badge> : null}
+        {conditionLabel ? <Badge variant="success">{conditionLabel}</Badge> : null}
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

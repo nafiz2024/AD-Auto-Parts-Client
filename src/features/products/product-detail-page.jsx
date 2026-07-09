@@ -8,6 +8,7 @@ import { CompatibilitySummary } from "@/features/products/components/compatibili
 import { ConditionSummary } from "@/features/products/components/condition-summary";
 import { ProductTabs } from "@/features/products/components/product-tabs";
 import { RelatedProducts } from "@/features/products/components/related-products";
+import { getConditionLabel, getStockLabel } from "@/lib/formatters/product-labels";
 
 function Breadcrumbs({ items }) {
   return (
@@ -31,6 +32,12 @@ function Breadcrumbs({ items }) {
 export function ProductDetailPage({ data }) {
   const { t, getLocalizedField } = useLanguage();
   const { product, relatedProducts, reviews, questions } = data;
+  const conditionLabel = getConditionLabel(
+    t,
+    product.conditionSummary?.code ?? product.conditionSummary?.label,
+    product.conditionSummary?.label,
+  );
+  const stockLabel = getStockLabel(t, product.stockCode ?? product.stockLabel, product.stockLabel);
   const whatsappHref = `https://wa.me/${product.whatsappNumber}?text=${encodeURIComponent(
     t("productWhatsappQuestion", {
       productName: getLocalizedField(product, "name") || product.name,
@@ -51,8 +58,8 @@ export function ProductDetailPage({ data }) {
           <ProductGallery
             title={getLocalizedField(product, "name") || product.name}
             images={product.images}
-            conditionLabel={product.conditionSummary.label}
-            stockLabel={product.stockLabel}
+            conditionLabel={conditionLabel}
+            stockLabel={stockLabel}
           />
           <ProductInfoPanel product={product} />
         </section>

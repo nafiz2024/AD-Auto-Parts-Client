@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
+import { getConditionLabel } from "@/lib/formatters/product-labels";
 import { getPublicProductQuestions, createCustomerQuestion } from "@/features/questions/question-api";
 import { getPublicProductReviews, createCustomerReview } from "@/features/reviews/review-api";
 
@@ -106,7 +107,11 @@ function SpecsTable({ specifications }) {
             className="grid gap-2 bg-white px-5 py-4 sm:grid-cols-[200px_minmax(0,1fr)]"
           >
             <p className="text-sm font-semibold text-foreground">{specification.label}</p>
-            <p className="text-sm text-muted-foreground">{specification.value}</p>
+            <p className="text-sm text-muted-foreground">
+              {specification.label === "Condition"
+                ? getConditionLabel(t, specification.value, specification.value)
+                : specification.value}
+            </p>
           </div>
         ))}
       </div>

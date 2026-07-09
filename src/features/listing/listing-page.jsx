@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { ProductCardSkeleton } from "@/components/states/loading-states";
 import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
+import { getConditionLabel, getStockLabel } from "@/lib/formatters/product-labels";
 import { buildQueryString } from "@/lib/api/query";
 import { DEFAULT_SUPPORT_DETAILS, getWhatsappHref } from "@/features/support/support-api";
 
@@ -422,7 +423,7 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
   );
 }
 
-function ProductArt({ tone = "default" }) {
+function ProductArt({ tone = "default", className }) {
   const accentClassName =
     tone === "lighting"
       ? "from-slate-900 via-slate-700 to-slate-500"
@@ -431,7 +432,7 @@ function ProductArt({ tone = "default" }) {
         : "from-slate-100 via-white to-slate-200";
 
   return (
-    <div className="relative flex h-48 items-center justify-center overflow-hidden rounded-[1.8rem] bg-[radial-gradient(circle_at_top,#ffffff_0%,#eef4fb_60%,#e2e8f0_100%)] sm:h-52">
+    <div className={cn("relative flex h-48 items-center justify-center overflow-hidden rounded-[1.8rem] bg-[radial-gradient(circle_at_top,#ffffff_0%,#eef4fb_60%,#e2e8f0_100%)] sm:h-52", className)}>
       <div className={`h-28 w-44 rounded-[1.75rem] bg-gradient-to-br ${accentClassName} shadow-lg`} />
       <div className="absolute -inset-block-end-4 inset-inline-start-6 h-20 w-20 rounded-full border-[10px] border-white/80 bg-[radial-gradient(circle,#f8fafc_0%,#d1d5db_60%,#64748b_100%)] shadow-lg" />
     </div>
@@ -440,6 +441,8 @@ function ProductArt({ tone = "default" }) {
 
 function ProductCard({ product, view = "grid" }) {
   const { t, getLocalizedField } = useLanguage();
+  const conditionLabel = getConditionLabel(t, product.conditionCode ?? product.conditionLabel, product.conditionLabel);
+  const stockLabel = getStockLabel(t, product.stockCode ?? product.stockLabel, product.stockLabel);
   const stockVariant =
     product.stockCode === "in_stock"
       ? "success"
@@ -477,9 +480,9 @@ function ProductCard({ product, view = "grid" }) {
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Badge variant={stockVariant}>{product.stockLabel}</Badge>
+              <Badge variant={stockVariant}>{stockLabel}</Badge>
               <Badge variant={product.conditionCode === "reconditioned" ? "warning" : "info"}>
-                {product.conditionLabel}
+                {conditionLabel}
               </Badge>
             </div>
           </div>
@@ -514,23 +517,25 @@ function ProductCard({ product, view = "grid" }) {
 
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border bg-white shadow-soft">
-      <div className="border-b border-border p-4">
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-              <Badge variant={stockVariant}>{product.stockLabel}</Badge>
-            <Badge variant={product.conditionCode === "reconditioned" ? "warning" : "info"}>
-              {product.conditionLabel}
-            </Badge>
+      <div className="relative h-56 border-b border-border p-4 sm:h-60">
+        <div className="absolute inset-x-4 inset-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex max-w-[calc(100%-3.5rem)] flex-wrap gap-2 pe-2">
+              <Badge variant={stockVariant}>{stockLabel}</Badge>
+              <Badge variant={product.conditionCode === "reconditioned" ? "warning" : "info"}>
+                {conditionLabel}
+              </Badge>
+            </div>
+            <button
+              type="button"
+              className="shrink-0 rounded-full border border-border bg-white/90 p-2 text-muted-foreground transition hover:text-brand-red"
+              aria-label={t("wishlist")}
+            >
+              <HeartIcon className="size-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            className="rounded-full border border-border bg-white/90 p-2 text-muted-foreground transition hover:text-brand-red"
-                aria-label={t("wishlist")}
-          >
-            <HeartIcon className="size-4" />
-          </button>
         </div>
-        <ProductArt tone={tone} />
+        <ProductArt tone={tone} className="h-full sm:h-full" />
       </div>
       <div className="flex flex-1 flex-col gap-4 p-5">
         <div className="space-y-2">
@@ -539,7 +544,7 @@ function ProductCard({ product, view = "grid" }) {
           </Link>
           <p className="text-sm text-muted-foreground">{product.vehicleSummary}</p>
           <p className="line-clamp-1 text-sm text-muted-foreground">{product.identifier}</p>
-          <p className="text-sm text-muted-foreground">{t("condition")}: {product.conditionLabel}</p>
+          <p className="text-sm text-muted-foreground">{t("condition")}: {conditionLabel}</p>
         </div>
         <div className="flex items-end gap-3">
           <PriceDisplay amountMinor={product.priceMinor} className="text-2xl" />

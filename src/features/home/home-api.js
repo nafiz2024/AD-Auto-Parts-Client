@@ -52,10 +52,12 @@ function normalizeProduct(item) {
       item?.sku ??
       item?.productCode ??
       null,
-    condition: item?.condition ?? item?.conditionLabel ?? "Used",
+    conditionCode: item?.condition ?? item?.conditionCode ?? item?.conditionLabel ?? "unknown",
+    conditionLabel: item?.conditionLabel ?? item?.conditionDisplay ?? item?.condition ?? "Unknown",
     stockLabel: item?.inStock
       ? "In Stock"
       : item?.stockStatus ?? item?.availabilityLabel ?? "Out of Stock",
+    stockCode: item?.stockStatus ?? item?.availability ?? (item?.inStock ? "in_stock" : "out_of_stock"),
     priceMinor,
     compareAtMinor:
       item?.compareAtPriceMinor ??

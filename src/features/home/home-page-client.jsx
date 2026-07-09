@@ -25,6 +25,7 @@ import { PriceDisplay } from "@/components/ui/price-display";
 import { SectionHeader } from "@/components/ui/section-header";
 import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
+import { getConditionLabel, getStockLabel } from "@/lib/formatters/product-labels";
 import { buildQueryString } from "@/lib/api/query";
 import { DEFAULT_SUPPORT_DETAILS, getWhatsappHref } from "@/features/support/support-api";
 
@@ -168,31 +169,35 @@ function CategoryCard({ category }) {
 function ProductCard({ product, buyNowHref }) {
   const { t, getLocalizedField } = useLanguage();
   const localizedName = getLocalizedField(product, "name") || product.name;
+  const conditionLabel = getConditionLabel(t, product.conditionCode ?? product.conditionLabel, product.conditionLabel);
+  const stockLabel = getStockLabel(t, product.stockCode ?? product.stockLabel, product.stockLabel);
   const stockVariant =
-    product.stockLabel === "In Stock"
+    product.stockCode === "in_stock"
       ? "success"
-      : product.stockLabel === "Limited Stock"
+      : product.stockCode === "limited_stock" || product.stockCode === "low_stock"
         ? "warning"
         : "error";
-  const conditionVariant = product.condition === "Reconditioned" ? "warning" : "info";
+  const conditionVariant = product.conditionCode === "reconditioned" ? "warning" : "info";
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-[2rem] border border-border bg-white shadow-soft">
-      <div className="relative border-b border-border bg-[radial-gradient(circle_at_top,#ffffff_0%,#eef4fb_65%,#e2e8f0_100%)] p-5">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={conditionVariant}>{product.condition}</Badge>
-            <Badge variant={stockVariant}>{product.stockLabel}</Badge>
+      <div className="relative h-56 border-b border-border bg-[radial-gradient(circle_at_top,#ffffff_0%,#eef4fb_65%,#e2e8f0_100%)] p-5 sm:h-60">
+        <div className="absolute inset-x-5 inset-y-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex max-w-[calc(100%-3.5rem)] flex-wrap gap-2 pe-2">
+              <Badge variant={conditionVariant}>{conditionLabel}</Badge>
+              <Badge variant={stockVariant}>{stockLabel}</Badge>
+            </div>
+            <button
+              type="button"
+              className="shrink-0 rounded-full border border-border bg-white/90 p-2 text-muted-foreground transition hover:text-brand-red"
+              aria-label={t("wishlist")}
+            >
+              <HeartIcon className="size-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            className="rounded-full border border-border bg-white/90 p-2 text-muted-foreground transition hover:text-brand-red"
-            aria-label={t("wishlist")}
-          >
-            <HeartIcon className="size-4" />
-          </button>
         </div>
-        <div className="mt-6 flex h-48 items-center justify-center sm:h-52">
+        <div className="flex h-full items-center justify-center">
           <div className="relative h-28 w-40 rounded-[2rem] border border-border bg-white shadow-soft">
             <div className="absolute inset-4 rounded-[1.5rem] bg-[linear-gradient(135deg,#0f172a,#64748b)]" />
           </div>
