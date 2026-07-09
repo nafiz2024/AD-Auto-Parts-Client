@@ -177,7 +177,7 @@ function ProductCard({ product, buyNowHref }) {
   const conditionVariant = product.condition === "Reconditioned" ? "warning" : "info";
 
   return (
-    <article className="group overflow-hidden rounded-[2rem] border border-border bg-white shadow-soft">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[2rem] border border-border bg-white shadow-soft">
       <div className="relative border-b border-border bg-[radial-gradient(circle_at_top,#ffffff_0%,#eef4fb_65%,#e2e8f0_100%)] p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-wrap gap-2">
@@ -192,22 +192,22 @@ function ProductCard({ product, buyNowHref }) {
             <HeartIcon className="size-4" />
           </button>
         </div>
-        <div className="mt-6 flex h-44 items-center justify-center">
+        <div className="mt-6 flex h-48 items-center justify-center sm:h-52">
           <div className="relative h-28 w-40 rounded-[2rem] border border-border bg-white shadow-soft">
             <div className="absolute inset-4 rounded-[1.5rem] bg-[linear-gradient(135deg,#0f172a,#64748b)]" />
           </div>
         </div>
       </div>
-      <div className="space-y-4 p-5">
+      <div className="flex flex-1 flex-col gap-4 p-5">
         <div className="space-y-2">
           <Link
             href={routes.public.productDetail(product.slug)}
-            className="block text-xl font-semibold text-foreground transition hover:text-brand-red"
+            className="line-clamp-2 block text-xl font-semibold text-foreground transition hover:text-brand-red"
           >
             {localizedName}
           </Link>
           {product.vehicleSummary ? <p className="text-sm text-muted-foreground">{product.vehicleSummary}</p> : null}
-          {product.identifier ? <p className="text-sm text-muted-foreground">{product.identifier}</p> : null}
+          {product.identifier ? <p className="line-clamp-1 text-sm text-muted-foreground">{product.identifier}</p> : null}
         </div>
         <div className="flex items-end gap-3">
           <PriceDisplay amountMinor={product.priceMinor} className="text-2xl" />
@@ -217,15 +217,15 @@ function ProductCard({ product, buyNowHref }) {
             </span>
           ) : null}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Link href={buyNowHref}>
-            <Button className="w-full">
-              <BagIcon className="size-4" />
+        <div className="mt-auto grid gap-3 sm:grid-cols-2">
+          <Link href={buyNowHref} className="flex">
+            <Button className="w-full whitespace-nowrap px-3 text-xs sm:px-4 sm:text-sm">
+              <BagIcon className="size-4 shrink-0" />
               {t("buyNow")}
             </Button>
           </Link>
-          <Link href={routes.public.productDetail(product.slug)}>
-            <Button variant="outline" className="w-full">
+          <Link href={routes.public.productDetail(product.slug)} className="flex">
+            <Button variant="outline" className="w-full whitespace-nowrap px-3 text-xs sm:px-4 sm:text-sm">
               {t("viewDetails")}
             </Button>
           </Link>

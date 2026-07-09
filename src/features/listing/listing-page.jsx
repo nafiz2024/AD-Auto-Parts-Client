@@ -431,7 +431,7 @@ function ProductArt({ tone = "default" }) {
         : "from-slate-100 via-white to-slate-200";
 
   return (
-    <div className="relative flex h-52 items-center justify-center overflow-hidden rounded-[1.8rem] bg-[radial-gradient(circle_at_top,#ffffff_0%,#eef4fb_60%,#e2e8f0_100%)]">
+    <div className="relative flex h-48 items-center justify-center overflow-hidden rounded-[1.8rem] bg-[radial-gradient(circle_at_top,#ffffff_0%,#eef4fb_60%,#e2e8f0_100%)] sm:h-52">
       <div className={`h-28 w-44 rounded-[1.75rem] bg-gradient-to-br ${accentClassName} shadow-lg`} />
       <div className="absolute -inset-block-end-4 inset-inline-start-6 h-20 w-20 rounded-full border-[10px] border-white/80 bg-[radial-gradient(circle,#f8fafc_0%,#d1d5db_60%,#64748b_100%)] shadow-lg" />
     </div>
@@ -513,7 +513,7 @@ function ProductCard({ product, view = "grid" }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-[2rem] border border-border bg-white shadow-soft">
+    <article className="flex h-full flex-col overflow-hidden rounded-[2rem] border border-border bg-white shadow-soft">
       <div className="border-b border-border p-4">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex flex-wrap gap-2">
@@ -532,13 +532,13 @@ function ProductCard({ product, view = "grid" }) {
         </div>
         <ProductArt tone={tone} />
       </div>
-      <div className="space-y-4 p-5">
+      <div className="flex flex-1 flex-col gap-4 p-5">
         <div className="space-y-2">
           <Link href={detailHref} className="line-clamp-2 text-xl font-semibold text-foreground transition hover:text-brand-red">
             {localizedName}
           </Link>
           <p className="text-sm text-muted-foreground">{product.vehicleSummary}</p>
-          <p className="text-sm text-muted-foreground">{product.identifier}</p>
+          <p className="line-clamp-1 text-sm text-muted-foreground">{product.identifier}</p>
           <p className="text-sm text-muted-foreground">{t("condition")}: {product.conditionLabel}</p>
         </div>
         <div className="flex items-end gap-3">
@@ -552,15 +552,15 @@ function ProductCard({ product, view = "grid" }) {
             </span>
           ) : null}
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Link href={detailHref}>
-            <Button variant="outline" className="w-full">
+        <div className="mt-auto grid gap-3 sm:grid-cols-2">
+          <Link href={detailHref} className="flex">
+            <Button variant="outline" className="w-full whitespace-nowrap px-3 text-xs sm:px-4 sm:text-sm">
               {t("viewDetails")}
             </Button>
           </Link>
-          <Link href={buyNowHref}>
-            <Button className="w-full">
-              <BagIcon className="size-4" />
+          <Link href={buyNowHref} className="flex">
+            <Button className="w-full whitespace-nowrap px-3 text-xs sm:px-4 sm:text-sm">
+              <BagIcon className="size-4 shrink-0" />
               {t("buyNow")}
             </Button>
           </Link>
