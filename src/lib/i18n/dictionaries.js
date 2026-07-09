@@ -133,6 +133,8 @@ export const dictionaries = {
     forbidden: "This account is not allowed to access the admin panel.",
     adminLoginSuccess: "Admin session verified successfully.",
     adminLoginFailed: "Invalid email, password, or admin access state.",
+    adminTotpEnrollmentRequired:
+      "Admin two-factor enrollment is required before dashboard access. Complete the backend TOTP setup, then sign in again.",
     verifyTotp: "Verify TOTP",
     enterAuthenticationCode: "Enter the 6-digit authentication code to continue.",
     invalidTotpCode: "Invalid authentication code. Please try again.",

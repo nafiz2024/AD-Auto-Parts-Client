@@ -17,7 +17,45 @@ import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { getAdminAccessState } from "@/features/admin/admin-access";
-import { signInWithEmail, verifyTotp } from "@/lib/auth/session";
+import { getAdminTotpState } from "@/features/admin/admin-access";
+import { getTotpStatus, signInWithEmail, verifyTotp } from "@/lib/auth/session";
+
+async function resolveAdminNextStep(session) {
+  const access = getAdminAccessState(session);
+
+  if (access.forbidden) {
+    return "FORBIDDEN";
+  }
+
+  if (access.totpPending) {
+    return "TOTP_VERIFICATION_REQUIRED";
+  }
+
+  if (access.canAccessDashboard) {
+    return "ADMIN_READY";
+  }
+
+  if (!access.isAuthenticated || !access.isAdmin || !access.isActive) {
+    return "INVALID_CREDENTIALS";
+  }
+
+  try {
+    const totpStatus = await getTotpStatus();
+    const totpState = getAdminTotpState(session, totpStatus);
+
+    if (totpState.enrollmentRequired) {
+      return "TOTP_ENROLLMENT_REQUIRED";
+    }
+
+    if (totpState.verificationRequired) {
+      return "TOTP_VERIFICATION_REQUIRED";
+    }
+  } catch {
+    // Fall through to the default invalid state if the backend does not expose a status route.
+  }
+
+  return "INVALID_CREDENTIALS";
+}
 
 function AuthShell({ children }) {
   const { t } = useLanguage();
@@ -132,23 +170,28 @@ function AdminLoginForm() {
 
     startTransition(async () => {
       try {
-        await signInWithEmail(email.trim(), password);
+        const signInResult = await signInWithEmail(email.trim(), password);
         setPassword("");
-        const session = await auth.refresh();
-        const access = getAdminAccessState(session);
+        const session = await auth.refresh().catch(() => signInResult);
+        const nextStep = await resolveAdminNextStep(session);
 
-        if (access.forbidden) {
+        if (nextStep === "FORBIDDEN") {
           await auth.logout();
           setErrorMessage(t("forbidden"));
           return;
         }
 
-        if (access.totpPending) {
+        if (nextStep === "TOTP_ENROLLMENT_REQUIRED") {
+          setErrorMessage(t("adminTotpEnrollmentRequired"));
+          return;
+        }
+
+        if (nextStep === "TOTP_VERIFICATION_REQUIRED") {
           router.replace(routes.admin.adminTotp);
           return;
         }
 
-        if (access.canAccessDashboard) {
+        if (nextStep === "ADMIN_READY") {
           toast.success(t("adminLogin"), t("adminLoginSuccess"));
           router.replace(routes.admin.adminDashboard);
           return;
@@ -157,13 +200,17 @@ function AdminLoginForm() {
         setErrorMessage(t("adminLoginFailed"));
       } catch (error) {
         setPassword("");
-        setErrorMessage(t("adminLoginFailed"));
         if (error?.isTotpRequired) {
           try {
-            const session = await auth.refresh();
-            const access = getAdminAccessState(session);
+            const session = await auth.refresh().catch(() => null);
+            const nextStep = await resolveAdminNextStep(session);
 
-            if (access.totpPending) {
+            if (nextStep === "TOTP_ENROLLMENT_REQUIRED") {
+              setErrorMessage(t("adminTotpEnrollmentRequired"));
+              return;
+            }
+
+            if (nextStep === "TOTP_VERIFICATION_REQUIRED") {
               router.replace(routes.admin.adminTotp);
               return;
             }
@@ -171,6 +218,8 @@ function AdminLoginForm() {
             // Safe fallback to generic login error below.
           }
         }
+
+        setErrorMessage(t("adminLoginFailed"));
       }
     });
   }
