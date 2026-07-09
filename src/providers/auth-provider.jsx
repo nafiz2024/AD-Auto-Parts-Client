@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   getCurrentSession,
   getCurrentUser,
@@ -30,7 +30,7 @@ function buildState(session, isLoading) {
 export function AuthProvider({ children }) {
   const [state, setState] = useState(() => buildState(null, true));
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setState((currentState) => ({ ...currentState, isLoading: true }));
 
     try {
@@ -41,12 +41,12 @@ export function AuthProvider({ children }) {
       setState(buildState(null, false));
       throw error;
     }
-  }
+  }, []);
 
-  async function logout() {
+  const logout = useCallback(async () => {
     await signOutSession();
     setState(buildState(null, false));
-  }
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -72,17 +72,16 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        ...state,
-        refresh,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      ...state,
+      refresh,
+      logout,
+    }),
+    [logout, refresh, state],
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuthContext() {
