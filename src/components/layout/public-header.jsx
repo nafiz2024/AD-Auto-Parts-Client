@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { FaWhatsappSquare } from "react-icons/fa";
 import { apiGet } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { BrandLogo } from "@/components/layout/brand-logo";
@@ -14,7 +15,6 @@ import {
   MenuIcon,
   SearchIcon,
   UserIcon,
-  WhatsappIcon,
   XIcon,
 } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
@@ -99,7 +99,7 @@ function IconAction({ icon: Icon, label, badge, onClick, ariaLabel }) {
       type="button"
       onClick={onClick}
       aria-label={ariaLabel ?? label}
-      className="relative flex h-14 min-w-[4.75rem] cursor-pointer items-center justify-center rounded-2xl px-3 text-sm text-foreground transition hover:bg-muted"
+      className="relative flex h-12 min-w-[4.5rem] cursor-pointer items-center justify-center rounded-2xl px-3 text-sm text-foreground transition hover:bg-muted"
     >
       <span className="relative flex flex-col items-center justify-center gap-1 leading-none">
         <span className="relative flex size-5 items-center justify-center">
@@ -251,7 +251,7 @@ export function PublicHeader() {
       </div>
 
       <Container>
-        <div className="flex items-center justify-between gap-4 py-4 lg:grid lg:grid-cols-[auto_1fr_auto]">
+        <div className="flex items-center justify-between gap-4 py-3 lg:grid lg:grid-cols-[auto_1fr_auto] lg:items-center">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -259,7 +259,7 @@ export function PublicHeader() {
               onClick={() => setMobileOpen(true)}
               aria-label={t("openNavigationMenu")}
             >
-              <MenuIcon />
+              <MenuIcon className="size-5" />
             </button>
             <BrandLogo />
           </div>
@@ -280,7 +280,7 @@ export function PublicHeader() {
                 aria-expanded={accountOpen}
                 aria-haspopup="menu"
                 aria-label={t("accountMenu")}
-                className="flex h-14 min-w-28 cursor-pointer items-center gap-2 rounded-2xl px-3 text-sm text-foreground transition hover:bg-muted"
+                className="flex h-12 min-w-28 cursor-pointer items-center gap-2 rounded-2xl px-3 text-sm text-foreground transition hover:bg-muted"
               >
                 <UserIcon className="size-5" />
                 <div className="text-start">
@@ -321,20 +321,20 @@ export function PublicHeader() {
           </div>
         </div>
 
-        <div className="pb-4 lg:hidden">
+        <div className="pb-3 lg:hidden">
           <SearchBar />
         </div>
       </Container>
 
       <div className="hidden border-t border-border lg:block">
-        <Container className="flex items-center justify-between gap-6 py-4">
+        <Container className="flex items-center justify-between gap-6 py-2.5">
           <div className="relative" ref={categoryMenuRef}>
             <button
               type="button"
               onClick={() => setCategoriesOpen((current) => !current)}
               aria-expanded={categoriesOpen}
               aria-haspopup="menu"
-              className="inline-flex cursor-pointer items-center gap-3 rounded-2xl px-2 py-2 font-medium text-foreground transition hover:text-brand-red"
+              className="inline-flex h-11 cursor-pointer items-center gap-3 rounded-2xl px-2 py-1.5 font-medium text-foreground transition hover:text-brand-red"
             >
               <MenuIcon className="size-5" />
               {t("allCategories")}
@@ -397,12 +397,12 @@ export function PublicHeader() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={`${t("whatsapp")} ${whatsappNumber}`}
-              className="flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border border-border px-4 py-2 transition hover:border-[#25d366]/40 hover:bg-muted/40"
+              className="flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border border-border px-4 py-2 transition hover:border-[#25d366]/40 hover:bg-muted/40"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#25d366]/10 text-[#25d366]">
-                <WhatsappIcon className="size-5 shrink-0" />
+                <FaWhatsappSquare className="text-[1.65rem]" aria-hidden="true" />
               </span>
-              <div className="text-sm">
+              <div className="flex min-w-0 flex-col justify-center text-sm leading-tight">
                 <p className="font-semibold text-foreground">{t("whatsapp")}</p>
                 <p className="text-muted-foreground">{whatsappNumber}</p>
               </div>
@@ -511,9 +511,9 @@ export function PublicHeader() {
               >
                 <div className="flex items-center gap-3">
                   <span className="flex size-10 items-center justify-center rounded-2xl bg-[#25d366]/10 text-[#25d366]">
-                    <WhatsappIcon className="size-5" />
+                    <FaWhatsappSquare className="text-[1.65rem]" aria-hidden="true" />
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-semibold text-foreground">{t("whatsapp")}</p>
                     <p className="text-sm text-muted-foreground">{whatsappNumber}</p>
                   </div>
