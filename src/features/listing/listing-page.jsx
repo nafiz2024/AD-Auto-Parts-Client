@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { FaSquareWhatsapp } from "react-icons/fa6";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +19,6 @@ import {
   HeartIcon,
   ListIcon,
   SearchIcon,
-  WhatsappIcon,
 } from "@/components/ui/icons";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Select } from "@/components/ui/select";
@@ -899,9 +899,9 @@ function NoResultsBlock({ filters, mode }) {
                       aria-label={`${t("chatOnWhatsapp")} ${supportPhone}`}
                       className="inline-flex w-full"
                     >
-                      <span className="inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-2xl bg-[#25d366] px-5 py-3 text-center font-semibold text-white transition hover:brightness-95">
-                        <WhatsappIcon className="size-5 shrink-0" />
-                        <span>{t("chatOnWhatsapp")}</span>
+                      <span className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#25d366] px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-[#1faa52]">
+                        <FaSquareWhatsapp className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <span className="whitespace-nowrap">{t("chatOnWhatsapp")}</span>
                       </span>
                     </a>
                   ) : null}
@@ -910,8 +910,9 @@ function NoResultsBlock({ filters, mode }) {
                     aria-label={t("callUsLabel", { phone: supportPhone })}
                     className="inline-flex w-full"
                   >
-                    <span className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl border border-border bg-white px-5 py-3 text-center text-sm font-semibold text-foreground transition hover:border-brand-red hover:text-brand-red">
-                      {t("callUsLabel", { phone: supportPhone })}
+                    <span className="inline-flex min-h-14 min-w-[190px] w-full flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-center text-sm font-bold text-slate-950 transition hover:bg-slate-50">
+                      <span>{`${t("callUs")}:`}</span>
+                      <span className="whitespace-nowrap">{supportPhone}</span>
                     </span>
                   </a>
                 </div>
