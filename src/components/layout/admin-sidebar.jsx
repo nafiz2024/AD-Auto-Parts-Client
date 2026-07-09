@@ -97,8 +97,10 @@ export function AdminSidebar({ mobileOpen = false, onClose }) {
       >
         <div className="mb-6 flex items-center justify-between lg:hidden">
           <BrandLogo
+            variant="admin"
             href={routes.admin.adminDashboard}
-            className="[&_p:first-child]:text-white [&_.text-brand-red]:text-brand-red [&_.text-muted-foreground]:text-white/70"
+            compact
+            imageClassName="max-w-[13.5rem]"
           />
           <button
             type="button"
@@ -110,8 +112,10 @@ export function AdminSidebar({ mobileOpen = false, onClose }) {
           </button>
         </div>
         <BrandLogo
+          variant="admin"
           href={routes.admin.adminDashboard}
-          className="hidden lg:block [&_p:first-child]:text-white [&_.text-brand-red]:text-brand-red [&_.text-muted-foreground]:text-white/70"
+          className="hidden lg:inline-flex"
+          imageClassName="max-w-[14rem]"
         />
         <div className="mt-8 space-y-2">
           {adminNavItems.map((item) => {

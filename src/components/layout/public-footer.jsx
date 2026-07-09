@@ -28,7 +28,7 @@ export function PublicFooter() {
     <footer className="border-t border-border bg-[#f8f7f4]">
       <Container className="grid gap-10 py-14 lg:grid-cols-[1.3fr_0.8fr_0.8fr_1fr]">
         <div className="space-y-4">
-          <BrandLogo />
+          <BrandLogo variant="public" imageClassName="h-14 sm:h-16 lg:h-[4.25rem]" />
           <p className="max-w-md text-sm leading-7 text-muted-foreground">
             {t("companySupportDescription")}
           </p>

@@ -21,7 +21,7 @@ export function NotFoundState() {
     <Container className="py-12 sm:py-20">
       <div className="mx-auto max-w-5xl rounded-[2.75rem] border border-border bg-white px-6 py-10 text-center shadow-soft sm:px-10 sm:py-12">
         <div className="flex justify-start">
-          <BrandLogo />
+          <BrandLogo variant="public" />
         </div>
         <div className="relative mx-auto mt-8 max-w-3xl">
           <div className="absolute inset-0 -z-10 rounded-full bg-[radial-gradient(circle_at_center,rgba(9,17,33,0.06),transparent_68%)]" />

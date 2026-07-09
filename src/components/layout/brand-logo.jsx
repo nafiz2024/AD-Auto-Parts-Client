@@ -2,26 +2,61 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { APP_NAME } from "@/config/env";
 import { cn } from "@/lib/utils/cn";
 
-export function BrandLogo({ href = "/", compact = false, className = "" }) {
+const LOGO_VARIANTS = {
+  public: {
+    src: "/public_logo.png",
+    alt: "AD Auto Parts",
+    href: "/",
+    width: 1536,
+    height: 436,
+    sizes: {
+      compact: "h-11 sm:h-12",
+      default: "h-12 sm:h-14 lg:h-[3.5rem]",
+    },
+  },
+  admin: {
+    src: "/admin_logo.png",
+    alt: "AD Auto Parts Admin",
+    href: "/admin/dashboard",
+    width: 869,
+    height: 270,
+    sizes: {
+      compact: "h-10 sm:h-11",
+      default: "h-11 sm:h-12 lg:h-14",
+    },
+  },
+};
+
+export function BrandLogo({
+  variant = "public",
+  href,
+  compact = false,
+  className = "",
+  imageClassName = "",
+  priority = true,
+}) {
+  const config = LOGO_VARIANTS[variant] ?? LOGO_VARIANTS.public;
+
   return (
-    <Link href={href} className={cn("inline-flex items-center", className)}>
+    <Link href={href ?? config.href} className={cn("inline-flex items-center", className)}>
       <div className="relative">
         <Image
-          src="/ad-auto-parts-wordmark-removebg-preview.png"
-          alt={APP_NAME}
-          width={960}
-          height={244}
+          src={config.src}
+          alt={config.alt}
+          width={config.width}
+          height={config.height}
+          sizes="(max-width: 640px) 180px, (max-width: 1024px) 240px, 320px"
           className={cn(
-            "w-auto object-contain",
-            compact ? "h-8 sm:h-9" : "h-10 sm:h-11 lg:h-12",
+            "w-auto max-w-full object-contain",
+            compact ? config.sizes.compact : config.sizes.default,
+            imageClassName,
           )}
-          priority
+          priority={priority}
         />
       </div>
-      <span className="sr-only">{APP_NAME}</span>
+      <span className="sr-only">{config.alt}</span>
     </Link>
   );
 }

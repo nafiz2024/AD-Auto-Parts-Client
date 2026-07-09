@@ -261,7 +261,7 @@ export function PublicHeader() {
             >
               <MenuIcon className="size-5" />
             </button>
-            <BrandLogo />
+            <BrandLogo variant="public" />
           </div>
 
           <div className="hidden justify-center lg:flex">
@@ -423,7 +423,7 @@ export function PublicHeader() {
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex items-center justify-between">
-            <BrandLogo compact />
+            <BrandLogo variant="public" compact />
             <button
               type="button"
               onClick={() => setMobileOpen(false)}

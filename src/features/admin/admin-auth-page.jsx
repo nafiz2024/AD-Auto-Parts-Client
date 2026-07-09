@@ -67,8 +67,9 @@ function AuthShell({ children }) {
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(239,68,68,0.12),transparent_28%),radial-gradient(circle_at_45%_65%,rgba(255,255,255,0.07),transparent_30%)]" />
           <div className="relative z-10 flex items-center justify-between">
             <BrandLogo
-              href={routes.public.home}
-              className="[&_p:first-child]:text-white [&_.text-brand-red]:text-brand-red [&_.text-muted-foreground]:text-white/80"
+              variant="admin"
+              href={routes.admin.adminDashboard}
+              imageClassName="max-w-[18rem]"
             />
             <LanguageToggle />
           </div>
@@ -108,7 +109,7 @@ function AuthShell({ children }) {
         <div className="flex min-h-screen items-center justify-center px-4 py-10 sm:px-6 lg:px-10">
           <div className="w-full max-w-2xl space-y-6">
             <div className="flex items-center justify-between lg:hidden">
-              <BrandLogo href={routes.public.home} compact />
+              <BrandLogo variant="admin" href={routes.admin.adminDashboard} compact />
               <LanguageToggle />
             </div>
             {children}
