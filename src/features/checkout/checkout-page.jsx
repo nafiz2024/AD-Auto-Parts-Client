@@ -20,7 +20,6 @@ import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { routes } from "@/constants/routes";
 import {
-  getDeliveryEstimate,
   getDeliveryZones,
   getCheckoutProduct,
   PAYMENT_METHODS,
@@ -28,7 +27,14 @@ import {
 } from "@/features/checkout/checkout-api";
 import { buildQueryString } from "@/lib/api/query";
 import { API_BASE_URL } from "@/config/env";
-import { ArrowLeftIcon, BagIcon, RefreshCcwIcon, ShieldIcon, WhatsappIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, BagIcon, ShieldIcon, WhatsappIcon } from "@/components/ui/icons";
+
+const FULFILLMENT_METHODS = {
+  homeDelivery: "home_delivery",
+  shopPickup: "shop_pickup",
+};
+
+const HOME_DELIVERY_FEE_MINOR = 5000;
 
 function createInitialForm(zoneId = "") {
   return {
@@ -42,6 +48,7 @@ function createInitialForm(zoneId = "") {
     postalCode: "",
     additionalDirections: "",
     paymentMethod: PAYMENT_METHODS.cashOnDelivery,
+    fulfillmentMethod: FULFILLMENT_METHODS.homeDelivery,
     orderNote: "",
     termsAccepted: false,
   };
@@ -69,16 +76,6 @@ function getFieldError(fieldErrors, field) {
   return value ?? null;
 }
 
-function mapEstimatePayload(productId, qty, form) {
-  return {
-    productId,
-    qty,
-    city: form.city,
-    area: form.area,
-    zoneId: form.city,
-  };
-}
-
 function getCheckoutRequestUrl() {
   return `${API_BASE_URL}/orders/checkout`;
 }
@@ -103,24 +100,6 @@ function getValidationSummary(fieldErrors) {
     .flatMap((value) => (Array.isArray(value) ? value : [value]))
     .filter(Boolean)
     .join(" ");
-}
-
-function normalizeLocationValue(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase();
-}
-
-function getSelectedDeliveryZone(zones, cityValue) {
-  return (
-    zones.find((zone) => zone.id === cityValue && zone.code) ??
-    zones.find(
-      (zone) =>
-        zone.code &&
-        normalizeLocationValue(zone.name) === normalizeLocationValue(cityValue),
-    ) ??
-    null
-  );
 }
 
 function getBackendValidationMessage(error) {
@@ -175,7 +154,7 @@ function getCheckoutErrorMessage(error) {
     error?.code === "RESOURCE_NOT_FOUND" &&
     String(error?.message || "").toLowerCase().includes("delivery zone not found")
   ) {
-    return "Delivery zone was not found. Please update the delivery estimate or contact support.";
+    return "Delivery zone was not found for the selected address. Please contact support.";
   }
 
   if (error?.status === 404 && process.env.NODE_ENV === "development") {
@@ -219,15 +198,6 @@ export function CheckoutPage({
   const [zones, setZones] = useState([]);
   const [form, setForm] = useState(createInitialForm());
   const [fieldErrors, setFieldErrors] = useState({});
-  const [estimateState, setEstimateState] = useState({
-    status: "idle",
-    data: null,
-    error: null,
-  });
-  const [deliveryZoneState, setDeliveryZoneState] = useState({
-    code: null,
-    source: null,
-  });
   const [checkoutError, setCheckoutError] = useState(null);
   const [idempotencyState, setIdempotencyState] = useState({
     key: null,
@@ -280,68 +250,28 @@ export function CheckoutPage({
     };
   }, [initialProductId]);
 
+  const isHomeDelivery = form.fulfillmentMethod === FULFILLMENT_METHODS.homeDelivery;
+  const deliveryFeeMinor = isHomeDelivery ? HOME_DELIVERY_FEE_MINOR : 0;
+
   const estimatedTotalMinor = useMemo(() => {
     if (!productState.product) {
       return null;
     }
 
-    if (estimateState.data?.feeMinor === null || estimateState.data?.feeMinor === undefined) {
-      return productState.product.priceMinor;
-    }
-
-    return productState.product.priceMinor + estimateState.data.feeMinor;
-  }, [estimateState.data, productState.product]);
+    return productState.product.priceMinor + deliveryFeeMinor;
+  }, [deliveryFeeMinor, productState.product]);
 
   function updateFormField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
     setFieldErrors((current) => ({ ...current, [field]: undefined }));
-    if (field === "city" || field === "area" || field === "streetAddress") {
-      setDeliveryZoneState({ code: null, source: null });
-      setEstimateState((current) => ({
+    if (field === "fulfillmentMethod") {
+      setFieldErrors((current) => ({
         ...current,
-        status: current.status === "ready" ? "idle" : current.status,
+        city: undefined,
+        area: undefined,
+        streetAddress: undefined,
       }));
-    }
-  }
-
-  async function handleEstimateDelivery() {
-    if (!productState.product) {
-      return;
-    }
-
-    setEstimateState({ status: "loading", data: null, error: null });
-
-    try {
-      const estimate = await getDeliveryEstimate(
-        mapEstimatePayload(productState.product.id, initialQty, form),
-      );
-      const matchedZone = getSelectedDeliveryZone(zones, form.city);
-      const confirmedZoneCode = estimate.zoneCode ?? matchedZone?.code ?? null;
-
-      if (!confirmedZoneCode) {
-        setDeliveryZoneState({ code: null, source: null });
-        setEstimateState({ status: "error", data: null, error: null });
-        setCheckoutError({
-          message: "Delivery is not available for this city yet. Please contact support.",
-        });
-        toast.warning(
-          t("estimateUnavailable"),
-          "Delivery is not available for this city yet. Please contact support.",
-        );
-        return;
-      }
-
-      setDeliveryZoneState({
-        code: confirmedZoneCode,
-        source: estimate.zoneCode ? "estimate" : "zones",
-      });
-      setEstimateState({ status: "ready", data: estimate, error: null });
       setCheckoutError(null);
-      toast.success(t("deliveryEstimateUpdated"), t("deliveryEstimateRefreshed"));
-    } catch (error) {
-      setDeliveryZoneState({ code: null, source: null });
-      setEstimateState({ status: "error", data: null, error });
-      toast.warning(t("estimateUnavailable"), t("estimateUnavailableDescription"));
     }
   }
 
@@ -352,16 +282,22 @@ export function CheckoutPage({
       nextErrors.fullName = "Full name is required.";
     }
 
+    if (!form.email.trim()) {
+      nextErrors.email = "Email is required.";
+    }
+
     if (!form.phone.trim()) {
       nextErrors.phone = "Phone is required.";
     }
 
-    if (!form.city.trim()) {
-      nextErrors.city = "City is required.";
-    }
+    if (form.fulfillmentMethod === FULFILLMENT_METHODS.homeDelivery) {
+      if (!form.city.trim()) {
+        nextErrors.city = "City is required.";
+      }
 
-    if (!form.streetAddress.trim()) {
-      nextErrors.streetAddress = "Street address is required.";
+      if (!form.streetAddress.trim()) {
+        nextErrors.streetAddress = "Street address is required.";
+      }
     }
 
     if (!form.termsAccepted) {
@@ -377,24 +313,21 @@ export function CheckoutPage({
     const fullName = form.fullName.trim();
     const phone = form.phone.trim();
     const email = form.email.trim();
-    const city = form.city.trim();
-    const deliveryZoneCode = deliveryZoneState.code;
+    const selectedZone = zones.find((zone) => zone.id === form.city);
+    const city = (selectedZone?.name ?? form.city).trim();
+    const area = form.area.trim();
+    const buildingNo = form.buildingNo.trim();
+    const postalCode = form.postalCode.trim();
+    const additionalDirections = form.additionalDirections.trim();
 
-    return {
+    const payload = {
       orderSource: "buy_now",
+      fulfillmentMethod: form.fulfillmentMethod,
       customer: {
         name: fullName,
         email: email || undefined,
         phone,
       },
-      deliveryAddress: {
-        recipientName: fullName,
-        phone,
-        line1,
-        city,
-        country: "SA",
-      },
-      deliveryZoneCode,
       items: [
         {
           productId: productState.product.id ?? productState.product._id,
@@ -403,6 +336,22 @@ export function CheckoutPage({
       ],
       paymentMethod: form.paymentMethod,
     };
+
+    if (form.fulfillmentMethod === FULFILLMENT_METHODS.homeDelivery) {
+      payload.deliveryAddress = {
+        recipientName: fullName,
+        phone,
+        line1,
+        city,
+        country: "SA",
+        area: area || undefined,
+        buildingNo: buildingNo || undefined,
+        postalCode: postalCode || undefined,
+        additionalDirections: additionalDirections || undefined,
+      };
+    }
+
+    return payload;
   }
 
   function getIdempotencyKeyForPayload(payload) {
@@ -435,18 +384,13 @@ export function CheckoutPage({
       phone: form.phone,
       city: form.city,
       address: form.streetAddress,
+      fulfillmentMethod: form.fulfillmentMethod,
       paymentMethod: form.paymentMethod,
       quantity: Number(initialQty || 1),
       confirmSingleItem: form.termsAccepted,
-      deliveryZoneCode: deliveryZoneState.code,
     });
 
     const nextErrors = validateForm();
-
-    if (!deliveryZoneState.code) {
-      nextErrors.city =
-        nextErrors.city ?? "Please update the delivery estimate before placing the order.";
-    }
 
     if (Object.keys(nextErrors).length > 0) {
       const validationMessage =
@@ -644,120 +588,124 @@ export function CheckoutPage({
             </Card>
 
             <Card className="space-y-5 rounded-[2rem]">
-              <h2 className="text-2xl font-semibold text-foreground">{t("shippingAddress")}</h2>
-              <div className="grid gap-5 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="city">{t("city")}</Label>
-                  <Select
-                    id="city"
-                    value={form.city}
-                    onChange={(event) => updateFormField("city", event.target.value)}
-                  >
-                    <option value="">{t("selectCity")}</option>
-                    {zones.map((zone) => (
-                      <option key={zone.id} value={zone.id}>
-                        {zone.name}
-                      </option>
-                    ))}
-                  </Select>
-                  {getFieldError(fieldErrors, "city") ? (
-                    <p className="text-sm text-error">{getFieldError(fieldErrors, "city")}</p>
-                  ) : null}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="area">{t("area")}</Label>
-                  <Input
-                    id="area"
-                    value={form.area}
-                    onChange={(event) => updateFormField("area", event.target.value)}
-                    placeholder={t("districtOrArea")}
-                  />
-                  {getFieldError(fieldErrors, "area") ? (
-                    <p className="text-sm text-error">{getFieldError(fieldErrors, "area")}</p>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="streetAddress">{t("streetAddress")}</Label>
-                <Input
-                  id="streetAddress"
-                    value={form.streetAddress}
-                    onChange={(event) => updateFormField("streetAddress", event.target.value)}
-                    placeholder={t("streetNeighborhoodUnitDetails")}
-                  />
-                {getFieldError(fieldErrors, "streetAddress") ? (
-                  <p className="text-sm text-error">{getFieldError(fieldErrors, "streetAddress")}</p>
-                ) : null}
-              </div>
-
-              <div className="grid gap-5 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="buildingNo">{t("buildingNo")}</Label>
-                  <Input
-                    id="buildingNo"
-                    value={form.buildingNo}
-                    onChange={(event) => updateFormField("buildingNo", event.target.value)}
-                    placeholder={t("optional")}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="postalCode">{t("postalCode")}</Label>
-                  <Input
-                    id="postalCode"
-                    value={form.postalCode}
-                    onChange={(event) => updateFormField("postalCode", event.target.value)}
-                    placeholder={t("optional")}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="additionalDirections">{t("additionalDirections")}</Label>
-                <Textarea
-                  id="additionalDirections"
-                  className="min-h-24"
-                  value={form.additionalDirections}
-                  onChange={(event) => updateFormField("additionalDirections", event.target.value)}
-                  placeholder={t("deliveryNotesForDriver")}
+              <h2 className="text-2xl font-semibold text-foreground">{t("deliveryMethod")}</h2>
+              <div className="grid gap-4 md:grid-cols-2">
+                <PaymentMethodCard
+                  id={FULFILLMENT_METHODS.homeDelivery}
+                  title={t("homeDelivery")}
+                  description={t("deliverToMyAddress")}
+                  selected={form.fulfillmentMethod === FULFILLMENT_METHODS.homeDelivery}
+                  onSelect={(value) => updateFormField("fulfillmentMethod", value)}
+                />
+                <PaymentMethodCard
+                  id={FULFILLMENT_METHODS.shopPickup}
+                  title={t("shopReceive")}
+                  description={t("pickupFromShopDescription")}
+                  selected={form.fulfillmentMethod === FULFILLMENT_METHODS.shopPickup}
+                  onSelect={(value) => updateFormField("fulfillmentMethod", value)}
                 />
               </div>
+            </Card>
 
-              <div className="rounded-[1.5rem] border border-border/70 bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-foreground">{t("deliveryMethod")}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {estimateState.data?.estimatedDelivery ?? t("backendDeliveryEstimateInstruction")}
-                    </p>
-                    {deliveryZoneState.code ? (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Zone code: {deliveryZoneState.code}
+            <Card className="space-y-5 rounded-[2rem]">
+              <h2 className="text-2xl font-semibold text-foreground">
+                {isHomeDelivery ? t("shippingAddress") : t("storePickup")}
+              </h2>
+
+              {isHomeDelivery ? (
+                <>
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">{t("city")}</Label>
+                      <Select
+                        id="city"
+                        value={form.city}
+                        onChange={(event) => updateFormField("city", event.target.value)}
+                      >
+                        <option value="">{t("selectCity")}</option>
+                        {zones.map((zone) => (
+                          <option key={zone.id} value={zone.id}>
+                            {zone.name}
+                          </option>
+                        ))}
+                      </Select>
+                      {getFieldError(fieldErrors, "city") ? (
+                        <p className="text-sm text-error">{getFieldError(fieldErrors, "city")}</p>
+                      ) : null}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="area">{t("area")}</Label>
+                      <Input
+                        id="area"
+                        value={form.area}
+                        onChange={(event) => updateFormField("area", event.target.value)}
+                        placeholder={t("districtOrArea")}
+                      />
+                      {getFieldError(fieldErrors, "area") ? (
+                        <p className="text-sm text-error">{getFieldError(fieldErrors, "area")}</p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="streetAddress">{t("streetAddress")}</Label>
+                    <Input
+                      id="streetAddress"
+                      value={form.streetAddress}
+                      onChange={(event) => updateFormField("streetAddress", event.target.value)}
+                      placeholder={t("streetNeighborhoodUnitDetails")}
+                    />
+                    {getFieldError(fieldErrors, "streetAddress") ? (
+                      <p className="text-sm text-error">
+                        {getFieldError(fieldErrors, "streetAddress")}
                       </p>
                     ) : null}
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleEstimateDelivery}
-                    disabled={!form.city || !form.area || estimateState.status === "loading"}
-                  >
-                    {estimateState.status === "loading" ? (
-                      <>
-                        <RefreshCcwIcon className="size-4 animate-spin" />
-                        {t("loading")}
-                      </>
-                    ) : (
-                      t("updateEstimate")
-                    )}
-                  </Button>
-                </div>
-                {estimateState.status === "error" ? (
-                  <Alert variant="warning" className="mt-4" title={t("estimateUnavailable")}>
-                    {t("estimateUnavailablePricingDescription")}
+
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="buildingNo">{t("buildingNo")}</Label>
+                      <Input
+                        id="buildingNo"
+                        value={form.buildingNo}
+                        onChange={(event) => updateFormField("buildingNo", event.target.value)}
+                        placeholder={t("optional")}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="postalCode">{t("postalCode")}</Label>
+                      <Input
+                        id="postalCode"
+                        value={form.postalCode}
+                        onChange={(event) => updateFormField("postalCode", event.target.value)}
+                        placeholder={t("optional")}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="additionalDirections">{t("additionalDirections")}</Label>
+                    <Textarea
+                      id="additionalDirections"
+                      className="min-h-24"
+                      value={form.additionalDirections}
+                      onChange={(event) => updateFormField("additionalDirections", event.target.value)}
+                      placeholder={t("deliveryNotesForDriver")}
+                    />
+                  </div>
+
+                  <Alert variant="warning" title={t("fixedDeliveryFeeTitle")}>
+                    {t("fixedDeliveryFeeDescription")}
                   </Alert>
-                ) : null}
-              </div>
+                </>
+              ) : (
+                <div className="rounded-[1.5rem] border border-border/70 bg-white p-5">
+                  <p className="font-semibold text-foreground">{t("shopReceive")}</p>
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    {t("storePickupInformation")}
+                  </p>
+                </div>
+              )}
             </Card>
 
             <Card className="space-y-5 rounded-[2rem]">
@@ -840,10 +788,10 @@ export function CheckoutPage({
                 </div>
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-muted-foreground">{t("deliveryFee")}</span>
-                  {estimateState.status === "ready" && estimateState.data?.feeMinor !== null ? (
-                    <PriceDisplay amountMinor={estimateState.data.feeMinor} />
+                  {isHomeDelivery ? (
+                    <PriceDisplay amountMinor={deliveryFeeMinor} />
                   ) : (
-                    <span className="text-muted-foreground">{t("pendingEstimate")}</span>
+                    <span className="text-muted-foreground">{t("storePickup")}</span>
                   )}
                 </div>
                 <div className="flex items-center justify-between gap-4 border-t border-border pt-3 text-lg font-semibold text-foreground">
@@ -856,8 +804,15 @@ export function CheckoutPage({
                 </div>
               </div>
 
-              <Alert variant="warning" title={t("finalTotalServerConfirmed")}>
-                {t("finalTotalInformationalDescription")}
+              <Alert
+                variant="warning"
+                title={
+                  isHomeDelivery ? t("finalTotalServerConfirmed") : t("storePickupSummaryTitle")
+                }
+              >
+                {isHomeDelivery
+                  ? t("finalTotalInformationalDescription")
+                  : t("storePickupSummaryDescription")}
               </Alert>
 
               {checkoutError ? (

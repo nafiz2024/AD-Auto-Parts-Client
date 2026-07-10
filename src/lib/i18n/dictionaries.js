@@ -698,6 +698,19 @@ export const dictionaries = {
     shippingAddress: "Shipping Address",
     billingAddress: "Billing Address",
     deliveryMethod: "Delivery Method",
+    homeDelivery: "Home Delivery",
+    deliverToMyAddress: "Deliver to my address",
+    shopReceive: "Shop Receive",
+    storePickup: "Store Pickup",
+    pickupFromShopDescription: "I will pick it up from the shop",
+    storePickupInformation:
+      "You will collect this product from the shop. Our team will confirm pickup details after order placement.",
+    fixedDeliveryFeeTitle: "Home delivery fee is fixed for testing.",
+    fixedDeliveryFeeDescription:
+      "Delivery fee is currently set to SAR 50 for checkout testing. The backend will still confirm the final order total.",
+    storePickupSummaryTitle: "Pickup details will be confirmed after order placement.",
+    storePickupSummaryDescription:
+      "No delivery estimate is required for store pickup. Our team will share pickup timing and location details after the backend confirms the order.",
     paymentMethod: "Payment Method",
     cashOnDelivery: "Cash on Delivery",
     manualAdvancePayment: "Manual Advance Payment",
@@ -1964,6 +1977,19 @@ export const dictionaries = {
     shippingAddress: "عنوان التوصيل",
     billingAddress: "عنوان الفاتورة",
     deliveryMethod: "طريقة التوصيل",
+    homeDelivery: "التوصيل للمنزل",
+    deliverToMyAddress: "التوصيل إلى عنواني",
+    shopReceive: "الاستلام من المتجر",
+    storePickup: "الاستلام من المتجر",
+    pickupFromShopDescription: "سأقوم باستلامه من المتجر",
+    storePickupInformation:
+      "ستقوم باستلام هذا المنتج من المتجر. سيقوم فريقنا بتأكيد تفاصيل الاستلام بعد تأكيد الطلب.",
+    fixedDeliveryFeeTitle: "رسوم التوصيل للمنزل ثابتة للاختبار.",
+    fixedDeliveryFeeDescription:
+      "تم تحديد رسوم التوصيل حاليا بقيمة 50 ريال سعودي لاختبار عملية الدفع. سيظل الخادم هو المرجع النهائي لإجمالي الطلب.",
+    storePickupSummaryTitle: "سيتم تأكيد تفاصيل الاستلام بعد تأكيد الطلب.",
+    storePickupSummaryDescription:
+      "لا يلزم تقدير توصيل لاستلام المتجر. سيوافيكم فريقنا بموعد وموقع الاستلام بعد تأكيد الطلب من الخادم.",
     paymentMethod: "طريقة الدفع",
     cashOnDelivery: "الدفع عند الاستلام",
     manualAdvancePayment: "دفع مسبق يدوي",

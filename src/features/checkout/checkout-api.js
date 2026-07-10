@@ -184,11 +184,32 @@ export async function getDeliveryZones() {
 }
 
 export async function getDeliveryEstimate(payload) {
-  const response = await apiGet(endpoints.public.deliveryEstimate, {
+  const requestUrl = resolveApiRequestUrl(endpoints.public.deliveryEstimate, {
     query: payload,
   });
 
-  return normalizeDeliveryEstimate(response?.data);
+  if (process.env.NODE_ENV === "development") {
+    console.log("[delivery-estimate] request url:", requestUrl);
+    console.log("[delivery-estimate] request payload:", payload);
+  }
+
+  try {
+    const response = await apiGet(endpoints.public.deliveryEstimate, {
+      query: payload,
+    });
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("[delivery-estimate] response:", response);
+    }
+
+    return normalizeDeliveryEstimate(response?.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[delivery-estimate] error:", error);
+    }
+
+    throw error;
+  }
 }
 
 export async function submitCheckout(payload, idempotencyKey) {
