@@ -105,20 +105,21 @@ function getValidationSummary(fieldErrors) {
     .join(" ");
 }
 
-function normalizeDeliveryZoneCode(value) {
+function normalizeLocationValue(value) {
   return String(value || "")
     .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "-");
+    .toLowerCase();
 }
 
-function getSelectedDeliveryZoneCode(zones, cityValue) {
-  const selectedZone = zones.find((zone) => zone.id === cityValue);
-
+function getSelectedDeliveryZone(zones, cityValue) {
   return (
-    selectedZone?.code ??
-    normalizeDeliveryZoneCode(selectedZone?.name) ??
-    normalizeDeliveryZoneCode(cityValue)
+    zones.find((zone) => zone.id === cityValue && zone.code) ??
+    zones.find(
+      (zone) =>
+        zone.code &&
+        normalizeLocationValue(zone.name) === normalizeLocationValue(cityValue),
+    ) ??
+    null
   );
 }
 
@@ -169,6 +170,14 @@ function getCheckoutErrorMessage(error) {
     return getBackendValidationMessage(error);
   }
 
+  if (
+    error?.status === 404 &&
+    error?.code === "RESOURCE_NOT_FOUND" &&
+    String(error?.message || "").toLowerCase().includes("delivery zone not found")
+  ) {
+    return "Delivery zone was not found. Please update the delivery estimate or contact support.";
+  }
+
   if (error?.status === 404 && process.env.NODE_ENV === "development") {
     return `Checkout route/config error. Expected POST ${getCheckoutRequestUrl()}. Backend said: ${error.message}`;
   }
@@ -214,6 +223,10 @@ export function CheckoutPage({
     status: "idle",
     data: null,
     error: null,
+  });
+  const [deliveryZoneState, setDeliveryZoneState] = useState({
+    code: null,
+    source: null,
   });
   const [checkoutError, setCheckoutError] = useState(null);
   const [idempotencyState, setIdempotencyState] = useState({
@@ -282,6 +295,13 @@ export function CheckoutPage({
   function updateFormField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
     setFieldErrors((current) => ({ ...current, [field]: undefined }));
+    if (field === "city" || field === "area" || field === "streetAddress") {
+      setDeliveryZoneState({ code: null, source: null });
+      setEstimateState((current) => ({
+        ...current,
+        status: current.status === "ready" ? "idle" : current.status,
+      }));
+    }
   }
 
   async function handleEstimateDelivery() {
@@ -295,9 +315,31 @@ export function CheckoutPage({
       const estimate = await getDeliveryEstimate(
         mapEstimatePayload(productState.product.id, initialQty, form),
       );
+      const matchedZone = getSelectedDeliveryZone(zones, form.city);
+      const confirmedZoneCode = estimate.zoneCode ?? matchedZone?.code ?? null;
+
+      if (!confirmedZoneCode) {
+        setDeliveryZoneState({ code: null, source: null });
+        setEstimateState({ status: "error", data: null, error: null });
+        setCheckoutError({
+          message: "Delivery is not available for this city yet. Please contact support.",
+        });
+        toast.warning(
+          t("estimateUnavailable"),
+          "Delivery is not available for this city yet. Please contact support.",
+        );
+        return;
+      }
+
+      setDeliveryZoneState({
+        code: confirmedZoneCode,
+        source: estimate.zoneCode ? "estimate" : "zones",
+      });
       setEstimateState({ status: "ready", data: estimate, error: null });
+      setCheckoutError(null);
       toast.success(t("deliveryEstimateUpdated"), t("deliveryEstimateRefreshed"));
     } catch (error) {
+      setDeliveryZoneState({ code: null, source: null });
       setEstimateState({ status: "error", data: null, error });
       toast.warning(t("estimateUnavailable"), t("estimateUnavailableDescription"));
     }
@@ -336,7 +378,7 @@ export function CheckoutPage({
     const phone = form.phone.trim();
     const email = form.email.trim();
     const city = form.city.trim();
-    const deliveryZoneCode = getSelectedDeliveryZoneCode(zones, city);
+    const deliveryZoneCode = deliveryZoneState.code;
 
     return {
       orderSource: "buy_now",
@@ -396,14 +438,14 @@ export function CheckoutPage({
       paymentMethod: form.paymentMethod,
       quantity: Number(initialQty || 1),
       confirmSingleItem: form.termsAccepted,
+      deliveryZoneCode: deliveryZoneState.code,
     });
 
     const nextErrors = validateForm();
 
-    const deliveryZoneCode = getSelectedDeliveryZoneCode(zones, form.city.trim());
-
-    if (!deliveryZoneCode) {
-      nextErrors.city = nextErrors.city ?? "Please enter your delivery city.";
+    if (!deliveryZoneState.code) {
+      nextErrors.city =
+        nextErrors.city ?? "Please update the delivery estimate before placing the order.";
     }
 
     if (Object.keys(nextErrors).length > 0) {
@@ -688,6 +730,11 @@ export function CheckoutPage({
                     <p className="text-sm text-muted-foreground">
                       {estimateState.data?.estimatedDelivery ?? t("backendDeliveryEstimateInstruction")}
                     </p>
+                    {deliveryZoneState.code ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Zone code: {deliveryZoneState.code}
+                      </p>
+                    ) : null}
                   </div>
                   <Button
                     type="button"

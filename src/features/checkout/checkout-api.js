@@ -5,11 +5,11 @@ import { endpoints } from "@/lib/api/endpoints";
 import { normalizeProductDetail } from "@/features/products/product-detail-api";
 
 const deliveryZoneFallbacks = [
-  { id: "riyadh", name: "Riyadh" },
-  { id: "jeddah", name: "Jeddah" },
-  { id: "dammam", name: "Dammam" },
-  { id: "mecca", name: "Mecca" },
-  { id: "medina", name: "Medina" },
+  { id: "riyadh", code: null, name: "Riyadh" },
+  { id: "jeddah", code: null, name: "Jeddah" },
+  { id: "dammam", code: null, name: "Dammam" },
+  { id: "mecca", code: null, name: "Mecca" },
+  { id: "medina", code: null, name: "Medina" },
 ];
 
 const PAYMENT_METHODS = {
@@ -76,6 +76,13 @@ function normalizeDeliveryEstimate(data) {
     zoneLabel:
       firstString(payload?.zoneLabel, payload?.zoneName, payload?.city, payload?.area) ??
       null,
+    zoneCode:
+      firstString(
+        payload?.deliveryZoneCode,
+        payload?.zoneCode,
+        payload?.zone?.code,
+        payload?.deliveryZone?.code,
+      ) ?? null,
   };
 }
 
