@@ -71,6 +71,14 @@ export const endpoints = {
     notifications: resource("customer/notifications"),
     notificationPreferences: resource("customer/notification-preferences"),
   },
+  account: {
+    summary: resource("account/summary"),
+    orders: resource("account/orders"),
+    orderDetail: (orderNumber) => byNumber("account/orders", orderNumber),
+    payments: resource("account/payments"),
+    invoices: resource("account/invoices"),
+    notifications: resource("account/notifications"),
+  },
   orders: {
     checkout: resource("orders/checkout"),
   },

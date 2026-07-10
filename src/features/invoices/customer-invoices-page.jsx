@@ -135,6 +135,18 @@ export function CustomerInvoicesSection() {
     return <LoadingState />;
   }
 
+  if (state.error?.status === 401) {
+    return (
+      <EmptyState
+        icon={UserIcon}
+        title={t("accountAccessRequired")}
+        description={t("accountAccessRequiredDescription")}
+        actionLabel={t("signInToContinue")}
+        actionHref={buildCustomerLoginHref(routes.customer.accountInvoices)}
+      />
+    );
+  }
+
   if (state.error) {
     return (
       <Alert variant="warning" title={t("failedToLoad")}>

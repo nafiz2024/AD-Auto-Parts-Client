@@ -31,6 +31,7 @@ import {
   createCustomerEnquiry,
   createCustomerReturn,
   downloadCustomerInvoicePdf,
+  getCustomerAccountSummary,
   getCustomerEnquiries,
   getCustomerInvoices,
   getCustomerNotifications,
@@ -93,6 +94,22 @@ function mapStatusTone(value = "") {
 
 function StatusPill({ value }) {
   return <Badge variant={mapStatusTone(value)}>{value}</Badge>;
+}
+
+function isUnauthorizedError(error) {
+  return error?.status === 401;
+}
+
+function renderSignInRequired(t, redirectPath) {
+  return (
+    <EmptyState
+      icon={UserIcon}
+      title={t("accountAccessRequired")}
+      description={t("accountAccessRequiredDescription")}
+      actionLabel={t("signInToContinue")}
+      actionHref={buildCustomerLoginHref(redirectPath)}
+    />
+  );
 }
 
 function LoadingCard() {
@@ -183,8 +200,14 @@ function AccountShell({ activeSection, children }) {
 
 function OverviewSection() {
   const { t } = useLanguage();
-  const [orders, setOrders] = useState([]);
-  const [notifications, setNotifications] = useState([]);
+  const [summary, setSummary] = useState({
+    invoiceCount: 0,
+    notificationCount: 0,
+    orderCount: 0,
+    paymentCount: 0,
+    recentNotifications: [],
+    recentOrders: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -196,14 +219,14 @@ function OverviewSection() {
       setError(null);
 
       try {
-        const [nextOrders, nextNotifications] = await Promise.all([
-          getCustomerOrders(),
-          getCustomerNotifications(),
-        ]);
+        const nextSummary = await getCustomerAccountSummary();
 
         if (active) {
-          setOrders(nextOrders.slice(0, 3));
-          setNotifications(nextNotifications.slice(0, 3));
+          setSummary({
+            ...nextSummary,
+            recentOrders: nextSummary.recentOrders.slice(0, 3),
+            recentNotifications: nextSummary.recentNotifications.slice(0, 3),
+          });
         }
       } catch (nextError) {
         if (active) {
@@ -227,6 +250,10 @@ function OverviewSection() {
     return <LoadingCard />;
   }
 
+  if (isUnauthorizedError(error)) {
+    return renderSignInRequired(t, routes.customer.account);
+  }
+
   return (
     <div className="space-y-6">
       {error ? (
@@ -235,26 +262,32 @@ function OverviewSection() {
         </Alert>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card>
           <p className="text-sm text-muted-foreground">{t("orders")}</p>
-          <p className="mt-3 text-4xl font-semibold text-foreground">{orders.length}</p>
+          <p className="mt-3 text-4xl font-semibold text-foreground">{summary.orderCount}</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-muted-foreground">{t("payments")}</p>
+          <p className="mt-3 text-4xl font-semibold text-foreground">{summary.paymentCount}</p>
+        </Card>
+        <Card>
+          <p className="text-sm text-muted-foreground">{t("invoices")}</p>
+          <p className="mt-3 text-4xl font-semibold text-foreground">{summary.invoiceCount}</p>
         </Card>
         <Card>
           <p className="text-sm text-muted-foreground">{t("notifications")}</p>
-          <p className="mt-3 text-4xl font-semibold text-foreground">{notifications.length}</p>
+          <p className="mt-3 text-4xl font-semibold text-foreground">{summary.notificationCount}</p>
         </Card>
-        <Card>
-          <p className="text-sm text-muted-foreground">{t("accountQuickActions")}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link href={routes.customer.accountPayments}>
-              <Button size="sm">{t("payments")}</Button>
-            </Link>
-            <Link href={routes.customer.accountInvoices}>
-              <Button size="sm" variant="outline">{t("invoices")}</Button>
-            </Link>
-          </div>
-        </Card>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Link href={routes.customer.accountPayments}>
+          <Button size="sm">{t("payments")}</Button>
+        </Link>
+        <Link href={routes.customer.accountInvoices}>
+          <Button size="sm" variant="outline">{t("invoices")}</Button>
+        </Link>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
@@ -265,7 +298,7 @@ function OverviewSection() {
               <Button variant="ghost" size="sm">{t("viewAll")}</Button>
             </Link>
           </div>
-          {orders.length === 0 ? (
+          {summary.recentOrders.length === 0 ? (
             <EmptyState
               title={t("noOrdersYet")}
               description={t("noOrdersDescription")}
@@ -273,7 +306,7 @@ function OverviewSection() {
               actionHref={routes.public.products}
             />
           ) : (
-            orders.map((order) => (
+            summary.recentOrders.map((order) => (
               <Link
                 key={order.orderNumber}
                 href={routes.customer.accountOrderDetail(order.orderNumber)}
@@ -298,14 +331,14 @@ function OverviewSection() {
               <Button variant="ghost" size="sm">{t("viewAll")}</Button>
             </Link>
           </div>
-          {notifications.length === 0 ? (
+          {summary.recentNotifications.length === 0 ? (
             <EmptyState
               icon={MessageCircleIcon}
               title={t("noNotificationsYet")}
               description={t("noNotificationsDescription")}
             />
           ) : (
-            notifications.map((notification) => (
+            summary.recentNotifications.map((notification) => (
               <div key={notification.id} className="rounded-3xl border border-border p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="font-semibold text-foreground">{notification.title}</p>
@@ -363,6 +396,10 @@ function OrdersSection() {
   }
 
   if (error) {
+    if (isUnauthorizedError(error)) {
+      return renderSignInRequired(t, routes.customer.accountOrders);
+    }
+
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
         {error.message}
@@ -434,6 +471,7 @@ function PaymentsSection() {
   const { t } = useLanguage();
   const toast = useToast();
   const [payments, setPayments] = useState([]);
+  const [manualPaymentOrders, setManualPaymentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isPending, startTransition] = useTransition();
@@ -455,15 +493,19 @@ function PaymentsSection() {
 
       try {
         const nextPayments = await getCustomerPayments();
+        const nextManualPaymentOrders = nextPayments.manualPaymentOrders ?? [];
+        const nextPaymentItems = nextPayments.payments ?? [];
 
         if (active) {
-          setPayments(nextPayments);
+          setPayments(nextPaymentItems);
+          setManualPaymentOrders(nextManualPaymentOrders);
           setForm((current) => ({
             ...current,
             orderNumber:
               current.orderNumber ||
-              nextPayments.find((payment) => payment.needsManualProof)?.orderNumber ||
-              nextPayments[0]?.orderNumber ||
+              nextManualPaymentOrders[0]?.orderNumber ||
+              nextPaymentItems.find((payment) => payment.needsManualProof)?.orderNumber ||
+              nextPaymentItems[0]?.orderNumber ||
               "",
           }));
         }
@@ -512,6 +554,10 @@ function PaymentsSection() {
 
   if (loading) {
     return <LoadingCard />;
+  }
+
+  if (isUnauthorizedError(error)) {
+    return renderSignInRequired(t, routes.customer.accountPayments);
   }
 
   return (
@@ -568,9 +614,9 @@ function PaymentsSection() {
                 onChange={(event) => updateField("orderNumber", event.target.value)}
               >
                 <option value="">{t("selectOrder")}</option>
-                {payments.map((payment) => (
-                  <option key={payment.id} value={payment.orderNumber}>
-                    {payment.orderNumber}
+                {manualPaymentOrders.map((order) => (
+                  <option key={order.orderNumber} value={order.orderNumber}>
+                    {order.orderNumber}
                   </option>
                 ))}
               </Select>
@@ -691,6 +737,10 @@ function InvoicesSection() {
   }
 
   if (error) {
+    if (isUnauthorizedError(error)) {
+      return renderSignInRequired(t, routes.customer.accountInvoices);
+    }
+
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
         {error.message}
@@ -791,6 +841,10 @@ function NotificationsSection() {
   }
 
   if (error) {
+    if (isUnauthorizedError(error)) {
+      return renderSignInRequired(t, routes.customer.accountNotifications);
+    }
+
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
         {error.message}

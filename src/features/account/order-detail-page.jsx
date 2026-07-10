@@ -47,6 +47,14 @@ function StatusPill({ value }) {
   return <Badge variant={variant}>{value}</Badge>;
 }
 
+function isUnauthorizedError(error) {
+  return error?.status === 401;
+}
+
+function isOrderNotFoundError(error) {
+  return error?.status === 404 && error?.code === "RESOURCE_NOT_FOUND";
+}
+
 function useOrderAccessState(orderNumber) {
   const { isLoading, isAuthenticated, role } = useAuth();
   const { t } = useLanguage();
@@ -150,6 +158,33 @@ export function AccountOrderDetailPage({ orderNumber }) {
   }
 
   if (error) {
+    if (isUnauthorizedError(error)) {
+      return (
+        <Container className="py-10">
+          <EmptyState
+            icon={BoxIcon}
+            title={t("accountAccessRequired")}
+            description={t("accountAccessRequiredDescription")}
+            actionLabel={t("signInToContinue")}
+            actionHref={buildCustomerLoginHref(routes.customer.accountOrderDetail(orderNumber))}
+          />
+        </Container>
+      );
+    }
+
+    if (isOrderNotFoundError(error)) {
+      return (
+        <Container className="py-10">
+          <EmptyState
+            title={t("orderNotFound")}
+            description={t("orderNotFoundDescription")}
+            actionLabel={t("orders")}
+            actionHref={routes.customer.accountOrders}
+          />
+        </Container>
+      );
+    }
+
     return (
       <Container className="py-10">
         <Alert variant="warning" title={t("failedToLoad")}>

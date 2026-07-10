@@ -13,6 +13,10 @@ import {
 import { endpoints } from "@/lib/api/endpoints";
 import { normalizeOrderSummary } from "@/features/checkout/checkout-api";
 
+const ACCOUNT_REQUEST_OPTIONS = {
+  credentials: "include",
+};
+
 function firstString(...values) {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) {
@@ -63,6 +67,11 @@ function normalizeItems(payload) {
 
 function getEnvelopeData(result) {
   return result?.data ?? result?.raw ?? result ?? {};
+}
+
+function getCollectionItems(payload) {
+  const data = getEnvelopeData(payload);
+  return normalizeItems(data);
 }
 
 function toMinorAmount(...values) {
@@ -123,18 +132,24 @@ function normalizeOrder(payload) {
         orderPayload?.invoice?.number,
       ) ?? null,
     customerName:
-      firstString(orderPayload?.customerName, orderPayload?.shippingAddress?.fullName) ?? null,
+      firstString(
+        orderPayload?.customerName,
+        orderPayload?.shippingAddress?.fullName,
+        orderPayload?.deliveryAddress?.recipientName,
+      ) ?? null,
     shippingAddress:
       firstString(
         orderPayload?.shippingAddress?.fullAddress,
         orderPayload?.shippingAddress?.addressLine1,
         orderPayload?.shippingAddress?.address,
+        orderPayload?.deliveryAddress?.line1,
       ) ?? null,
     billingAddress:
       firstString(
         orderPayload?.billingAddress?.fullAddress,
         orderPayload?.billingAddress?.addressLine1,
         orderPayload?.billingAddress?.address,
+        orderPayload?.deliveryAddress?.line1,
       ) ?? null,
     trackingNumber:
       firstString(orderPayload?.trackingNumber, orderPayload?.shipment?.trackingNumber) ?? null,
@@ -145,20 +160,24 @@ function normalizeOrder(payload) {
       ? orderPayload.statusTimeline
       : Array.isArray(orderPayload?.timeline)
         ? orderPayload.timeline
+        : Array.isArray(orderPayload?.trackingHistory)
+          ? orderPayload.trackingHistory
         : [],
   };
 }
 
 function normalizePaymentRecord(order, index = 0) {
+  const paymentMethod =
+    firstString(order?.paymentMethod, order?.payment?.method) ?? "cash_on_delivery";
+
   return {
     id: firstString(order?.id, order?.orderNumber, `payment-${index}`) ?? `payment-${index}`,
     orderNumber: firstString(order?.orderNumber, order?.number),
-    paymentMethod: firstString(order?.paymentMethod, order?.payment?.method) ?? "COD",
+    paymentMethod,
     paymentStatus: firstString(order?.paymentStatus, order?.payment?.status) ?? "Pending",
     amountMinor: toMinorAmount(order?.totalMinor, order?.total, order?.payment?.amount),
     createdAt: firstString(order?.createdAt, order?.placedAt),
-    needsManualProof:
-      firstString(order?.paymentMethod, order?.payment?.method) === "MANUAL_ADVANCE",
+    needsManualProof: paymentMethod.toLowerCase() === "manual_advance_payment",
   };
 }
 
@@ -247,19 +266,103 @@ function normalizeProfile(payload) {
   };
 }
 
+function normalizeAccountSummary(payload) {
+  const data = getEnvelopeData(payload);
+  const counts = data?.counts ?? data?.summary ?? data?.stats ?? {};
+  const recentOrders = normalizeItems(
+    data?.recentOrders ?? data?.orders ?? data?.latestOrders ?? [],
+  ).map((item) => normalizeOrder(item));
+  const recentNotifications = normalizeItems(
+    data?.recentNotifications ?? data?.notifications ?? data?.latestNotifications ?? [],
+  ).map((item) => normalizeNotification(item));
+
+  return {
+    orderCount:
+      firstNumber(
+        counts?.orders,
+        counts?.orderCount,
+        counts?.totalOrders,
+        data?.orderCount,
+        recentOrders.length,
+      ) ?? 0,
+    paymentCount:
+      firstNumber(
+        counts?.payments,
+        counts?.paymentCount,
+        counts?.totalPayments,
+        data?.paymentCount,
+      ) ?? 0,
+    invoiceCount:
+      firstNumber(
+        counts?.invoices,
+        counts?.invoiceCount,
+        counts?.totalInvoices,
+        data?.invoiceCount,
+      ) ?? 0,
+    notificationCount:
+      firstNumber(
+        counts?.notifications,
+        counts?.notificationCount,
+        counts?.totalNotifications,
+        data?.notificationCount,
+        recentNotifications.length,
+      ) ?? 0,
+    recentOrders,
+    recentNotifications,
+  };
+}
+
+function normalizePaymentCollection(payload) {
+  const data = getEnvelopeData(payload);
+  const payments = normalizeItems(
+    data?.payments ?? data?.items ?? data?.results ?? data,
+  ).map((item, index) => normalizePaymentRecord(item, index));
+  const manualPaymentOrders = normalizeItems(
+    data?.manualPaymentOrders ??
+      data?.eligibleOrders ??
+      data?.manualAdvanceOrders ??
+      data?.orders ??
+      [],
+  ).map((item) => normalizeOrder(item));
+
+  return {
+    payments,
+    manualPaymentOrders:
+      manualPaymentOrders.length > 0
+        ? manualPaymentOrders
+        : payments
+            .filter((payment) => payment.needsManualProof)
+            .map((payment) => ({
+              orderNumber: payment.orderNumber,
+              paymentMethod: payment.paymentMethod,
+              paymentStatus: payment.paymentStatus,
+              totalMinor: payment.amountMinor,
+              createdAt: payment.createdAt,
+            })),
+  };
+}
+
+export async function getCustomerAccountSummary() {
+  const result = await apiGet(endpoints.account.summary, ACCOUNT_REQUEST_OPTIONS);
+  return normalizeAccountSummary(result);
+}
+
 export async function getCustomerOrders() {
-  const result = await apiGet(endpoints.customer.orders);
-  return normalizeItems(getEnvelopeData(result)).map((item) => normalizeOrder(item));
+  const result = await apiGet(endpoints.account.orders, ACCOUNT_REQUEST_OPTIONS);
+  return getCollectionItems(result).map((item) => normalizeOrder(item));
 }
 
 export async function getCustomerOrderDetail(orderNumber) {
-  const result = await apiGet(endpoints.customer.orderDetail(orderNumber));
+  const result = await apiGet(
+    endpoints.account.orderDetail(orderNumber),
+    ACCOUNT_REQUEST_OPTIONS,
+  );
   return normalizeOrder(getEnvelopeData(result));
 }
 
 export async function getCustomerPayments() {
-  const orders = await getCustomerOrders();
-  return orders.map(normalizePaymentRecord);
+  const result = await apiGet(endpoints.account.payments, ACCOUNT_REQUEST_OPTIONS);
+  return normalizePaymentCollection(result);
 }
 
 export async function submitManualPayment(payload) {
@@ -290,8 +393,8 @@ export async function submitManualPayment(payload) {
 }
 
 export async function getCustomerInvoices() {
-  const result = await apiGet(endpoints.customer.invoices);
-  return normalizeItems(getEnvelopeData(result)).map(normalizeInvoice);
+  const result = await apiGet(endpoints.account.invoices, ACCOUNT_REQUEST_OPTIONS);
+  return getCollectionItems(result).map(normalizeInvoice);
 }
 
 export async function downloadCustomerInvoicePdf(invoiceNumber) {
@@ -304,8 +407,8 @@ export async function downloadCustomerInvoicePdf(invoiceNumber) {
 }
 
 export async function getCustomerNotifications() {
-  const result = await apiGet(endpoints.customer.notifications);
-  return normalizeItems(getEnvelopeData(result)).map(normalizeNotification);
+  const result = await apiGet(endpoints.account.notifications, ACCOUNT_REQUEST_OPTIONS);
+  return getCollectionItems(result).map(normalizeNotification);
 }
 
 export async function getCustomerEnquiries() {

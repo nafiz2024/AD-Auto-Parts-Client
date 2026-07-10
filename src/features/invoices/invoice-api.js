@@ -11,6 +11,10 @@ import {
 import { endpoints } from "@/lib/api/endpoints";
 import { API_BASE_URL } from "@/config/env";
 
+const ACCOUNT_REQUEST_OPTIONS = {
+  credentials: "include",
+};
+
 function asArray(value) {
   if (Array.isArray(value)) {
     return value;
@@ -404,7 +408,7 @@ export async function downloadAdminInvoicePdf(invoice) {
 }
 
 export async function getCustomerInvoices() {
-  const result = await apiGet(endpoints.customer.invoices);
+  const result = await apiGet(endpoints.account.invoices, ACCOUNT_REQUEST_OPTIONS);
   return normalizeItems(getEnvelopeData(result)).map((item, index) =>
     normalizeInvoiceRecord(item, index, "customer"),
   );
