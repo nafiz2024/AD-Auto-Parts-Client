@@ -19,8 +19,15 @@ import { ProductDetailsSkeleton } from "@/components/states/loading-states";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { routes } from "@/constants/routes";
-import { getDeliveryEstimate, getDeliveryZones, getCheckoutProduct, submitCheckout } from "@/features/checkout/checkout-api";
+import {
+  getDeliveryEstimate,
+  getDeliveryZones,
+  getCheckoutProduct,
+  PAYMENT_METHODS,
+  submitCheckout,
+} from "@/features/checkout/checkout-api";
 import { buildQueryString } from "@/lib/api/query";
+import { API_BASE_URL } from "@/config/env";
 import { ArrowLeftIcon, BagIcon, RefreshCcwIcon, ShieldIcon, WhatsappIcon } from "@/components/ui/icons";
 
 function createInitialForm(zoneId = "") {
@@ -34,7 +41,7 @@ function createInitialForm(zoneId = "") {
     buildingNo: "",
     postalCode: "",
     additionalDirections: "",
-    paymentMethod: "COD",
+    paymentMethod: PAYMENT_METHODS.cashOnDelivery,
     orderNote: "",
     termsAccepted: false,
   };
@@ -70,6 +77,18 @@ function mapEstimatePayload(productId, qty, form) {
     area: form.area,
     zoneId: form.city,
   };
+}
+
+function getCheckoutRequestUrl() {
+  return `${API_BASE_URL}/orders/checkout`;
+}
+
+function getCheckoutErrorMessage(error) {
+  if (error?.status === 404 && process.env.NODE_ENV === "development") {
+    return `Checkout route/config error. Expected POST ${getCheckoutRequestUrl()}. Backend said: ${error.message}`;
+  }
+
+  return error?.message ?? "The request could not be completed.";
 }
 
 function PaymentMethodCard({ id, title, description, selected, onSelect, disabled }) {
@@ -290,9 +309,11 @@ export function CheckoutPage({
     startSubmitTransition(async () => {
       try {
         const order = await submitCheckout(payload, idempotencyKey);
-        toast.success(t("orderPlacedSuccessfully"), `Order ${order.orderNumber ?? ""} was created.`);
+        const orderReference = order.orderReference ?? order.orderNumber ?? "";
+        toast.success(t("orderPlacedSuccessfully"), `Order ${orderReference} was created.`);
         const search = buildQueryString({
-          orderNumber: order.orderNumber,
+          orderNumber: order.orderNumber ?? order.orderReference,
+          orderReference,
           paymentMethod: order.paymentMethod,
           status: order.status,
           totalMinor: order.totalMinor,
@@ -301,9 +322,13 @@ export function CheckoutPage({
         });
         router.push(`${routes.public.checkoutSuccess}${search}`);
       } catch (error) {
-        setFieldErrors(error?.fieldErrors ?? {});
-        setCheckoutError(error);
-        toast.apiError(error, t("failedToPlaceOrder"));
+        const nextError =
+          error && typeof error === "object"
+            ? { ...error, message: getCheckoutErrorMessage(error) }
+            : error;
+        setFieldErrors(nextError?.fieldErrors ?? {});
+        setCheckoutError(nextError);
+        toast.apiError(nextError, t("failedToPlaceOrder"));
       }
     });
   }
@@ -573,17 +598,17 @@ export function CheckoutPage({
               <h2 className="text-2xl font-semibold text-foreground">{t("paymentMethod")}</h2>
               <div className="grid gap-4 md:grid-cols-2">
                 <PaymentMethodCard
-                  id="COD"
+                  id={PAYMENT_METHODS.cashOnDelivery}
                   title={t("cashOnDelivery")}
                   description={t("payWhenReceive")}
-                  selected={form.paymentMethod === "COD"}
+                  selected={form.paymentMethod === PAYMENT_METHODS.cashOnDelivery}
                   onSelect={(value) => updateFormField("paymentMethod", value)}
                 />
                 <PaymentMethodCard
-                  id="MANUAL_ADVANCE"
+                  id={PAYMENT_METHODS.manualAdvancePayment}
                   title={t("manualAdvancePayment")}
                   description={t("submitPaymentProofAfterOrder")}
-                  selected={form.paymentMethod === "MANUAL_ADVANCE"}
+                  selected={form.paymentMethod === PAYMENT_METHODS.manualAdvancePayment}
                   onSelect={(value) => updateFormField("paymentMethod", value)}
                 />
               </div>

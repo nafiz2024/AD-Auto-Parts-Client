@@ -56,7 +56,6 @@ export const endpoints = {
     profile: resource("customer/profile"),
     orders: resource("customer/orders"),
     orderDetail: (orderNumber) => byNumber("customer/orders", orderNumber),
-    checkout: resource("customer/checkout"),
     cancelOrder: (orderNumber) =>
       child("customer/orders", orderNumber, "cancel"),
     manualPaymentSubmission: resource("customer/payments/manual"),
@@ -71,6 +70,9 @@ export const endpoints = {
       child("customer/invoices", invoiceNumber, "pdf"),
     notifications: resource("customer/notifications"),
     notificationPreferences: resource("customer/notification-preferences"),
+  },
+  orders: {
+    checkout: resource("orders/checkout"),
   },
   admin: {
     categories: resource("admin/categories"),

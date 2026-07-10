@@ -19,10 +19,22 @@ function SuccessRow({ label, value }) {
   );
 }
 
+function getPaymentMethodLabel(paymentMethod, t) {
+  if (paymentMethod === "manual_advance_payment") {
+    return t("manualAdvancePayment");
+  }
+
+  if (paymentMethod === "cash_on_delivery") {
+    return t("cashOnDelivery");
+  }
+
+  return paymentMethod;
+}
+
 export function OrderSuccessPage({ searchParams }) {
   const { t } = useLanguage();
   const { isAuthenticated } = useAuth();
-  const orderNumber = searchParams.orderNumber ?? null;
+  const orderNumber = searchParams.orderNumber ?? searchParams.orderReference ?? null;
   const paymentMethod = searchParams.paymentMethod ?? null;
   const status = searchParams.status ?? "Placed";
   const totalMinor = searchParams.totalMinor ? Number(searchParams.totalMinor) : null;
@@ -52,7 +64,7 @@ export function OrderSuccessPage({ searchParams }) {
 
           <div className="rounded-[2rem] border border-border/70 bg-white px-6 py-2">
             <SuccessRow label={t("yourOrderNumber")} value={orderNumber} />
-            <SuccessRow label={t("paymentMethod")} value={paymentMethod} />
+            <SuccessRow label={t("paymentMethod")} value={getPaymentMethodLabel(paymentMethod, t)} />
             <SuccessRow label={t("orders")} value={status} />
             <SuccessRow
               label={t("total")}
@@ -61,7 +73,7 @@ export function OrderSuccessPage({ searchParams }) {
             <SuccessRow label={t("estimatedDelivery")} value={estimatedDelivery} />
           </div>
 
-          {paymentMethod === "MANUAL_ADVANCE" ? (
+          {paymentMethod === "manual_advance_payment" ? (
             <Alert variant="warning" title={t("manualAdvancePayment")}>
               {t("submitPaymentProofAfterOrder")}
             </Alert>

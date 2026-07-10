@@ -35,6 +35,10 @@ function joinUrl(baseUrl, path) {
   return `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+export function resolveApiRequestUrl(path, { baseUrl = API_BASE_URL, query } = {}) {
+  return joinUrl(baseUrl, withQuery(path, query));
+}
+
 function getRequestId(headers, body) {
   const headerRequestId = REQUEST_ID_HEADERS.find((headerName) =>
     headers.has(headerName),
@@ -294,7 +298,10 @@ export async function apiRequest(
     language && (!query || query.lang === undefined)
       ? { ...query, lang: language }
       : query;
-  const requestUrl = joinUrl(baseUrl, withQuery(path, localizedQuery));
+  const requestUrl = resolveApiRequestUrl(path, {
+    baseUrl,
+    query: localizedQuery,
+  });
   const { signal: timeoutSignal, cleanup } = createAbortSignal(timeoutMs, signal);
 
   try {

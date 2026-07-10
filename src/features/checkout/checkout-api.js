@@ -1,6 +1,6 @@
 "use client";
 
-import { apiGet, apiPost } from "@/lib/api/client";
+import { apiGet, apiPost, resolveApiRequestUrl } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { normalizeProductDetail } from "@/features/products/product-detail-api";
 
@@ -11,6 +11,11 @@ const deliveryZoneFallbacks = [
   { id: "mecca", name: "Mecca" },
   { id: "medina", name: "Medina" },
 ];
+
+const PAYMENT_METHODS = {
+  cashOnDelivery: "cash_on_delivery",
+  manualAdvancePayment: "manual_advance_payment",
+};
 
 function normalizeItems(data) {
   if (Array.isArray(data?.items)) {
@@ -79,10 +84,28 @@ function normalizeOrderSummary(data) {
 
   return {
     orderNumber:
-      firstString(payload?.orderNumber, payload?.number, payload?.id) ?? null,
+      firstString(
+        payload?.orderNumber,
+        payload?.number,
+        payload?.referenceNumber,
+        payload?.reference,
+        payload?.id,
+      ) ?? null,
+    orderReference:
+      firstString(
+        payload?.referenceNumber,
+        payload?.reference,
+        payload?.orderReference,
+        payload?.orderNumber,
+        payload?.number,
+        payload?.id,
+      ) ?? null,
     status: firstString(payload?.status, payload?.orderStatus) ?? "Placed",
     paymentMethod:
-      firstString(payload?.paymentMethod, payload?.payment?.method) ?? "COD",
+      firstString(
+        payload?.paymentMethod,
+        payload?.payment?.method,
+      ) ?? PAYMENT_METHODS.cashOnDelivery,
     totalMinor:
       firstNumber(
         payload?.totalMinor,
@@ -153,7 +176,16 @@ export async function getDeliveryEstimate(payload) {
 }
 
 export async function submitCheckout(payload, idempotencyKey) {
-  const response = await apiPost(endpoints.customer.checkout, payload, {
+  const checkoutPath = endpoints.orders.checkout;
+
+  if (process.env.NODE_ENV === "development") {
+    console.log(
+      "[checkout] POST URL:",
+      resolveApiRequestUrl(checkoutPath),
+    );
+  }
+
+  const response = await apiPost(checkoutPath, payload, {
     headers: {
       "Idempotency-Key": idempotencyKey,
       "X-Idempotency-Key": idempotencyKey,
@@ -164,3 +196,4 @@ export async function submitCheckout(payload, idempotencyKey) {
 }
 
 export { normalizeOrderSummary };
+export { PAYMENT_METHODS };
