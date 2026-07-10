@@ -20,10 +20,6 @@ function SuccessRow({ label, value }) {
 }
 
 function getPaymentMethodLabel(paymentMethod, t) {
-  if (paymentMethod === "manual_advance_payment") {
-    return t("manualAdvancePayment");
-  }
-
   if (paymentMethod === "cash_on_delivery") {
     return t("cashOnDelivery");
   }
@@ -36,6 +32,7 @@ export function OrderSuccessPage({ searchParams }) {
   const { isAuthenticated } = useAuth();
   const orderNumber = searchParams.orderNumber ?? searchParams.orderReference ?? null;
   const paymentMethod = searchParams.paymentMethod ?? null;
+  const fulfillmentMethod = searchParams.fulfillmentMethod ?? "home_delivery";
   const status = searchParams.status ?? "Placed";
   const totalMinor = searchParams.totalMinor ? Number(searchParams.totalMinor) : null;
   const estimatedDelivery = searchParams.estimatedDelivery ?? null;
@@ -73,15 +70,16 @@ export function OrderSuccessPage({ searchParams }) {
             <SuccessRow label={t("estimatedDelivery")} value={estimatedDelivery} />
           </div>
 
-          {paymentMethod === "manual_advance_payment" ? (
-            <Alert variant="warning" title={t("manualAdvancePayment")}>
-              {t("submitPaymentProofAfterOrder")}
-            </Alert>
-          ) : (
-            <Alert variant="success" title={t("cashOnDelivery")}>
-              {t("payWhenReceive")}
-            </Alert>
-          )}
+          <Alert
+            variant="success"
+            title={
+              fulfillmentMethod === "shop_pickup" ? t("shopReceive") : t("cashOnDelivery")
+            }
+          >
+            {fulfillmentMethod === "shop_pickup"
+              ? t("storePickupInformation")
+              : t("payWhenReceive")}
+          </Alert>
 
           <div className="grid gap-3">
             <a href={viewOrderHref}>

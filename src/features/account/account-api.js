@@ -94,6 +94,55 @@ function toMinorAmount(...values) {
   return null;
 }
 
+function toDisplayLabel(value, fallback = "Pending") {
+  const source = firstString(value) ?? fallback;
+
+  return source
+    .split(/[_-\s]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function normalizeOrderStatuses(orderPayload, baseStatus) {
+  const rawOrderStatus = firstString(baseStatus, orderPayload?.status, orderPayload?.orderStatus);
+  const rawShipmentStatus = firstString(
+    orderPayload?.shipmentStatus,
+    orderPayload?.shipment?.status,
+    orderPayload?.deliveryStatus,
+  );
+  const rawPaymentStatus = firstString(
+    orderPayload?.paymentStatus,
+    orderPayload?.payment?.status,
+  );
+  const shipmentStatusLabel = toDisplayLabel(rawShipmentStatus, "Processing");
+  const paymentStatusLabel = toDisplayLabel(rawPaymentStatus, "Pending");
+  const normalizedShipmentStatus = rawShipmentStatus?.toLowerCase() ?? "";
+  const normalizedOrderStatus = rawOrderStatus?.toLowerCase() ?? "";
+
+  let orderStatusLabel = toDisplayLabel(rawOrderStatus, "Pending");
+
+  if (
+    normalizedShipmentStatus.includes("deliver") ||
+    normalizedShipmentStatus.includes("complete")
+  ) {
+    orderStatusLabel = "Delivered";
+  } else if (
+    normalizedOrderStatus.includes("deliver") ||
+    normalizedOrderStatus.includes("complete")
+  ) {
+    orderStatusLabel = "Delivered";
+  } else if (normalizedOrderStatus.includes("cancel")) {
+    orderStatusLabel = "Cancelled";
+  }
+
+  return {
+    orderStatusLabel,
+    paymentStatusLabel,
+    shipmentStatusLabel,
+  };
+}
+
 function normalizeOrderItem(item, index = 0) {
   return {
     id: firstString(item?.id, item?._id, item?.productId, `item-${index}`) ?? `item-${index}`,
@@ -111,19 +160,15 @@ function normalizeOrder(payload) {
   const base = normalizeOrderSummary(payload);
   const orderPayload = payload?.item ?? payload?.order ?? payload ?? {};
   const rawItems = Array.isArray(orderPayload?.items) ? orderPayload.items : [];
+  const statuses = normalizeOrderStatuses(orderPayload, base.status);
 
   return {
     ...base,
+    status: statuses.orderStatusLabel,
     id: firstString(orderPayload?.id, orderPayload?._id, base.orderNumber) ?? base.orderNumber,
     orderNumber: base.orderNumber ?? firstString(orderPayload?.number, orderPayload?.id),
-    paymentStatus:
-      firstString(orderPayload?.paymentStatus, orderPayload?.payment?.status) ?? "Pending",
-    shipmentStatus:
-      firstString(
-        orderPayload?.shipmentStatus,
-        orderPayload?.shipment?.status,
-        orderPayload?.deliveryStatus,
-      ) ?? "Processing",
+    paymentStatus: statuses.paymentStatusLabel,
+    shipmentStatus: statuses.shipmentStatusLabel,
     items: rawItems.map(normalizeOrderItem),
     invoiceNumber:
       firstString(

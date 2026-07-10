@@ -20,7 +20,6 @@ import {
   MessageCircleIcon,
   RefreshCcwIcon,
   UserIcon,
-  WalletIcon,
 } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import { useAuth } from "@/hooks/use-auth";
@@ -36,10 +35,8 @@ import {
   getCustomerInvoices,
   getCustomerNotifications,
   getCustomerOrders,
-  getCustomerPayments,
   getCustomerProfile,
   getCustomerReturns,
-  submitManualPayment,
   updateCustomerProfile,
 } from "@/features/account/account-api";
 import { CustomerQuestionsPage } from "@/features/questions/customer-questions-page";
@@ -50,7 +47,6 @@ import { getCustomerReviews } from "@/features/reviews/review-api";
 const sections = [
   { key: "accountOverview", href: routes.customer.account, icon: BoxIcon },
   { key: "orders", href: routes.customer.accountOrders, icon: BoxIcon },
-  { key: "payments", href: routes.customer.accountPayments, icon: WalletIcon },
   { key: "invoices", href: routes.customer.accountInvoices, icon: FileTextIcon },
   { key: "notifications", href: routes.customer.accountNotifications, icon: MessageCircleIcon },
   { key: "enquiries", href: routes.customer.accountEnquiries, icon: MessageCircleIcon },
@@ -77,7 +73,12 @@ function formatDate(value) {
 function mapStatusTone(value = "") {
   const normalized = String(value).toLowerCase();
 
-  if (normalized.includes("paid") || normalized.includes("delivered") || normalized.includes("approved")) {
+  if (
+    normalized.includes("paid") ||
+    normalized.includes("delivered") ||
+    normalized.includes("approved") ||
+    normalized.includes("complete")
+  ) {
     return "success";
   }
 
@@ -204,7 +205,6 @@ function OverviewSection() {
     invoiceCount: 0,
     notificationCount: 0,
     orderCount: 0,
-    paymentCount: 0,
     recentNotifications: [],
     recentOrders: [],
   });
@@ -262,14 +262,10 @@ function OverviewSection() {
         </Alert>
       ) : null}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card>
           <p className="text-sm text-muted-foreground">{t("orders")}</p>
           <p className="mt-3 text-4xl font-semibold text-foreground">{summary.orderCount}</p>
-        </Card>
-        <Card>
-          <p className="text-sm text-muted-foreground">{t("payments")}</p>
-          <p className="mt-3 text-4xl font-semibold text-foreground">{summary.paymentCount}</p>
         </Card>
         <Card>
           <p className="text-sm text-muted-foreground">{t("invoices")}</p>
@@ -282,8 +278,8 @@ function OverviewSection() {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Link href={routes.customer.accountPayments}>
-          <Button size="sm">{t("payments")}</Button>
+        <Link href={routes.customer.accountOrders}>
+          <Button size="sm">{t("orders")}</Button>
         </Link>
         <Link href={routes.customer.accountInvoices}>
           <Button size="sm" variant="outline">{t("invoices")}</Button>
@@ -429,7 +425,7 @@ function OrdersSection() {
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <StatusPill value={order.status} />
-              <StatusPill value={order.paymentStatus} />
+              <StatusPill value={order.shipmentStatus} />
             </div>
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-4">
@@ -454,9 +450,6 @@ function OrdersSection() {
             <Link href={routes.customer.accountOrderDetail(order.orderNumber)}>
               <Button>{t("viewOrderDetails")}</Button>
             </Link>
-            <Link href={routes.customer.accountPayments}>
-              <Button variant="outline">{t("goToPayments")}</Button>
-            </Link>
             <Link href={routes.customer.accountInvoices}>
               <Button variant="outline">{t("goToInvoices")}</Button>
             </Link>
@@ -464,215 +457,6 @@ function OrdersSection() {
         </div>
       ))}
     </Card>
-  );
-}
-
-function PaymentsSection() {
-  const { t } = useLanguage();
-  const toast = useToast();
-  const [payments, setPayments] = useState([]);
-  const [manualPaymentOrders, setManualPaymentOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [isPending, startTransition] = useTransition();
-  const [form, setForm] = useState({
-    orderNumber: "",
-    amount: "",
-    transferDate: "",
-    referenceNumber: "",
-    notes: "",
-    receipt: null,
-  });
-
-  useEffect(() => {
-    let active = true;
-
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const nextPayments = await getCustomerPayments();
-        const nextManualPaymentOrders = nextPayments.manualPaymentOrders ?? [];
-        const nextPaymentItems = nextPayments.payments ?? [];
-
-        if (active) {
-          setPayments(nextPaymentItems);
-          setManualPaymentOrders(nextManualPaymentOrders);
-          setForm((current) => ({
-            ...current,
-            orderNumber:
-              current.orderNumber ||
-              nextManualPaymentOrders[0]?.orderNumber ||
-              nextPaymentItems.find((payment) => payment.needsManualProof)?.orderNumber ||
-              nextPaymentItems[0]?.orderNumber ||
-              "",
-          }));
-        }
-      } catch (nextError) {
-        if (active) {
-          setError(nextError);
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    }
-
-    load();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  function updateField(key, value) {
-    setForm((current) => ({ ...current, [key]: value }));
-  }
-
-  function handleSubmit(event) {
-    event.preventDefault();
-
-    startTransition(async () => {
-      try {
-        await submitManualPayment(form);
-        toast.success(t("paymentProofSubmitted"), t("paymentProofSuccessDescription"));
-        setForm((current) => ({
-          ...current,
-          amount: "",
-          transferDate: "",
-          referenceNumber: "",
-          notes: "",
-          receipt: null,
-        }));
-      } catch (nextError) {
-        toast.apiError(nextError);
-      }
-    });
-  }
-
-  if (loading) {
-    return <LoadingCard />;
-  }
-
-  if (isUnauthorizedError(error)) {
-    return renderSignInRequired(t, routes.customer.accountPayments);
-  }
-
-  return (
-    <div className="space-y-6">
-      {error ? (
-        <Alert variant="warning" title={t("failedToLoad")}>
-          {error.message}
-        </Alert>
-      ) : null}
-
-      <Alert title={t("manualPaymentSupport")} variant="info">
-        {t("paymentTimelineNote")}
-      </Alert>
-
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr]">
-        <Card className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">{t("recentPayments")}</h2>
-          {payments.length === 0 ? (
-            <EmptyState
-              icon={WalletIcon}
-              title={t("payments")}
-              description={t("paymentsDescription")}
-            />
-          ) : (
-            payments.map((payment) => (
-              <div key={payment.id} className="rounded-3xl border border-border p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-foreground">{payment.orderNumber}</p>
-                    <p className="text-sm text-muted-foreground">{payment.paymentMethod}</p>
-                  </div>
-                  <StatusPill value={payment.paymentStatus} />
-                </div>
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-                  <span>{formatDate(payment.createdAt)}</span>
-                  <PriceDisplay amountMinor={payment.amountMinor} />
-                </div>
-              </div>
-            ))
-          )}
-        </Card>
-
-        <Card>
-          <h2 className="text-xl font-semibold text-foreground">{t("manualAdvancePayment")}</h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {t("submitManualPaymentDescription")}
-          </p>
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="payment-order">{t("yourOrderNumber")}</Label>
-              <Select
-                id="payment-order"
-                value={form.orderNumber}
-                onChange={(event) => updateField("orderNumber", event.target.value)}
-              >
-                <option value="">{t("selectOrder")}</option>
-                {manualPaymentOrders.map((order) => (
-                  <option key={order.orderNumber} value={order.orderNumber}>
-                    {order.orderNumber}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="payment-amount">{t("proofAmount")}</Label>
-              <Input
-                id="payment-amount"
-                value={form.amount}
-                onChange={(event) => updateField("amount", event.target.value)}
-                placeholder="2500.00"
-              />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="payment-transfer-date">{t("transferDate")}</Label>
-                <Input
-                  id="payment-transfer-date"
-                  type="date"
-                  value={form.transferDate}
-                  onChange={(event) => updateField("transferDate", event.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="payment-reference">{t("referenceNumber")}</Label>
-                <Input
-                  id="payment-reference"
-                  value={form.referenceNumber}
-                  onChange={(event) => updateField("referenceNumber", event.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="payment-receipt">{t("receiptFile")}</Label>
-              <Input
-                id="payment-receipt"
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={(event) => updateField("receipt", event.target.files?.[0] ?? null)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="payment-notes">{t("notes")}</Label>
-              <Textarea
-                id="payment-notes"
-                value={form.notes}
-                onChange={(event) => updateField("notes", event.target.value)}
-              />
-            </div>
-            <Button type="submit" disabled={isPending || !form.orderNumber}>
-              {isPending ? t("sending") : t("submitProof")}
-            </Button>
-          </form>
-        </Card>
-      </div>
-    </div>
   );
 }
 
@@ -1495,7 +1279,6 @@ export function AccountRoutePage({ section = "accountOverview" }) {
   const sectionRouteMap = {
     accountOverview: routes.customer.account,
     orders: routes.customer.accountOrders,
-    payments: routes.customer.accountPayments,
     invoices: routes.customer.accountInvoices,
     notifications: routes.customer.accountNotifications,
     enquiries: routes.customer.accountEnquiries,
@@ -1514,7 +1297,6 @@ export function AccountRoutePage({ section = "accountOverview" }) {
     <AccountShell activeSection={section}>
       {section === "accountOverview" ? <OverviewSection /> : null}
       {section === "orders" ? <OrdersSection /> : null}
-      {section === "payments" ? <PaymentsSection /> : null}
       {section === "invoices" ? <InvoicesSection /> : null}
       {section === "notifications" ? <NotificationsSection /> : null}
       {section === "enquiries" ? <EnquiriesSection /> : null}

@@ -47,7 +47,6 @@ function createInitialForm(zoneId = "") {
     buildingNo: "",
     postalCode: "",
     additionalDirections: "",
-    paymentMethod: PAYMENT_METHODS.cashOnDelivery,
     fulfillmentMethod: FULFILLMENT_METHODS.homeDelivery,
     orderNote: "",
     termsAccepted: false,
@@ -345,7 +344,7 @@ export function CheckoutPage({
           quantity,
         },
       ],
-      paymentMethod: form.paymentMethod,
+      paymentMethod: PAYMENT_METHODS.cashOnDelivery,
     };
 
     if (form.fulfillmentMethod === FULFILLMENT_METHODS.homeDelivery) {
@@ -392,7 +391,7 @@ export function CheckoutPage({
       city: form.city,
       address: form.streetAddress,
       fulfillmentMethod: form.fulfillmentMethod,
-      paymentMethod: form.paymentMethod,
+      paymentMethod: PAYMENT_METHODS.cashOnDelivery,
       quantity: Number(initialQty || 1),
       confirmSingleItem: form.termsAccepted,
     });
@@ -427,6 +426,7 @@ export function CheckoutPage({
           orderNumber: order.orderNumber ?? order.orderReference,
           orderReference,
           paymentMethod: order.paymentMethod,
+          fulfillmentMethod: form.fulfillmentMethod,
           status: order.status,
           totalMinor: order.totalMinor,
           estimatedDelivery: order.estimatedDelivery,
@@ -717,21 +717,9 @@ export function CheckoutPage({
 
             <Card className="space-y-5 rounded-[2rem]">
               <h2 className="text-2xl font-semibold text-foreground">{t("paymentMethod")}</h2>
-              <div className="grid gap-4 md:grid-cols-2">
-                <PaymentMethodCard
-                  id={PAYMENT_METHODS.cashOnDelivery}
-                  title={t("cashOnDelivery")}
-                  description={t("payWhenReceive")}
-                  selected={form.paymentMethod === PAYMENT_METHODS.cashOnDelivery}
-                  onSelect={(value) => updateFormField("paymentMethod", value)}
-                />
-                <PaymentMethodCard
-                  id={PAYMENT_METHODS.manualAdvancePayment}
-                  title={t("manualAdvancePayment")}
-                  description={t("submitPaymentProofAfterOrder")}
-                  selected={form.paymentMethod === PAYMENT_METHODS.manualAdvancePayment}
-                  onSelect={(value) => updateFormField("paymentMethod", value)}
-                />
+              <div className="rounded-[1.6rem] border border-brand-navy bg-brand-navy/[0.04] px-4 py-4 shadow-soft">
+                <p className="font-semibold text-foreground">{t("cashOnDelivery")}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t("payWhenReceive")}</p>
               </div>
 
               <div className="space-y-2">

@@ -10,7 +10,7 @@ import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { PriceDisplay } from "@/components/ui/price-display";
-import { BoxIcon, WalletIcon } from "@/components/ui/icons";
+import { BoxIcon } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
@@ -36,7 +36,9 @@ function formatDate(value) {
 function StatusPill({ value }) {
   const normalized = String(value).toLowerCase();
   const variant =
-    normalized.includes("paid") || normalized.includes("delivered")
+    normalized.includes("paid") ||
+    normalized.includes("delivered") ||
+    normalized.includes("complete")
       ? "success"
       : normalized.includes("pending") || normalized.includes("processing")
         ? "warning"
@@ -243,7 +245,6 @@ export function AccountOrderDetailPage({ orderNumber }) {
           </div>
           <div className="flex flex-wrap gap-2">
             <StatusPill value={order.status} />
-            <StatusPill value={order.paymentStatus} />
             <StatusPill value={order.shipmentStatus} />
           </div>
         </div>
@@ -323,12 +324,6 @@ export function AccountOrderDetailPage({ orderNumber }) {
             </div>
           ) : null}
           <div className="flex flex-wrap gap-3">
-            <Link href={routes.customer.accountPayments}>
-              <Button>
-                <WalletIcon className="size-4" />
-                {t("goToPayments")}
-              </Button>
-            </Link>
             <Link href={routes.customer.accountInvoices}>
               <Button variant="outline">{t("goToInvoices")}</Button>
             </Link>

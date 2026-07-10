@@ -1,5 +1,6 @@
-import { AccountRoutePage } from "@/features/account/account-page";
+import { redirect } from "next/navigation";
+import { routes } from "@/constants/routes";
 
 export default function AccountPaymentsRoute() {
-  return <AccountRoutePage section="payments" />;
+  redirect(routes.customer.account);
 }
