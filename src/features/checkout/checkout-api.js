@@ -177,22 +177,34 @@ export async function getDeliveryEstimate(payload) {
 
 export async function submitCheckout(payload, idempotencyKey) {
   const checkoutPath = endpoints.orders.checkout;
+  const finalUrl = resolveApiRequestUrl(checkoutPath);
 
   if (process.env.NODE_ENV === "development") {
-    console.log(
-      "[checkout] POST URL:",
-      resolveApiRequestUrl(checkoutPath),
-    );
+    console.log("[checkout] POST URL:", finalUrl);
   }
 
-  const response = await apiPost(checkoutPath, payload, {
-    headers: {
-      "Idempotency-Key": idempotencyKey,
-      "X-Idempotency-Key": idempotencyKey,
-    },
-  });
+  try {
+    const response = await apiPost(checkoutPath, payload, {
+      headers: {
+        "Idempotency-Key": idempotencyKey,
+        "X-Idempotency-Key": idempotencyKey,
+      },
+    });
 
-  return normalizeOrderSummary(response?.data);
+    if (process.env.NODE_ENV === "development") {
+      console.log("[checkout] success:", response);
+    }
+
+    return normalizeOrderSummary(response?.data);
+  } catch (error) {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[checkout] error status:", error?.status ?? null);
+      console.log("[checkout] error data:", error?.details ?? null);
+      console.log("[checkout] error message:", error?.message ?? null);
+    }
+
+    throw error;
+  }
 }
 
 export { normalizeOrderSummary };

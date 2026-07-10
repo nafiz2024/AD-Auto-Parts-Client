@@ -83,7 +83,33 @@ function getCheckoutRequestUrl() {
   return `${API_BASE_URL}/orders/checkout`;
 }
 
+function logCheckout(label, value) {
+  if (process.env.NODE_ENV === "development") {
+    console.log(label, value);
+  }
+}
+
+function createValidationError(message, fieldErrors) {
+  return {
+    message,
+    fieldErrors,
+    isValidationError: true,
+    status: null,
+  };
+}
+
+function getValidationSummary(fieldErrors) {
+  return Object.values(fieldErrors)
+    .flatMap((value) => (Array.isArray(value) ? value : [value]))
+    .filter(Boolean)
+    .join(" ");
+}
+
 function getCheckoutErrorMessage(error) {
+  if (error?.status === 401) {
+    return "Please sign in to place your order.";
+  }
+
   if (error?.status === 404 && process.env.NODE_ENV === "development") {
     return `Checkout route/config error. Expected POST ${getCheckoutRequestUrl()}. Backend said: ${error.message}`;
   }
@@ -249,25 +275,47 @@ export function CheckoutPage({
   }
 
   function buildCheckoutPayload() {
+    const quantity = Number(initialQty || 1);
+    const address = form.streetAddress.trim();
+    const fullName = form.fullName.trim();
+    const phone = form.phone.trim();
+    const email = form.email.trim();
+    const city = form.city.trim();
+    const area = form.area.trim();
+
     return {
       productId: productState.product.id,
-      quantity: initialQty,
+      quantity,
+      qty: quantity,
+      fullName,
+      name: fullName,
+      email: email || undefined,
+      phone,
+      city,
+      area,
+      address,
+      customerName: fullName,
+      customerPhone: phone,
       contact: {
-        fullName: form.fullName,
-        email: form.email || undefined,
-        phone: form.phone,
+        fullName,
+        email: email || undefined,
+        phone,
       },
       shippingAddress: {
-        city: form.city,
-        area: form.area,
-        streetAddress: form.streetAddress,
+        fullName,
+        phone,
+        email: email || undefined,
+        city,
+        area,
+        address,
+        streetAddress: address,
         buildingNo: form.buildingNo || undefined,
         postalCode: form.postalCode || undefined,
         additionalDirections: form.additionalDirections || undefined,
       },
       delivery: {
-        zoneId: form.city,
-        area: form.area,
+        zoneId: city,
+        area,
       },
       paymentMethod: form.paymentMethod,
       orderNote: form.orderNote || undefined,
@@ -289,21 +337,46 @@ export function CheckoutPage({
 
   function handleSubmit(event) {
     event.preventDefault();
+    logCheckout("[checkout] submit clicked", {
+      triggeredBy: event?.type ?? "unknown",
+    });
 
     if (!productState.product) {
+      logCheckout("[checkout] selected product:", productState.product);
       return;
     }
+
+    logCheckout("[checkout] selected product:", productState.product);
+    logCheckout("[checkout] form state:", {
+      name: form.fullName,
+      email: form.email,
+      phone: form.phone,
+      city: form.city,
+      address: form.streetAddress,
+      paymentMethod: form.paymentMethod,
+      quantity: Number(initialQty || 1),
+      confirmSingleItem: form.termsAccepted,
+    });
 
     const nextErrors = validateForm();
 
     if (Object.keys(nextErrors).length > 0) {
+      const validationMessage =
+        getValidationSummary(nextErrors) ||
+        "Please review the highlighted checkout fields and try again.";
+      const validationError = createValidationError(validationMessage, nextErrors);
+      logCheckout("[checkout] frontend validation blocked submit:", validationError);
       setFieldErrors(nextErrors);
-      toast.error(t("failedToPlaceOrder"), t("checkInfoAndTryAgain"));
+      setCheckoutError(validationError);
+      toast.error(t("failedToPlaceOrder"), validationMessage);
       return;
     }
 
     const payload = buildCheckoutPayload();
     const idempotencyKey = getIdempotencyKeyForPayload(payload);
+    const endpoint = getCheckoutRequestUrl();
+    logCheckout("[checkout] final endpoint:", endpoint);
+    logCheckout("[checkout] final payload:", payload);
     setCheckoutError(null);
 
     startSubmitTransition(async () => {
@@ -701,7 +774,7 @@ export function CheckoutPage({
               ) : null}
 
               <Button
-                type="submit"
+                type="button"
                 onClick={handleSubmit}
                 disabled={isSubmitting}
                 className="w-full"
