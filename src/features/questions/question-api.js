@@ -14,6 +14,9 @@ import {
 } from "@/features/feedback/feedback-utils";
 
 const DEFAULT_PAGE_SIZE = 6;
+const ACCOUNT_REQUEST_OPTIONS = {
+  credentials: "include",
+};
 
 function isPublicQuestion(question) {
   return (
@@ -175,7 +178,8 @@ export async function getPublicProductQuestions(productId, options = {}) {
 export async function getCustomerQuestions(options = {}) {
   const page = options.page ?? 1;
   const limit = options.limit ?? DEFAULT_PAGE_SIZE;
-  const result = await apiGet(endpoints.customer.productQuestions, {
+  const result = await apiGet(endpoints.account.questions, {
+    ...ACCOUNT_REQUEST_OPTIONS,
     query: {
       page,
       limit,

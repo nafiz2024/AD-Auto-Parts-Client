@@ -78,6 +78,11 @@ export const endpoints = {
     payments: resource("account/payments"),
     invoices: resource("account/invoices"),
     notifications: resource("account/notifications"),
+    enquiries: resource("account/enquiries"),
+    reviews: resource("account/reviews"),
+    questions: resource("account/questions"),
+    returns: resource("account/returns"),
+    profile: resource("account/profile"),
   },
   orders: {
     checkout: resource("orders/checkout"),

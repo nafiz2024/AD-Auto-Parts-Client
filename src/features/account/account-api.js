@@ -412,8 +412,8 @@ export async function getCustomerNotifications() {
 }
 
 export async function getCustomerEnquiries() {
-  const result = await apiGet(endpoints.customer.enquiries);
-  return normalizeItems(getEnvelopeData(result)).map(normalizeEnquiry);
+  const result = await apiGet(endpoints.account.enquiries, ACCOUNT_REQUEST_OPTIONS);
+  return getCollectionItems(result).map(normalizeEnquiry);
 }
 
 export async function createCustomerEnquiry(payload) {
@@ -422,18 +422,18 @@ export async function createCustomerEnquiry(payload) {
 }
 
 export async function getCustomerReviews() {
-  const result = await apiGet(endpoints.customer.reviews);
-  return normalizeItems(getEnvelopeData(result)).map(normalizeReview);
+  const result = await apiGet(endpoints.account.reviews, ACCOUNT_REQUEST_OPTIONS);
+  return getCollectionItems(result).map(normalizeReview);
 }
 
 export async function getCustomerQuestions() {
-  const result = await apiGet(endpoints.customer.productQuestions);
-  return normalizeItems(getEnvelopeData(result)).map(normalizeQuestion);
+  const result = await apiGet(endpoints.account.questions, ACCOUNT_REQUEST_OPTIONS);
+  return getCollectionItems(result).map(normalizeQuestion);
 }
 
 export async function getCustomerReturns() {
-  const result = await apiGet(endpoints.customer.returns);
-  return normalizeItems(getEnvelopeData(result)).map(normalizeReturn);
+  const result = await apiGet(endpoints.account.returns, ACCOUNT_REQUEST_OPTIONS);
+  return getCollectionItems(result).map(normalizeReturn);
 }
 
 export async function createCustomerReturn(payload) {
@@ -442,20 +442,20 @@ export async function createCustomerReturn(payload) {
 }
 
 export async function getCustomerProfile() {
-  const result = await apiGet(endpoints.customer.profile);
+  const result = await apiGet(endpoints.account.profile, ACCOUNT_REQUEST_OPTIONS);
   return normalizeProfile(getEnvelopeData(result));
 }
 
 export async function updateCustomerProfile(payload) {
   try {
-    const result = await apiPatch(endpoints.customer.profile, payload);
+    const result = await apiPatch(endpoints.account.profile, payload, ACCOUNT_REQUEST_OPTIONS);
     return normalizeProfile(getEnvelopeData(result));
   } catch (error) {
     if (error?.status !== 405) {
       throw error;
     }
 
-    const result = await apiPut(endpoints.customer.profile, payload);
+    const result = await apiPut(endpoints.account.profile, payload, ACCOUNT_REQUEST_OPTIONS);
     return normalizeProfile(getEnvelopeData(result));
   }
 }

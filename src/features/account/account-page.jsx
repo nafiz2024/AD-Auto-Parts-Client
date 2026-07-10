@@ -949,6 +949,10 @@ function EnquiriesSection() {
     return <LoadingCard />;
   }
 
+  if (isUnauthorizedError(error)) {
+    return renderSignInRequired(t, routes.customer.accountEnquiries);
+  }
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
       <Card className="space-y-4">
@@ -1252,6 +1256,10 @@ function ReturnsSection() {
     return <LoadingCard />;
   }
 
+  if (isUnauthorizedError(error)) {
+    return renderSignInRequired(t, routes.customer.accountReturns);
+  }
+
   return (
     <div className="grid gap-6 xl:grid-cols-[1fr_0.95fr]">
       <Card className="space-y-4">
@@ -1402,6 +1410,10 @@ function ProfileSection() {
 
   if (loading) {
     return <LoadingCard />;
+  }
+
+  if (isUnauthorizedError(error)) {
+    return renderSignInRequired(t, routes.customer.accountProfile);
   }
 
   return (

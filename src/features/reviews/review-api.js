@@ -15,6 +15,9 @@ import {
 } from "@/features/feedback/feedback-utils";
 
 const DEFAULT_PAGE_SIZE = 6;
+const ACCOUNT_REQUEST_OPTIONS = {
+  credentials: "include",
+};
 
 function isPublicReview(review) {
   return review.availableActions.publicVisible || review.status === "published";
@@ -253,7 +256,8 @@ export async function getPublicProductReviews(productId, options = {}) {
 export async function getCustomerReviews(options = {}) {
   const page = options.page ?? 1;
   const limit = options.limit ?? DEFAULT_PAGE_SIZE;
-  const result = await apiGet(endpoints.customer.reviews, {
+  const result = await apiGet(endpoints.account.reviews, {
+    ...ACCOUNT_REQUEST_OPTIONS,
     query: {
       page,
       limit,

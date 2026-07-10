@@ -16,6 +16,7 @@ import { FileTextIcon } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
+import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 import {
   deleteCustomerReview,
   getCustomerReviews,
@@ -152,6 +153,18 @@ export function CustomerReviewsPage() {
   const [deletingReview, setDeletingReview] = useState(null);
   const [isDeleting, startDelete] = useTransition();
 
+  function renderSignInRequired() {
+    return (
+      <EmptyState
+        icon={FileTextIcon}
+        title={t("accountAccessRequired")}
+        description={t("accountAccessRequiredDescription")}
+        actionLabel={t("signInToContinue")}
+        actionHref={buildCustomerLoginHref(routes.customer.accountReviews)}
+      />
+    );
+  }
+
   useEffect(() => {
     let active = true;
 
@@ -256,10 +269,14 @@ export function CustomerReviewsPage() {
         </Card>
       ) : null}
 
+      {!state.loading && state.error?.status === 401 ? renderSignInRequired() : null}
+
       {state.error ? (
-        <Alert variant="warning" title={t("failedToLoad")}>
-          {state.error.message}
-        </Alert>
+        state.error?.status === 401 ? null : (
+          <Alert variant="warning" title={t("failedToLoad")}>
+            {state.error.message}
+          </Alert>
+        )
       ) : null}
 
       {!state.loading && !state.error && state.items.length === 0 ? (
