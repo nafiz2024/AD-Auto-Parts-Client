@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FaSquareWhatsapp } from "react-icons/fa6";
+import { FaWhatsappSquare } from "react-icons/fa";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -910,7 +910,7 @@ function NoResultsBlock({ filters, mode }) {
                       className="inline-flex w-full"
                     >
                       <span className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[#25d366] px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-[#1faa52]">
-                        <FaSquareWhatsapp className="h-5 w-5 shrink-0" aria-hidden="true" />
+                        <FaWhatsappSquare className="h-5 w-5 shrink-0" aria-hidden="true" />
                         <span className="whitespace-nowrap">{t("chatOnWhatsapp")}</span>
                       </span>
                     </a>

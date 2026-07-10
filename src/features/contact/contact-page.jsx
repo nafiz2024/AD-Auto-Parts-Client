@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { FaWhatsappSquare } from "react-icons/fa";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
@@ -17,7 +18,6 @@ import {
   MessageCircleIcon,
   RefreshCcwIcon,
   ShieldIcon,
-  WhatsappIcon,
 } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import { useAuth } from "@/hooks/use-auth";
@@ -199,8 +199,8 @@ export function ContactPage() {
                   className="inline-flex"
                 >
                   <Button className="bg-brand-red hover:bg-brand-red/90">
-                    <WhatsappIcon className="size-5 shrink-0" />
-                    {t("chatOnWhatsapp")}
+                    <FaWhatsappSquare className="h-5 w-5 shrink-0" aria-hidden="true" />
+                    <span className="whitespace-nowrap">{t("chatOnWhatsapp")}</span>
                   </Button>
                 </a>
               </div>
@@ -421,8 +421,11 @@ export function ContactPage() {
                 className="inline-flex"
               >
                 <Button type="button" variant="outline" size="lg">
-                  <WhatsappIcon className="size-5 shrink-0 text-[#25d366]" />
-                  {t("chatOnWhatsapp")}
+                  <FaWhatsappSquare
+                    className="h-5 w-5 shrink-0 text-[#25d366]"
+                    aria-hidden="true"
+                  />
+                  <span className="whitespace-nowrap">{t("chatOnWhatsapp")}</span>
                 </Button>
               </a>
               <Link href={routes.public.shop}>
