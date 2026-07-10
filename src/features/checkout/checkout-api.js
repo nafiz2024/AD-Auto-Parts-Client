@@ -157,6 +157,15 @@ export async function getDeliveryZones() {
     if (items.length > 0) {
       return items.map((item) => ({
         id: item?.id ?? item?._id ?? item?.slug ?? item?.name,
+        code:
+          firstString(
+            item?.code,
+            item?.zoneCode,
+            item?.slug,
+            item?.id,
+            item?._id,
+            item?.name,
+          ) ?? null,
         name: item?.name ?? item?.title ?? item?.city ?? "Zone",
       }));
     }

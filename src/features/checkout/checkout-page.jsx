@@ -105,9 +105,68 @@ function getValidationSummary(fieldErrors) {
     .join(" ");
 }
 
+function normalizeDeliveryZoneCode(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+}
+
+function getSelectedDeliveryZoneCode(zones, cityValue) {
+  const selectedZone = zones.find((zone) => zone.id === cityValue);
+
+  return (
+    selectedZone?.code ??
+    normalizeDeliveryZoneCode(selectedZone?.name) ??
+    normalizeDeliveryZoneCode(cityValue)
+  );
+}
+
+function getBackendValidationMessage(error) {
+  const fieldErrors = error?.fieldErrors ?? {};
+  const fieldMessages = Object.entries(fieldErrors).flatMap(([field, messages]) =>
+    (Array.isArray(messages) ? messages : [messages])
+      .filter(Boolean)
+      .map((message) => {
+        if (message && typeof message === "object") {
+          return `${message.field ?? field}: ${message.message ?? JSON.stringify(message)}`;
+        }
+
+        return `${field}: ${message}`;
+      }),
+  );
+
+  if (fieldMessages.length > 0) {
+    return fieldMessages.join(" ");
+  }
+
+  const detailsErrors = Array.isArray(error?.details?.errors)
+    ? error.details.errors
+    : [];
+  const detailMessages = detailsErrors
+    .map((entry) => {
+      const field =
+        (Array.isArray(entry?.path) ? entry.path.join(".") : entry?.field) ??
+        entry?.key ??
+        null;
+      return [field, entry?.message].filter(Boolean).join(": ");
+    })
+    .filter(Boolean);
+
+  if (detailMessages.length > 0) {
+    return detailMessages.join(" ");
+  }
+
+  return error?.message ?? "The request could not be completed.";
+}
+
 function getCheckoutErrorMessage(error) {
   if (error?.status === 401) {
     return "Please sign in to place your order.";
+  }
+
+  if (error?.isValidationError) {
+    return getBackendValidationMessage(error);
   }
 
   if (error?.status === 404 && process.env.NODE_ENV === "development") {
@@ -259,10 +318,6 @@ export function CheckoutPage({
       nextErrors.city = "City is required.";
     }
 
-    if (!form.area.trim()) {
-      nextErrors.area = "Area is required.";
-    }
-
     if (!form.streetAddress.trim()) {
       nextErrors.streetAddress = "Street address is required.";
     }
@@ -276,50 +331,35 @@ export function CheckoutPage({
 
   function buildCheckoutPayload() {
     const quantity = Number(initialQty || 1);
-    const address = form.streetAddress.trim();
+    const line1 = form.streetAddress.trim();
     const fullName = form.fullName.trim();
     const phone = form.phone.trim();
     const email = form.email.trim();
     const city = form.city.trim();
-    const area = form.area.trim();
+    const deliveryZoneCode = getSelectedDeliveryZoneCode(zones, city);
 
     return {
-      productId: productState.product.id,
-      quantity,
-      qty: quantity,
-      fullName,
-      name: fullName,
-      email: email || undefined,
-      phone,
-      city,
-      area,
-      address,
-      customerName: fullName,
-      customerPhone: phone,
-      contact: {
-        fullName,
+      orderSource: "buy_now",
+      customer: {
+        name: fullName,
         email: email || undefined,
         phone,
       },
-      shippingAddress: {
-        fullName,
+      deliveryAddress: {
+        recipientName: fullName,
         phone,
-        email: email || undefined,
+        line1,
         city,
-        area,
-        address,
-        streetAddress: address,
-        buildingNo: form.buildingNo || undefined,
-        postalCode: form.postalCode || undefined,
-        additionalDirections: form.additionalDirections || undefined,
+        country: "SA",
       },
-      delivery: {
-        zoneId: city,
-        area,
-      },
+      deliveryZoneCode,
+      items: [
+        {
+          productId: productState.product.id ?? productState.product._id,
+          quantity,
+        },
+      ],
       paymentMethod: form.paymentMethod,
-      orderNote: form.orderNote || undefined,
-      termsAccepted: form.termsAccepted,
     };
   }
 
@@ -359,6 +399,12 @@ export function CheckoutPage({
     });
 
     const nextErrors = validateForm();
+
+    const deliveryZoneCode = getSelectedDeliveryZoneCode(zones, form.city.trim());
+
+    if (!deliveryZoneCode) {
+      nextErrors.city = nextErrors.city ?? "Please enter your delivery city.";
+    }
 
     if (Object.keys(nextErrors).length > 0) {
       const validationMessage =
