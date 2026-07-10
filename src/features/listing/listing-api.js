@@ -1,7 +1,8 @@
 import { apiGet } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 
-const SHOP_PAGE_SIZE = 6;
+const SHOP_GRID_PAGE_SIZE = 12;
+const SHOP_LIST_PAGE_SIZE = 6;
 
 const previewCategories = [
   {
@@ -979,6 +980,10 @@ function normalizeView(view) {
   return view === "list" ? "list" : "grid";
 }
 
+function getShopPageSize(view) {
+  return view === "grid" ? SHOP_GRID_PAGE_SIZE : SHOP_LIST_PAGE_SIZE;
+}
+
 function matchesBackendId(value) {
   return /^[a-f0-9]{24}$/i.test(value) || /^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(value);
 }
@@ -1217,8 +1222,9 @@ function createSuggestedSearches(query) {
 }
 
 function buildBackendQuery(filters, mode, taxonomies) {
+  const pageSize = getShopPageSize(filters.view);
   const query = {
-    limit: SHOP_PAGE_SIZE,
+    limit: pageSize,
     page: filters.page,
     sort: filters.sort,
   };
@@ -1313,6 +1319,7 @@ function buildBackendQuery(filters, mode, taxonomies) {
 export async function getListingPageData({ mode, categorySlug = null, searchParams }) {
   const resolvedSearchParams = (await searchParams) ?? {};
   const filters = normalizeSearchParams(resolvedSearchParams, mode, categorySlug);
+  const pageSize = getShopPageSize(filters.view);
 
   const [categories, vehicleBrands, vehicleModels, partsBrands] = await Promise.all([
     fetchCollection(() => apiGet(endpoints.public.categories), normalizeCategory),
@@ -1343,7 +1350,7 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
     const totalPages = Math.max(
       1,
       responsePagination?.totalPages ??
-        Math.ceil(totalResults / SHOP_PAGE_SIZE),
+        Math.ceil(totalResults / pageSize),
     );
     const currentPage = Math.min(
       Math.max(responsePagination?.page ?? filters.page, 1),
@@ -1353,13 +1360,13 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
     const paginatedItems = usesBackendPagination
       ? normalizedItems
       : normalizedItems.slice(
-          (currentPage - 1) * SHOP_PAGE_SIZE,
-          currentPage * SHOP_PAGE_SIZE,
+          (currentPage - 1) * pageSize,
+          currentPage * pageSize,
         );
 
     const pagination = {
       page: currentPage,
-      limit: responsePagination?.limit ?? SHOP_PAGE_SIZE,
+      limit: responsePagination?.limit ?? pageSize,
       total: totalResults,
       totalPages,
       hasNextPage:
@@ -1387,7 +1394,7 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
     source: productsError ? "unavailable" : "api",
     pagination: {
         page: filters.page,
-        limit: SHOP_PAGE_SIZE,
+        limit: pageSize,
         total: 0,
         totalPages: 0,
         hasNextPage: false,
@@ -1439,7 +1446,8 @@ export async function getListingPageData({ mode, categorySlug = null, searchPara
 }
 
 export {
-  SHOP_PAGE_SIZE,
+  SHOP_GRID_PAGE_SIZE,
+  SHOP_LIST_PAGE_SIZE,
   normalizeProduct,
   previewCategories,
   previewProducts,

@@ -398,8 +398,9 @@ function FilterSidebar({ basePath, filters, filterData, mode }) {
   }
 
   function handleClearAll() {
-    setDraftFilters(createEmptyFilters(mode, filters.view));
-    router.replace(basePath, { scroll: false });
+    const nextFilters = createEmptyFilters(mode, filters.view);
+    setDraftFilters(nextFilters);
+    router.replace(createHref(basePath, nextFilters), { scroll: false });
   }
 
   return (
@@ -770,7 +771,7 @@ function ListingToolbar({ basePath, filters, sortOptions, products }) {
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <div className="inline-flex rounded-2xl border border-border bg-muted/40 p-1">
-          <Link href={createHref(basePath, filters, { view: "grid" })}>
+          <Link href={createHref(basePath, filters, { view: "grid", page: undefined })}>
             <span
               className={`flex size-11 items-center justify-center rounded-xl transition ${
                 filters.view === "grid"
@@ -781,7 +782,7 @@ function ListingToolbar({ basePath, filters, sortOptions, products }) {
               <GridIcon className="size-4" />
             </span>
           </Link>
-          <Link href={createHref(basePath, filters, { view: "list" })}>
+          <Link href={createHref(basePath, filters, { view: "list", page: undefined })}>
             <span
               className={`flex size-11 items-center justify-center rounded-xl transition ${
                 filters.view === "list"
