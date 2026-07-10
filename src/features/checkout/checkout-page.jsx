@@ -120,6 +120,21 @@ function getBackendValidationMessage(error) {
     return fieldMessages.join(" ");
   }
 
+  const backendErrors = Array.isArray(error?.errors) ? error.errors : [];
+  const backendErrorMessages = backendErrors
+    .map((entry) => {
+      const field =
+        (Array.isArray(entry?.path) ? entry.path.join(".") : entry?.field) ??
+        entry?.key ??
+        null;
+      return [field, entry?.message].filter(Boolean).join(": ");
+    })
+    .filter(Boolean);
+
+  if (backendErrorMessages.length > 0) {
+    return backendErrorMessages.join(" ");
+  }
+
   const detailsErrors = Array.isArray(error?.details?.errors)
     ? error.details.errors
     : [];
@@ -315,10 +330,6 @@ export function CheckoutPage({
     const email = form.email.trim();
     const selectedZone = zones.find((zone) => zone.id === form.city);
     const city = (selectedZone?.name ?? form.city).trim();
-    const area = form.area.trim();
-    const buildingNo = form.buildingNo.trim();
-    const postalCode = form.postalCode.trim();
-    const additionalDirections = form.additionalDirections.trim();
 
     const payload = {
       orderSource: "buy_now",
@@ -344,10 +355,6 @@ export function CheckoutPage({
         line1,
         city,
         country: "SA",
-        area: area || undefined,
-        buildingNo: buildingNo || undefined,
-        postalCode: postalCode || undefined,
-        additionalDirections: additionalDirections || undefined,
       };
     }
 
@@ -408,7 +415,7 @@ export function CheckoutPage({
     const idempotencyKey = getIdempotencyKeyForPayload(payload);
     const endpoint = getCheckoutRequestUrl();
     logCheckout("[checkout] final endpoint:", endpoint);
-    logCheckout("[checkout] final payload:", payload);
+    logCheckout("[checkout] final payload:", JSON.stringify(payload, null, 2));
     setCheckoutError(null);
 
     startSubmitTransition(async () => {
