@@ -94,6 +94,38 @@ function toMinorAmount(...values) {
   return null;
 }
 
+function normalizeMinorAmount(...values) {
+  const amount = toMinorAmount(...values);
+  return amount === null ? null : Math.round(amount);
+}
+
+function normalizeAddress(value) {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    return value.trim() || null;
+  }
+
+  const lines = [
+    firstString(
+      value.fullAddress,
+      value.address,
+      value.addressLine1,
+      value.line1,
+      value.street,
+    ),
+    firstString(value.addressLine2, value.line2, value.neighborhood, value.area),
+    firstString(value.city),
+    firstString(value.region, value.state, value.province),
+    firstString(value.postalCode, value.zipCode),
+    firstString(value.country),
+  ].filter(Boolean);
+
+  return lines.length > 0 ? lines.join(", ") : null;
+}
+
 function toDisplayLabel(value, fallback = "Pending") {
   const source = firstString(value) ?? fallback;
 
@@ -115,7 +147,7 @@ function normalizeOrderStatuses(orderPayload, baseStatus) {
     orderPayload?.paymentStatus,
     orderPayload?.payment?.status,
   );
-  const shipmentStatusLabel = toDisplayLabel(rawShipmentStatus, "Processing");
+  let shipmentStatusLabel = toDisplayLabel(rawShipmentStatus, "Processing");
   const paymentStatusLabel = toDisplayLabel(rawPaymentStatus, "Pending");
   const normalizedShipmentStatus = rawShipmentStatus?.toLowerCase() ?? "";
   const normalizedOrderStatus = rawOrderStatus?.toLowerCase() ?? "";
@@ -123,15 +155,25 @@ function normalizeOrderStatuses(orderPayload, baseStatus) {
   let orderStatusLabel = toDisplayLabel(rawOrderStatus, "Pending");
 
   if (
-    normalizedShipmentStatus.includes("deliver") ||
-    normalizedShipmentStatus.includes("complete")
+    normalizedShipmentStatus.includes("deliver")
+  ) {
+    orderStatusLabel = "Delivered";
+    shipmentStatusLabel = "Delivered";
+  } else if (
+    normalizedOrderStatus.includes("deliver")
   ) {
     orderStatusLabel = "Delivered";
   } else if (
-    normalizedOrderStatus.includes("deliver") ||
-    normalizedOrderStatus.includes("complete")
+    normalizedShipmentStatus.includes("pick") ||
+    normalizedOrderStatus.includes("pick")
   ) {
-    orderStatusLabel = "Delivered";
+    orderStatusLabel = "Picked Up";
+    shipmentStatusLabel = "Picked Up";
+  } else if (normalizedShipmentStatus.includes("complete")) {
+    orderStatusLabel = "Completed";
+    shipmentStatusLabel = "Completed";
+  } else if (normalizedOrderStatus.includes("complete")) {
+    orderStatusLabel = "Completed";
   } else if (normalizedOrderStatus.includes("cancel")) {
     orderStatusLabel = "Cancelled";
   }
@@ -144,14 +186,38 @@ function normalizeOrderStatuses(orderPayload, baseStatus) {
 }
 
 function normalizeOrderItem(item, index = 0) {
+  const quantity = firstNumber(item?.quantity, item?.qty) ?? 1;
+  const unitPriceMinor = normalizeMinorAmount(
+    item?.unitPriceMinor,
+    item?.priceMinor,
+    item?.unitPrice?.amountMinor,
+    item?.price?.amountMinor,
+    item?.unitPrice,
+    item?.price,
+  );
+  const lineTotalMinor = normalizeMinorAmount(
+    item?.subtotalMinor,
+    item?.lineTotalMinor,
+    item?.totalMinor,
+    item?.subtotal?.amountMinor,
+    item?.lineTotal?.amountMinor,
+    item?.total?.amountMinor,
+    item?.subtotal,
+    item?.lineTotal,
+    item?.total,
+  );
+
   return {
     id: firstString(item?.id, item?._id, item?.productId, `item-${index}`) ?? `item-${index}`,
     productId: firstString(item?.productId, item?.product?._id, item?.product?.id),
     name:
       firstString(item?.name, item?.productName, item?.product?.name, item?.title) ??
       "Used auto part",
-    quantity: firstNumber(item?.quantity, item?.qty) ?? 1,
-    amountMinor: toMinorAmount(item?.priceMinor, item?.price, item?.totalMinor),
+    quantity,
+    unitPriceMinor,
+    amountMinor:
+      lineTotalMinor ??
+      (unitPriceMinor !== null ? unitPriceMinor * quantity : null),
     imageUrl: firstString(item?.imageUrl, item?.product?.imageUrl, item?.product?.primaryImageUrl),
   };
 }
@@ -161,6 +227,31 @@ function normalizeOrder(payload) {
   const orderPayload = payload?.item ?? payload?.order ?? payload ?? {};
   const rawItems = Array.isArray(orderPayload?.items) ? orderPayload.items : [];
   const statuses = normalizeOrderStatuses(orderPayload, base.status);
+  const deliveryFeeMinor = normalizeMinorAmount(
+    orderPayload?.deliveryFeeMinor,
+    orderPayload?.deliveryChargeMinor,
+    orderPayload?.shippingFeeMinor,
+    orderPayload?.delivery?.amountMinor,
+    orderPayload?.delivery?.amount,
+    orderPayload?.shipping?.amountMinor,
+    orderPayload?.shipping?.amount,
+  );
+  const itemTotalMinor = normalizeMinorAmount(
+    orderPayload?.subtotalMinor,
+    orderPayload?.subTotalMinor,
+    orderPayload?.subtotal?.amountMinor,
+    orderPayload?.subtotal?.amount,
+  );
+  const normalizedItems = rawItems.map(normalizeOrderItem);
+  const derivedItemTotalMinor = normalizedItems.reduce(
+    (sum, item) => sum + (item.amountMinor ?? 0),
+    0,
+  );
+  const fulfillmentMethod = firstString(
+    orderPayload?.fulfillmentMethod,
+    orderPayload?.deliveryMethod,
+    orderPayload?.shipment?.fulfillmentMethod,
+  );
 
   return {
     ...base,
@@ -169,12 +260,17 @@ function normalizeOrder(payload) {
     orderNumber: base.orderNumber ?? firstString(orderPayload?.number, orderPayload?.id),
     paymentStatus: statuses.paymentStatusLabel,
     shipmentStatus: statuses.shipmentStatusLabel,
-    items: rawItems.map(normalizeOrderItem),
+    fulfillmentMethod: fulfillmentMethod ? toDisplayLabel(fulfillmentMethod) : null,
+    itemTotalMinor:
+      itemTotalMinor ?? (normalizedItems.length > 0 ? derivedItemTotalMinor : null),
+    deliveryFeeMinor,
+    items: normalizedItems,
     invoiceNumber:
       firstString(
         orderPayload?.invoiceNumber,
         orderPayload?.invoice?.invoiceNumber,
         orderPayload?.invoice?.number,
+        orderPayload?.invoice?.referenceNumber,
       ) ?? null,
     customerName:
       firstString(
@@ -183,21 +279,23 @@ function normalizeOrder(payload) {
         orderPayload?.deliveryAddress?.recipientName,
       ) ?? null,
     shippingAddress:
-      firstString(
-        orderPayload?.shippingAddress?.fullAddress,
-        orderPayload?.shippingAddress?.addressLine1,
-        orderPayload?.shippingAddress?.address,
-        orderPayload?.deliveryAddress?.line1,
-      ) ?? null,
+      normalizeAddress(orderPayload?.shippingAddress) ??
+      normalizeAddress(orderPayload?.deliveryAddress) ??
+      null,
     billingAddress:
-      firstString(
-        orderPayload?.billingAddress?.fullAddress,
-        orderPayload?.billingAddress?.addressLine1,
-        orderPayload?.billingAddress?.address,
-        orderPayload?.deliveryAddress?.line1,
-      ) ?? null,
+      normalizeAddress(orderPayload?.billingAddress) ??
+      normalizeAddress(orderPayload?.shippingAddress) ??
+      normalizeAddress(orderPayload?.deliveryAddress) ??
+      null,
     trackingNumber:
-      firstString(orderPayload?.trackingNumber, orderPayload?.shipment?.trackingNumber) ?? null,
+      firstString(
+        orderPayload?.trackingNumber,
+        orderPayload?.trackingCode,
+        orderPayload?.shipment?.trackingNumber,
+        orderPayload?.shipment?.trackingCode,
+        orderPayload?.shipments?.[0]?.trackingNumber,
+        orderPayload?.shipments?.[0]?.trackingCode,
+      ) ?? null,
     courierName:
       firstString(orderPayload?.courierName, orderPayload?.shipment?.courierName) ?? null,
     notes: firstString(orderPayload?.notes, orderPayload?.customerNote),

@@ -161,12 +161,23 @@ export function CustomerQuestionsPage() {
 
       try {
         const result = await getCustomerQuestions(filters);
+        const normalizedQuery = filters.q.trim().toLowerCase();
+        const items = result.items.filter((item) => {
+          const matchesStatus = !filters.status || item.status === filters.status;
+          const matchesQuery =
+            !normalizedQuery ||
+            [item.productName, item.question, item.answer, item.questionNumber]
+              .filter(Boolean)
+              .some((value) => String(value).toLowerCase().includes(normalizedQuery));
+
+          return matchesStatus && matchesQuery;
+        });
 
         if (active) {
           setState({
             loading: false,
             error: null,
-            items: result.items,
+            items,
           });
         }
       } catch (error) {

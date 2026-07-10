@@ -178,16 +178,7 @@ export async function getPublicProductQuestions(productId, options = {}) {
 export async function getCustomerQuestions(options = {}) {
   const page = options.page ?? 1;
   const limit = options.limit ?? DEFAULT_PAGE_SIZE;
-  const result = await apiGet(endpoints.account.questions, {
-    ...ACCOUNT_REQUEST_OPTIONS,
-    query: {
-      page,
-      limit,
-      status: options.status || undefined,
-      q: options.q || undefined,
-    },
-  });
-
+  const result = await apiGet(endpoints.account.questions, ACCOUNT_REQUEST_OPTIONS);
   return normalizeQuestionCollection(result, page, limit);
 }
 

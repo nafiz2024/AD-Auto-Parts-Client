@@ -97,6 +97,14 @@ function StatusPill({ value }) {
   return <Badge variant={mapStatusTone(value)}>{value}</Badge>;
 }
 
+function AmountValue({ amountMinor, pendingLabel }) {
+  return amountMinor === null || amountMinor === undefined ? (
+    <span className="font-medium text-muted-foreground">{pendingLabel}</span>
+  ) : (
+    <PriceDisplay amountMinor={amountMinor} />
+  );
+}
+
 function isUnauthorizedError(error) {
   return error?.status === 401;
 }
@@ -443,7 +451,7 @@ function OrdersSection() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{t("total")}</p>
-              <PriceDisplay amountMinor={order.totalMinor} />
+              <AmountValue amountMinor={order.totalMinor} pendingLabel={t("pending")} />
             </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-3">

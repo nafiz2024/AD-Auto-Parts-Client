@@ -793,10 +793,10 @@ export const dictionaries = {
       "Hi, I need help with checkout for {productName}.",
     accountOverview: "Account Overview",
     accountOverviewDescription:
-      "Review your orders, payments, invoices, support activity, and profile details in one place.",
+      "Review your orders, invoices, support activity, and profile details in one place.",
     accountAccessRequired: "Account Sign-In Required",
     accountAccessRequiredDescription:
-      "Please sign in with a customer account to view protected order, payment, invoice, and support details.",
+      "Please sign in with a customer account to view protected order, invoice, and support details.",
     signInToContinue: "Sign In to Continue",
     customerOnlyArea: "Customer Account Only",
     customerOnlyAreaDescription:

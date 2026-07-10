@@ -21,7 +21,7 @@ import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 
 function formatDate(value) {
   if (!value) {
-    return "—";
+    return "-";
   }
 
   const date = new Date(value);
@@ -47,6 +47,18 @@ function StatusPill({ value }) {
           : "neutral";
 
   return <Badge variant={variant}>{value}</Badge>;
+}
+
+function DetailValue({ amountMinor, value, pendingLabel = "Pending" }) {
+  if (amountMinor !== undefined) {
+    return amountMinor === null ? (
+      <span className="font-medium text-muted-foreground">{pendingLabel}</span>
+    ) : (
+      <PriceDisplay amountMinor={amountMinor} />
+    );
+  }
+
+  return <p className="font-medium text-foreground">{value || pendingLabel}</p>;
 }
 
 function isUnauthorizedError(error) {
@@ -241,7 +253,9 @@ export function AccountOrderDetailPage({ orderNumber }) {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">{formatDate(order.createdAt)}</p>
-            <p className="text-2xl font-semibold text-foreground">{order.productName || t("orders")}</p>
+            <p className="text-2xl font-semibold text-foreground">
+              {order.productName || t("orders")}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <StatusPill value={order.status} />
@@ -249,22 +263,26 @@ export function AccountOrderDetailPage({ orderNumber }) {
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 md:grid-cols-5">
           <div>
             <p className="text-sm text-muted-foreground">{t("paymentMethod")}</p>
-            <p className="font-medium text-foreground">{order.paymentMethod}</p>
+            <DetailValue value={order.paymentMethod} pendingLabel={t("pending")} />
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">{t("deliveryMethod")}</p>
+            <DetailValue value={order.fulfillmentMethod} pendingLabel={t("pending")} />
           </div>
           <div>
             <p className="text-sm text-muted-foreground">{t("total")}</p>
-            <PriceDisplay amountMinor={order.totalMinor} />
+            <DetailValue amountMinor={order.totalMinor} pendingLabel={t("pending")} />
           </div>
           <div>
             <p className="text-sm text-muted-foreground">{t("invoiceNumber")}</p>
-            <p className="font-medium text-foreground">{order.invoiceNumber || "—"}</p>
+            <DetailValue value={order.invoiceNumber} pendingLabel={t("pending")} />
           </div>
           <div>
             <p className="text-sm text-muted-foreground">{t("trackingNumber")}</p>
-            <p className="font-medium text-foreground">{order.trackingNumber || "—"}</p>
+            <DetailValue value={order.trackingNumber} pendingLabel={t("pending")} />
           </div>
         </div>
       </Card>
@@ -288,7 +306,7 @@ export function AccountOrderDetailPage({ orderNumber }) {
                       {t("quantity")}: {item.quantity}
                     </p>
                   </div>
-                  <PriceDisplay amountMinor={item.amountMinor} />
+                  <DetailValue amountMinor={item.amountMinor} pendingLabel={t("pending")} />
                 </div>
               </div>
             ))
@@ -298,16 +316,24 @@ export function AccountOrderDetailPage({ orderNumber }) {
         <Card className="space-y-4">
           <h2 className="text-xl font-semibold text-foreground">{t("recentActivity")}</h2>
           <div className="rounded-3xl border border-border p-4">
+            <p className="text-sm text-muted-foreground">{t("itemTotal")}</p>
+            <DetailValue amountMinor={order.itemTotalMinor} pendingLabel={t("pending")} />
+          </div>
+          <div className="rounded-3xl border border-border p-4">
+            <p className="text-sm text-muted-foreground">{t("deliveryFee")}</p>
+            <DetailValue amountMinor={order.deliveryFeeMinor} pendingLabel={t("pending")} />
+          </div>
+          <div className="rounded-3xl border border-border p-4">
             <p className="text-sm text-muted-foreground">{t("shipmentStatus")}</p>
-            <p className="font-medium text-foreground">{order.shipmentStatus}</p>
+            <DetailValue value={order.shipmentStatus} pendingLabel={t("pending")} />
           </div>
           <div className="rounded-3xl border border-border p-4">
             <p className="text-sm text-muted-foreground">{t("shippingAddress")}</p>
-            <p className="font-medium text-foreground">{order.shippingAddress || "—"}</p>
+            <DetailValue value={order.shippingAddress} pendingLabel={t("pending")} />
           </div>
           <div className="rounded-3xl border border-border p-4">
             <p className="text-sm text-muted-foreground">{t("billingAddress")}</p>
-            <p className="font-medium text-foreground">{order.billingAddress || "—"}</p>
+            <DetailValue value={order.billingAddress} pendingLabel={t("pending")} />
           </div>
           {order.invoiceNumber ? (
             <div className="rounded-3xl border border-border p-4">

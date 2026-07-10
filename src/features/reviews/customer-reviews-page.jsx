@@ -173,12 +173,23 @@ export function CustomerReviewsPage() {
 
       try {
         const result = await getCustomerReviews(filters);
+        const normalizedQuery = filters.q.trim().toLowerCase();
+        const items = result.items.filter((item) => {
+          const matchesStatus = !filters.status || item.status === filters.status;
+          const matchesQuery =
+            !normalizedQuery ||
+            [item.productName, item.title, item.comment, item.reviewNumber]
+              .filter(Boolean)
+              .some((value) => String(value).toLowerCase().includes(normalizedQuery));
+
+          return matchesStatus && matchesQuery;
+        });
 
         if (active) {
           setState({
             loading: false,
             error: null,
-            items: result.items,
+            items,
           });
         }
       } catch (error) {

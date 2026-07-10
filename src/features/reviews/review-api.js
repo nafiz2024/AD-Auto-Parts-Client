@@ -256,16 +256,7 @@ export async function getPublicProductReviews(productId, options = {}) {
 export async function getCustomerReviews(options = {}) {
   const page = options.page ?? 1;
   const limit = options.limit ?? DEFAULT_PAGE_SIZE;
-  const result = await apiGet(endpoints.account.reviews, {
-    ...ACCOUNT_REQUEST_OPTIONS,
-    query: {
-      page,
-      limit,
-      status: options.status || undefined,
-      q: options.q || undefined,
-    },
-  });
-
+  const result = await apiGet(endpoints.account.reviews, ACCOUNT_REQUEST_OPTIONS);
   return normalizeReviewCollection(result, page, limit);
 }
 
