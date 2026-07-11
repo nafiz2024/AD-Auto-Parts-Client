@@ -88,6 +88,7 @@ export const endpoints = {
     checkout: resource("orders/checkout"),
   },
   admin: {
+    dashboard: resource("admin/dashboard"),
     categories: resource("admin/categories"),
     vehicleBrands: resource("admin/vehicle-brands"),
     vehicleModels: resource("admin/vehicle-models"),
@@ -103,7 +104,7 @@ export const endpoints = {
     shipments: resource("admin/shipments"),
     customers: resource("admin/customers"),
     reviews: resource("admin/reviews"),
-    questions: resource("admin/questions"),
+    questions: resource("admin/product-questions"),
     enquiries: resource("admin/enquiries"),
     returns: resource("admin/returns"),
     refunds: resource("admin/refunds"),

@@ -17,6 +17,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MessageCircleIcon, XIcon } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import {
   createAdminManualEnquiry,
@@ -542,7 +543,7 @@ export function AdminEnquiriesPage() {
     return (
       <ErrorState
         title={t("failedToLoad")}
-        description={t("adminEnquiriesLoadError")}
+        description={resolveAdminLoadMessage(state.error, t("adminEnquiriesLoadError"))}
         actionLabel={t("retry")}
         onAction={() => setRefreshKey((value) => value + 1)}
       />

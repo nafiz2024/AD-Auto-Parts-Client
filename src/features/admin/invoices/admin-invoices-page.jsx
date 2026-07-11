@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import {
   downloadAdminInvoicePdf,
@@ -143,7 +144,7 @@ export function AdminInvoicesPage() {
   if (state.error) {
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
-        {state.error.message}
+        {resolveAdminLoadMessage(state.error, t("failedToLoadDescription"))}
       </Alert>
     );
   }

@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import {
   createAdminBrand,
@@ -861,7 +862,7 @@ export function AdminBrandPage() {
             ) : state.error ? (
               <ErrorState
                 title={t("failedToLoad")}
-                description={t("adminBrandsLoadError")}
+                description={resolveAdminLoadMessage(state.error, t("adminBrandsLoadError"))}
                 actionLabel={t("retry")}
                 onAction={() => setRefreshKey((value) => value + 1)}
               />

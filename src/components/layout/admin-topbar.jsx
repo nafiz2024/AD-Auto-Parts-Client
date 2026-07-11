@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   BellIcon,
   ChevronDownIcon,
@@ -75,13 +74,13 @@ export function AdminTopbar({ onMenuClick }) {
         >
           <MenuIcon />
         </button>
-        <div className="relative hidden max-w-xl flex-1 sm:block">
-          <SearchIcon className="pointer-events-none absolute inset-block-start-1/2 inset-inline-end-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
+        <div className="relative hidden w-full max-w-xl sm:block">
+          <input
             placeholder={t("searchAnything")}
-            className="ps-5 pe-12"
+            className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-5 pr-12 text-sm leading-5 text-foreground shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-brand-red focus:ring-4 focus:ring-brand-red/10"
             aria-label={t("searchAdminArea")}
           />
+          <SearchIcon className="pointer-events-none absolute right-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
         </div>
       </div>
       <div className="flex items-center gap-3">

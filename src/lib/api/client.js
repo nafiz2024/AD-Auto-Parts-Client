@@ -10,12 +10,53 @@ import {
   createTimeoutError,
   isApiError,
 } from "@/lib/api/errors";
+import { routes } from "@/constants/routes";
 import { withQuery } from "@/lib/api/query";
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const REQUEST_ID_HEADERS = ["x-request-id", "request-id", "x-correlation-id"];
 const LANGUAGE_STORAGE_KEY = "ad-auto-parts-language";
 const LANGUAGE_COOKIE_KEY = "ad-auto-parts-language";
+const IS_DEVELOPMENT = process.env.NODE_ENV !== "production";
+
+function normalizePathForChecks(path) {
+  return path.startsWith("/") ? path : `/${path}`;
+}
+
+function isAdminRequestPath(path) {
+  return normalizePathForChecks(path).startsWith("/admin/");
+}
+
+function redirectClientAdminAuth(error) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (!error?.isAuthError && !error?.isTotpRequired) {
+    return;
+  }
+
+  const target = error.isTotpRequired ? routes.admin.adminTotp : routes.admin.adminLogin;
+  const currentPath = `${window.location.pathname}${window.location.search}`;
+
+  if (currentPath !== target) {
+    window.location.assign(target);
+  }
+}
+
+function debugAdminRequest({ path, method, requestUrl, credentials, status, body }) {
+  if (!IS_DEVELOPMENT || !isAdminRequestPath(path) || typeof window === "undefined") {
+    return;
+  }
+
+  console.info("[admin-api]", {
+    method,
+    url: requestUrl,
+    credentials,
+    status,
+    body,
+  });
+}
 
 function joinUrl(baseUrl, path) {
   if (/^https?:\/\//i.test(path)) {
@@ -163,7 +204,7 @@ function normalizeSuccess(response, parsedBody) {
 
   if (body && typeof body === "object" && "success" in body) {
     if (body.success === false) {
-      throw createApiError({
+      const error = createApiError({
         status: response.status,
         code: body.code || "REQUEST_FAILED",
         message: body.message || "The request could not be completed.",
@@ -171,6 +212,7 @@ function normalizeSuccess(response, parsedBody) {
         fieldErrors: body.fieldErrors || body.errors,
         details: body,
       });
+      throw error;
     }
 
     return {
@@ -317,6 +359,14 @@ export async function apiRequest(
     });
 
     const parsedBody = await parseResponseBody(response, responseType);
+    debugAdminRequest({
+      path,
+      method,
+      requestUrl,
+      credentials,
+      status: response.status,
+      body: parsedBody.body,
+    });
 
     if (!response.ok) {
       normalizeError(response, parsedBody);
@@ -340,8 +390,21 @@ export async function apiRequest(
     return normalizeSuccess(response, parsedBody);
   } catch (error) {
     if (isApiError(error)) {
+      if (isAdminRequestPath(path)) {
+        redirectClientAdminAuth(error);
+      }
+
       throw error;
     }
+
+    debugAdminRequest({
+      path,
+      method,
+      requestUrl,
+      credentials,
+      status: null,
+      body: error?.message ?? null,
+    });
 
     if (error?.name === "AbortError" && timeoutSignal.aborted) {
       throw createTimeoutError(timeoutMs);

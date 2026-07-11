@@ -16,6 +16,7 @@ import { PriceDisplay } from "@/components/ui/price-display";
 import { Select } from "@/components/ui/select";
 import { UsersIcon } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import {
   getAdminCustomers,
@@ -433,7 +434,7 @@ export function AdminCustomersPage() {
     return (
       <ErrorState
         title={t("failedToLoad")}
-        description={t("adminCustomersLoadError")}
+        description={resolveAdminLoadMessage(state.error, t("adminCustomersLoadError"))}
         actionLabel={t("retry")}
         onAction={() => setRefreshKey((value) => value + 1)}
       />

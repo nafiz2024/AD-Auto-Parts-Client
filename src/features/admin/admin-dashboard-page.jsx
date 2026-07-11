@@ -20,6 +20,7 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import { getAdminDashboardData } from "@/features/admin/dashboard-api";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,8 +41,9 @@ const statusToneMap = {
 
 const metricIconMap = {
   totalOrders: ShoppingCartIcon,
+  codOrders: WalletIcon,
+  totalProducts: BoxIcon,
   paidAmount: WalletIcon,
-  pendingPayments: WalletIcon,
   pendingShipments: TruckIcon,
   pendingReturns: RefreshCcwIcon,
   pendingEnquiries: MessageCircleIcon,
@@ -162,8 +164,9 @@ function AdminDashboardContent({ data }) {
   const { t } = useLanguage();
   const metricTitles = {
     totalOrders: t("totalOrders"),
+    codOrders: "COD Orders",
+    totalProducts: "Total Products",
     paidAmount: t("paidAmount"),
-    pendingPayments: t("pendingPayments"),
     pendingShipments: t("pendingShipments"),
     pendingReturns: t("pendingReturns"),
     pendingEnquiries: t("pendingEnquiries"),
@@ -326,10 +329,9 @@ function AdminDashboardContent({ data }) {
           </div>
           <div className="mt-6 space-y-4 rounded-[1.75rem] border border-border p-5">
             <h3 className="text-lg font-semibold text-foreground">{t("adminQueueSummary")}</h3>
-            {[data.pendingPayments, data.pendingShipments, data.pendingReturns, data.pendingEnquiries].map(
+            {[data.pendingShipments, data.pendingReturns, data.pendingEnquiries].map(
               (items, index) => {
                 const titles = [
-                  t("pendingPayments"),
                   t("pendingShipments"),
                   t("pendingReturns"),
                   t("pendingEnquiries"),
@@ -509,7 +511,7 @@ export function AdminDashboardPage() {
   if (error) {
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
-        {error.message}
+        {resolveAdminLoadMessage(error, t("failedToLoadDescription"))}
       </Alert>
     );
   }

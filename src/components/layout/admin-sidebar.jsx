@@ -18,7 +18,6 @@ import {
   ShoppingCartIcon,
   TruckIcon,
   UsersIcon,
-  WalletIcon,
   XIcon,
 } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
@@ -33,7 +32,6 @@ const adminNavItems = [
   { key: "addProduct", href: routes.admin.adminProductNew, icon: PlusCircleIcon },
   { key: "orders", href: routes.admin.adminOrders, icon: ShoppingCartIcon },
   { key: "invoices", href: routes.admin.adminInvoices, icon: FileTextIcon },
-  { key: "manualPayments", href: routes.admin.adminPayments, icon: WalletIcon },
   { key: "shipments", href: routes.admin.adminShipments, icon: TruckIcon },
   { key: "categories", href: routes.admin.adminCategories, icon: FolderIcon },
   { key: "brands", href: routes.admin.adminBrands, icon: ShieldIcon },

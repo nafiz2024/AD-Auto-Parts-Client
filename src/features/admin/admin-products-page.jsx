@@ -16,6 +16,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Select } from "@/components/ui/select";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import {
   getAdminCatalogOptions,
@@ -519,7 +520,7 @@ export function AdminProductsPage() {
         ) : state.error ? (
           <ErrorState
             title={t("failedToLoad")}
-            description={t("adminProductsLoadError")}
+            description={resolveAdminLoadMessage(state.error, t("adminProductsLoadError"))}
             actionLabel={t("retry")}
             onAction={() => setRefreshKey((value) => value + 1)}
           />

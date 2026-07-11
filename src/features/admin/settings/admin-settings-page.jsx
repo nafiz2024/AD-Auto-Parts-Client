@@ -6,6 +6,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { ErrorState } from "@/components/ui/error-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import {
   buildAdminSettingsPayload,
@@ -292,7 +293,7 @@ export function AdminSettingsPage() {
     return (
       <ErrorState
         title={t("failedToLoad")}
-        description={t("adminSettingsLoadError")}
+        description={resolveAdminLoadMessage(state.error, t("adminSettingsLoadError"))}
         actionLabel={t("retry")}
         onAction={() => setRefreshKey((value) => value + 1)}
       />

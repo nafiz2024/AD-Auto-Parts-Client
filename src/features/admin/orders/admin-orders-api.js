@@ -125,7 +125,14 @@ function normalizeOrderSummary(item, index = 0) {
     ),
     paymentMethod:
       firstString(item?.paymentMethod, item?.payment?.method, item?.paymentType) ??
-      "Manual Advance Payment",
+      "—",
+    fulfillmentMethod:
+      firstString(
+        item?.fulfillmentMethod,
+        item?.deliveryMethod,
+        item?.shippingMethod,
+        item?.shipment?.method,
+      ) ?? "—",
     paymentStatus: normalizePaymentStatus(
       item?.paymentStatus ?? item?.payment?.status ?? item?.payment_state,
     ),

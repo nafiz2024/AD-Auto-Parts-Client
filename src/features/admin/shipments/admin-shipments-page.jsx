@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { Select } from "@/components/ui/select";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import {
   getAdminCourierList,
@@ -239,7 +240,7 @@ export function AdminShipmentsPage() {
     return (
       <ErrorState
         title={t("failedToLoad")}
-        description={t("adminShipmentsLoadError")}
+        description={resolveAdminLoadMessage(state.error, t("adminShipmentsLoadError"))}
         actionLabel={t("retry")}
         onAction={() => setRefreshKey((value) => value + 1)}
       />

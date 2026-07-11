@@ -73,6 +73,37 @@ function extractMetric(payload, candidatePaths = []) {
   return null;
 }
 
+function extractCollection(payload, candidatePaths = []) {
+  for (const path of candidatePaths) {
+    let current = payload;
+
+    for (const key of path) {
+      current = current?.[key];
+    }
+
+    const items = normalizeItems(current);
+
+    if (items.length > 0) {
+      return items;
+    }
+  }
+
+  return [];
+}
+
+function extractCount(payload, candidatePaths = [], fallback = 0) {
+  return extractMetric(payload, candidatePaths) ?? fallback;
+}
+
+function buildMetric(key, label, value, format = "number") {
+  return {
+    key,
+    label,
+    value,
+    format,
+  };
+}
+
 function normalizeOrder(item, index = 0) {
   return {
     id: firstString(item?.id, item?._id, item?.orderNumber, `order-${index}`) ?? `order-${index}`,
@@ -165,73 +196,68 @@ export async function getAdminNotificationPreview() {
 }
 
 export async function getAdminDashboardData() {
-  const [
-    analyticsResult,
-    notificationsResult,
-    ordersResult,
-    paymentsResult,
-    shipmentsResult,
-    returnsResult,
-    enquiriesResult,
-    productsResult,
-  ] = await Promise.allSettled([
-    loadList(endpoints.admin.analytics),
+  const [dashboardResult, notificationsResult] = await Promise.allSettled([
+    loadList(endpoints.admin.dashboard),
     loadList(endpoints.admin.notifications, { page: 1, limit: 5 }),
-    loadList(endpoints.admin.orders, { page: 1, limit: 6 }),
-    loadList(endpoints.admin.payments, { page: 1, limit: 12 }),
-    loadList(endpoints.admin.shipments, { page: 1, limit: 12 }),
-    loadList(endpoints.admin.returns, { page: 1, limit: 12 }),
-    loadList(endpoints.admin.enquiries, { page: 1, limit: 12 }),
-    loadList(endpoints.admin.products, { page: 1, limit: 12 }),
   ]);
 
-  const analyticsPayload =
-    analyticsResult.status === "fulfilled" ? analyticsResult.value : {};
+  const dashboardPayload =
+    dashboardResult.status === "fulfilled" ? dashboardResult.value : {};
+  const notificationsFromDashboard = extractCollection(dashboardPayload, [
+    ["notifications"],
+    ["recentNotifications"],
+    ["summary", "notifications"],
+  ]);
   const notifications =
-    notificationsResult.status === "fulfilled"
-      ? normalizeItems(notificationsResult.value).map(normalizeNotification)
-      : [];
-  const orders =
-    ordersResult.status === "fulfilled"
-      ? normalizeItems(ordersResult.value).map(normalizeOrder)
-      : [];
-  const products =
-    productsResult.status === "fulfilled"
-      ? normalizeItems(productsResult.value).map(normalizeProduct)
-      : [];
-  const pendingPayments =
-    paymentsResult.status === "fulfilled"
-      ? normalizeItems(paymentsResult.value).filter((item) => {
-          const status = firstString(item?.status, item?.paymentStatus) ?? "";
-          return status.toLowerCase().includes("pending");
-        })
-      : [];
-  const pendingShipments =
-    shipmentsResult.status === "fulfilled"
-      ? normalizeItems(shipmentsResult.value).filter((item) => {
-          const status = firstString(item?.status, item?.shipmentStatus) ?? "";
-          return !status.toLowerCase().includes("delivered");
-        })
-      : [];
-  const pendingReturns =
-    returnsResult.status === "fulfilled"
-      ? normalizeItems(returnsResult.value).map((item, index) =>
-          normalizeSimpleRecord(item, index, "Return"),
-        )
-      : [];
-  const pendingEnquiries =
-    enquiriesResult.status === "fulfilled"
-      ? normalizeItems(enquiriesResult.value).map((item, index) =>
-          normalizeSimpleRecord(item, index, "Enquiry"),
-        )
-      : [];
+    notificationsFromDashboard.length > 0
+      ? notificationsFromDashboard.map(normalizeNotification)
+      : notificationsResult.status === "fulfilled"
+        ? normalizeItems(notificationsResult.value).map(normalizeNotification)
+        : [];
+  const orders = extractCollection(dashboardPayload, [
+    ["recentOrders"],
+    ["orders"],
+    ["latestOrders"],
+    ["summary", "recentOrders"],
+  ]).map(normalizeOrder);
+  const products = extractCollection(dashboardPayload, [
+    ["recentProducts"],
+    ["products"],
+    ["latestProducts"],
+    ["summary", "recentProducts"],
+  ]).map(normalizeProduct);
+  const lowStockProducts = extractCollection(dashboardPayload, [
+    ["lowStockProducts"],
+    ["lowStock"],
+    ["summary", "lowStockProducts"],
+    ["inventory", "lowStockProducts"],
+  ])
+    .map(normalizeProduct)
+    .filter((product) => product.lowStock);
+  const pendingShipments = extractCollection(dashboardPayload, [
+    ["pendingShipments"],
+    ["shipments", "pending"],
+    ["summary", "pendingShipments"],
+  ]).map((item, index) => normalizeSimpleRecord(item, index, "Shipment"));
+  const pendingReturns = extractCollection(dashboardPayload, [
+    ["pendingReturns"],
+    ["returns", "pending"],
+    ["summary", "pendingReturns"],
+  ]).map((item, index) => normalizeSimpleRecord(item, index, "Return"));
+  const pendingEnquiries = extractCollection(dashboardPayload, [
+    ["pendingEnquiries"],
+    ["enquiries", "pending"],
+    ["summary", "pendingEnquiries"],
+  ]).map((item, index) => normalizeSimpleRecord(item, index, "Enquiry"));
 
   const paidAmountMinor =
-    extractMetric(analyticsPayload, [
+    extractMetric(dashboardPayload, [
       ["summary", "paidAmountMinor"],
       ["summary", "revenueMinor"],
       ["overview", "revenueMinor"],
       ["totals", "paidAmountMinor"],
+      ["totals", "revenueMinor"],
+      ["stats", "paidAmountMinor"],
       ["paidAmountMinor"],
       ["revenueMinor"],
     ]) ??
@@ -243,74 +269,116 @@ export async function getAdminDashboardData() {
       return sum;
     }, 0);
 
-  const totalOrders =
-    extractMetric(analyticsPayload, [
+  const totalOrders = extractCount(
+    dashboardPayload,
+    [
       ["summary", "totalOrders"],
       ["overview", "totalOrders"],
       ["totals", "orders"],
+      ["stats", "orders"],
       ["totalOrders"],
-    ]) ?? orders.length;
-
-  const lowStockProducts = products.filter((product) => product.lowStock);
+    ],
+    orders.length,
+  );
+  const codOrders = extractCount(
+    dashboardPayload,
+    [
+      ["summary", "codOrders"],
+      ["overview", "codOrders"],
+      ["totals", "codOrders"],
+      ["stats", "codOrders"],
+      ["codOrders"],
+    ],
+    orders.filter((order) => (order.paymentMethod || "").toLowerCase().includes("cod")).length,
+  );
+  const totalProducts = extractCount(
+    dashboardPayload,
+    [
+      ["summary", "totalProducts"],
+      ["overview", "totalProducts"],
+      ["totals", "products"],
+      ["stats", "products"],
+      ["totalProducts"],
+    ],
+    products.length,
+  );
+  const pendingShipmentsCount = extractCount(
+    dashboardPayload,
+    [
+      ["summary", "pendingShipments"],
+      ["overview", "pendingShipments"],
+      ["totals", "pendingShipments"],
+      ["stats", "pendingShipments"],
+      ["pendingShipmentsCount"],
+    ],
+    pendingShipments.length,
+  );
+  const pendingReturnsCount = extractCount(
+    dashboardPayload,
+    [
+      ["summary", "pendingReturns"],
+      ["overview", "pendingReturns"],
+      ["totals", "pendingReturns"],
+      ["stats", "pendingReturns"],
+      ["pendingReturnsCount"],
+    ],
+    pendingReturns.length,
+  );
+  const pendingEnquiriesCount = extractCount(
+    dashboardPayload,
+    [
+      ["summary", "pendingEnquiries"],
+      ["overview", "pendingEnquiries"],
+      ["totals", "pendingEnquiries"],
+      ["stats", "pendingEnquiries"],
+      ["pendingEnquiriesCount"],
+    ],
+    pendingEnquiries.length,
+  );
+  const lowStockCount = extractCount(
+    dashboardPayload,
+    [
+      ["summary", "lowStockProducts"],
+      ["overview", "lowStockProducts"],
+      ["totals", "lowStockProducts"],
+      ["stats", "lowStockProducts"],
+      ["lowStockCount"],
+    ],
+    lowStockProducts.length,
+  );
+  const orderStatusBreakdownSource = extractCollection(dashboardPayload, [
+    ["orderStatusBreakdown"],
+    ["summary", "orderStatusBreakdown"],
+    ["statusBreakdown"],
+  ]);
+  const orderStatusBreakdown =
+    orderStatusBreakdownSource.length > 0
+      ? orderStatusBreakdownSource.map((item) => ({
+          label: firstString(item?.label, item?.status, item?.key, item?.name) ?? "Pending",
+          count: firstNumber(item?.count, item?.total, item?.value) ?? 0,
+          percentage: firstNumber(item?.percentage) ?? 0,
+        }))
+      : buildStatusBreakdown(orders);
 
   return {
     metrics: [
-      {
-        key: "totalOrders",
-        label: "Total Orders",
-        value: totalOrders,
-        format: "number",
-      },
-      {
-        key: "paidAmount",
-        label: "Paid Amount",
-        value: paidAmountMinor,
-        format: "currency",
-      },
-      {
-        key: "pendingPayments",
-        label: "Pending Payments",
-        value: pendingPayments.length,
-        format: "number",
-      },
-      {
-        key: "pendingShipments",
-        label: "Pending Shipments",
-        value: pendingShipments.length,
-        format: "number",
-      },
-      {
-        key: "pendingReturns",
-        label: "Pending Returns",
-        value: pendingReturns.length,
-        format: "number",
-      },
-      {
-        key: "pendingEnquiries",
-        label: "Pending Enquiries",
-        value: pendingEnquiries.length,
-        format: "number",
-      },
-      {
-        key: "lowStock",
-        label: "Low Stock",
-        value: lowStockProducts.length,
-        format: "number",
-      },
+      buildMetric("totalOrders", "Total Orders", totalOrders),
+      buildMetric("codOrders", "COD Orders", codOrders),
+      buildMetric("totalProducts", "Total Products", totalProducts),
+      buildMetric("paidAmount", "Paid Amount", paidAmountMinor, "currency"),
+      buildMetric("pendingShipments", "Pending Shipments", pendingShipmentsCount),
+      buildMetric("pendingReturns", "Pending Returns", pendingReturnsCount),
+      buildMetric("pendingEnquiries", "Pending Enquiries", pendingEnquiriesCount),
+      buildMetric("lowStock", "Low Stock", lowStockCount),
     ],
     notifications,
     unreadNotifications: notifications.filter((item) => !item.read).length,
     recentOrders: orders,
-    pendingPayments: pendingPayments.slice(0, 5).map((item, index) =>
-      normalizeSimpleRecord(item, index, "Payment"),
-    ),
-    pendingShipments: pendingShipments.slice(0, 5).map((item, index) =>
-      normalizeSimpleRecord(item, index, "Shipment"),
-    ),
+    pendingShipments: pendingShipments.slice(0, 5),
     pendingReturns: pendingReturns.slice(0, 5),
     pendingEnquiries: pendingEnquiries.slice(0, 5),
     lowStockProducts: lowStockProducts.slice(0, 5),
     recentProducts: products.slice(0, 5),
-    orderStatusBreakdown: buildStatusBreakdown(orders),
+    orderStatusBreakdown,
   };
 }

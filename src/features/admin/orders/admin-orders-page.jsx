@@ -10,12 +10,13 @@ import { Card } from "@/components/ui/card";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { ShoppingCartIcon, TruckIcon, WalletIcon } from "@/components/ui/icons";
+import { ShoppingCartIcon, TruckIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { PriceDisplay } from "@/components/ui/price-display";
 import { Select } from "@/components/ui/select";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import { cancelAdminOrder, getAdminOrders } from "@/features/admin/orders/admin-orders-api";
 import { useAuth } from "@/hooks/use-auth";
@@ -104,8 +105,10 @@ function OrderTable({ items, t, onCancelOrder }) {
             <th className="pb-3">{t("productCount")}</th>
             <th className="pb-3">{t("total")}</th>
             <th className="pb-3">{t("paymentMethod")}</th>
+            <th className="pb-3">Fulfillment Method</th>
             <th className="pb-3">{t("paymentStatus")}</th>
             <th className="pb-3">{t("orderStatus")}</th>
+            <th className="pb-3">{t("shipmentStatus")}</th>
             <th className="pb-3">{t("date")}</th>
             <th className="pb-3">{t("actions")}</th>
           </tr>
@@ -127,6 +130,7 @@ function OrderTable({ items, t, onCancelOrder }) {
                 <PriceDisplay amountMinor={order.totalMinor} />
               </td>
               <td className="py-4 text-muted-foreground">{order.paymentMethod}</td>
+              <td className="py-4 text-muted-foreground">{order.fulfillmentMethod}</td>
               <td className="py-4">
                 <Badge variant={getStatusVariant(order.paymentStatus)}>
                   {order.paymentStatusLabel}
@@ -135,6 +139,11 @@ function OrderTable({ items, t, onCancelOrder }) {
               <td className="py-4">
                 <Badge variant={getStatusVariant(order.orderStatus)}>
                   {order.orderStatusLabel}
+                </Badge>
+              </td>
+              <td className="py-4">
+                <Badge variant={getStatusVariant(order.shipmentStatus)}>
+                  {order.shipmentStatusLabel}
                 </Badge>
               </td>
               <td className="py-4 text-muted-foreground">{formatDate(order.createdAt)}</td>
@@ -192,9 +201,21 @@ function OrderCards({ items, t, onCancelOrder }) {
               </div>
             </div>
             <div>
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                Fulfillment Method
+              </p>
+              <p className="mt-1 font-medium text-foreground">{order.fulfillmentMethod}</p>
+            </div>
+            <div>
               <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("paymentStatus")}</p>
               <div className="mt-2">
                 <Badge variant={getStatusVariant(order.paymentStatus)}>{order.paymentStatusLabel}</Badge>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("shipmentStatus")}</p>
+              <div className="mt-2">
+                <Badge variant={getStatusVariant(order.shipmentStatus)}>{order.shipmentStatusLabel}</Badge>
               </div>
             </div>
             <div>
@@ -408,7 +429,7 @@ export function AdminOrdersPage() {
     return (
       <ErrorState
         title={t("failedToLoad")}
-        description={t("adminOrdersLoadError")}
+        description={resolveAdminLoadMessage(state.error, t("adminOrdersLoadError"))}
         actionLabel={t("retry")}
         onAction={() => setRefreshKey((value) => value + 1)}
       />
@@ -422,12 +443,6 @@ export function AdminOrdersPage() {
         description={t("adminOrdersDescription")}
         action={
           <div className="flex flex-wrap gap-3">
-            <Link href={routes.admin.adminPayments}>
-              <Button variant="outline">
-                <WalletIcon className="size-4" />
-                {t("manualPayments")}
-              </Button>
-            </Link>
             <Link href={routes.admin.adminShipments}>
               <Button variant="outline">
                 <TruckIcon className="size-4" />
