@@ -33,8 +33,22 @@ function formatDate(value) {
   return date.toLocaleDateString();
 }
 
+function toDisplayText(value) {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || null;
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return null;
+}
+
 function StatusPill({ value }) {
-  const normalized = String(value).toLowerCase();
+  const displayValue = toDisplayText(value);
+  const normalized = (displayValue ?? "").toLowerCase();
   const variant =
     normalized.includes("paid") ||
     normalized.includes("delivered") ||
@@ -46,7 +60,7 @@ function StatusPill({ value }) {
           ? "info"
           : "neutral";
 
-  return <Badge variant={variant}>{value}</Badge>;
+  return <Badge variant={variant}>{displayValue ?? "Pending"}</Badge>;
 }
 
 function DetailValue({ amountMinor, value, pendingLabel = "Pending" }) {
@@ -58,7 +72,11 @@ function DetailValue({ amountMinor, value, pendingLabel = "Pending" }) {
     );
   }
 
-  return <p className="font-medium text-foreground">{value || pendingLabel}</p>;
+  return (
+    <p className="font-medium text-foreground">
+      {toDisplayText(value) ?? pendingLabel}
+    </p>
+  );
 }
 
 function isUnauthorizedError(error) {
@@ -127,22 +145,25 @@ export function AccountOrderDetailPage({ orderNumber }) {
 
     let active = true;
 
-    async function load() {
-      setLoading(true);
-      setError(null);
+    async function load(showLoadingState = true) {
+      if (showLoadingState) {
+        setLoading(true);
+        setError(null);
+      }
 
       try {
         const nextOrder = await getCustomerOrderDetail(orderNumber);
 
         if (active) {
           setOrder(nextOrder);
+          setError(null);
         }
       } catch (nextError) {
-        if (active) {
+        if (active && showLoadingState) {
           setError(nextError);
         }
       } finally {
-        if (active) {
+        if (active && showLoadingState) {
           setLoading(false);
         }
       }
@@ -150,8 +171,23 @@ export function AccountOrderDetailPage({ orderNumber }) {
 
     load();
 
+    function refreshOrder() {
+      load(false);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        refreshOrder();
+      }
+    }
+
+    window.addEventListener("focus", refreshOrder);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       active = false;
+      window.removeEventListener("focus", refreshOrder);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [accessState, orderNumber]);
 
@@ -237,6 +273,9 @@ export function AccountOrderDetailPage({ orderNumber }) {
     }
   }
 
+  const invoiceNumber = toDisplayText(order.invoiceNumber);
+  const trackingNumber = toDisplayText(order.trackingNumber);
+
   return (
     <Container className="space-y-8 py-8 pb-16 lg:py-10">
       <PageHeader
@@ -278,11 +317,11 @@ export function AccountOrderDetailPage({ orderNumber }) {
           </div>
           <div>
             <p className="text-sm text-muted-foreground">{t("invoiceNumber")}</p>
-            <DetailValue value={order.invoiceNumber} pendingLabel={t("pending")} />
+            <DetailValue value={invoiceNumber} pendingLabel={t("notGeneratedYet")} />
           </div>
           <div>
             <p className="text-sm text-muted-foreground">{t("trackingNumber")}</p>
-            <DetailValue value={order.trackingNumber} pendingLabel={t("pending")} />
+            <DetailValue value={trackingNumber} pendingLabel={t("notAssignedYet")} />
           </div>
         </div>
       </Card>
@@ -335,12 +374,12 @@ export function AccountOrderDetailPage({ orderNumber }) {
             <p className="text-sm text-muted-foreground">{t("billingAddress")}</p>
             <DetailValue value={order.billingAddress} pendingLabel={t("pending")} />
           </div>
-          {order.invoiceNumber ? (
+          {invoiceNumber ? (
             <div className="rounded-3xl border border-border p-4">
               <p className="text-sm text-muted-foreground">{t("invoice")}</p>
-              <p className="font-medium text-foreground">{order.invoiceNumber}</p>
+              <p className="font-medium text-foreground">{invoiceNumber}</p>
               <div className="mt-4 flex flex-wrap gap-3">
-                <Link href={routes.customer.accountInvoiceDetail(order.invoiceNumber)}>
+                <Link href={routes.customer.accountInvoiceDetail(invoiceNumber)}>
                   <Button variant="outline">{t("viewInvoice")}</Button>
                 </Link>
                 <Button onClick={handleDownloadInvoice} disabled={downloadingInvoice}>

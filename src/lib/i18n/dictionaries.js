@@ -1059,6 +1059,8 @@ export const dictionaries = {
     courier: "Courier",
     awaitingAssignment: "Awaiting assignment",
     pending: "Pending",
+    notGeneratedYet: "Not generated yet",
+    notAssignedYet: "Not assigned yet",
     trackingWhatsappHelp:
       "Hi, I need help tracking order {orderNumber}.",
     noOrdersYet: "No Orders Yet",

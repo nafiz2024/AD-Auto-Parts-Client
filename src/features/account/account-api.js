@@ -17,6 +17,11 @@ const ACCOUNT_REQUEST_OPTIONS = {
   credentials: "include",
 };
 
+const ORDER_DETAIL_REQUEST_OPTIONS = {
+  ...ACCOUNT_REQUEST_OPTIONS,
+  cache: "no-store",
+};
+
 function firstString(...values) {
   for (const value of values) {
     if (typeof value === "string" && value.trim()) {
@@ -136,6 +141,36 @@ function toDisplayLabel(value, fallback = "Pending") {
     .join(" ");
 }
 
+function mapLifecycleStatus(value, fallback = "Pending") {
+  const normalizedValue = firstString(value)?.toLowerCase();
+
+  if (!normalizedValue) {
+    return fallback;
+  }
+
+  if (normalizedValue.includes("deliver") || normalizedValue.includes("complete")) {
+    return "Delivered";
+  }
+
+  if (normalizedValue.includes("ship")) {
+    return "Shipped";
+  }
+
+  if (normalizedValue.includes("confirm") || normalizedValue.includes("process")) {
+    return "Processing";
+  }
+
+  if (normalizedValue.includes("unassigned")) {
+    return "Unassigned";
+  }
+
+  if (normalizedValue.includes("pending")) {
+    return "Pending";
+  }
+
+  return toDisplayLabel(normalizedValue, fallback);
+}
+
 function normalizeOrderStatuses(orderPayload, baseStatus) {
   const rawOrderStatus = firstString(baseStatus, orderPayload?.status, orderPayload?.orderStatus);
   const rawShipmentStatus = firstString(
@@ -147,33 +182,13 @@ function normalizeOrderStatuses(orderPayload, baseStatus) {
     orderPayload?.paymentStatus,
     orderPayload?.payment?.status,
   );
-  let shipmentStatusLabel = toDisplayLabel(rawShipmentStatus, "Processing");
+  let shipmentStatusLabel = mapLifecycleStatus(rawShipmentStatus, "Pending");
   const paymentStatusLabel = toDisplayLabel(rawPaymentStatus, "Pending");
-  const normalizedShipmentStatus = rawShipmentStatus?.toLowerCase() ?? "";
   const normalizedOrderStatus = rawOrderStatus?.toLowerCase() ?? "";
+  let orderStatusLabel = mapLifecycleStatus(rawOrderStatus, "Pending");
 
-  let orderStatusLabel = toDisplayLabel(rawOrderStatus, "Pending");
-
-  if (
-    normalizedShipmentStatus.includes("deliver")
-  ) {
+  if (shipmentStatusLabel === "Delivered") {
     orderStatusLabel = "Delivered";
-    shipmentStatusLabel = "Delivered";
-  } else if (
-    normalizedOrderStatus.includes("deliver")
-  ) {
-    orderStatusLabel = "Delivered";
-  } else if (
-    normalizedShipmentStatus.includes("pick") ||
-    normalizedOrderStatus.includes("pick")
-  ) {
-    orderStatusLabel = "Picked Up";
-    shipmentStatusLabel = "Picked Up";
-  } else if (normalizedShipmentStatus.includes("complete")) {
-    orderStatusLabel = "Completed";
-    shipmentStatusLabel = "Completed";
-  } else if (normalizedOrderStatus.includes("complete")) {
-    orderStatusLabel = "Completed";
   } else if (normalizedOrderStatus.includes("cancel")) {
     orderStatusLabel = "Cancelled";
   }
@@ -498,7 +513,7 @@ export async function getCustomerOrders() {
 export async function getCustomerOrderDetail(orderNumber) {
   const result = await apiGet(
     endpoints.account.orderDetail(orderNumber),
-    ACCOUNT_REQUEST_OPTIONS,
+    ORDER_DETAIL_REQUEST_OPTIONS,
   );
   return normalizeOrder(getEnvelopeData(result));
 }

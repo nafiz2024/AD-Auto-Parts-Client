@@ -282,6 +282,7 @@ export async function apiRequest(
   {
     method = "GET",
     baseUrl = API_BASE_URL,
+    cache,
     query,
     body,
     headers,
@@ -307,6 +308,7 @@ export async function apiRequest(
   try {
     const response = await fetch(requestUrl, {
       method,
+      cache,
       credentials,
       headers: buildHeaders(body, headers, language),
       body:
