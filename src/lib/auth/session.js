@@ -22,14 +22,10 @@ export async function getCurrentSession(options) {
 export async function getCurrentAdminSession(options) {
   try {
     const result = await getAdminSessionRequest(options);
-    return result.data ?? result.raw ?? null;
+    return result.raw ?? result.data ?? null;
   } catch (error) {
     if (error?.status === 401) {
       return null;
-    }
-
-    if (error?.isTotpRequired || error?.status === 428) {
-      return getCurrentSession(options).catch(() => null);
     }
 
     throw error;
@@ -42,7 +38,7 @@ export async function refreshSession(options) {
 
 export async function signInWithEmail(email, password, options) {
   const result = await signInWithEmailRequest(email, password, options);
-  return result.data ?? result.raw ?? null;
+  return result.raw ?? result.data ?? null;
 }
 
 export function signInWithSocial(provider, options) {
@@ -70,10 +66,14 @@ export async function verifyTotp(payload, options) {
 }
 
 export function getCurrentUser(session) {
-  return session?.user ?? session?.data?.user ?? null;
+  return session?.user ?? session?.data?.user ?? session?.admin ?? session?.data?.admin ?? null;
 }
 
 export function isAuthenticated(session) {
+  if (session?.data?.authenticated === true || session?.authenticated === true) {
+    return true;
+  }
+
   return Boolean(getCurrentUser(session));
 }
 

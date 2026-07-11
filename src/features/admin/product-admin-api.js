@@ -544,7 +544,10 @@ function buildProductPayload(values) {
 
 export async function getAdminProducts(filters) {
   const query = buildListQuery(filters);
-  const response = await apiGet(endpoints.admin.products, { query });
+  const response = await apiGet(endpoints.admin.products, {
+    query,
+    credentials: "include",
+  });
   const items = normalizeItems(response.data).map(normalizeProductSummary);
   const pagination = normalizePagination(
     response.meta ?? response.raw?.meta,

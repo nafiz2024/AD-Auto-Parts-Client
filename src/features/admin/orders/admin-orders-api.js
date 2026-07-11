@@ -329,7 +329,10 @@ export async function getAdminOrders(filters = {}) {
     maxTotalMinor: filters.maxAmount || undefined,
   };
 
-  const result = await apiGet(endpoints.admin.orders, { query });
+  const result = await apiGet(endpoints.admin.orders, {
+    query,
+    credentials: "include",
+  });
   const payload = getEnvelopeData(result);
   const items = normalizeItems(payload).map(normalizeOrderSummary);
 

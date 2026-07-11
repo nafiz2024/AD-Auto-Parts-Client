@@ -4,7 +4,7 @@ export const USER_ROLES = {
 };
 
 export function getRoleList(session) {
-  const user = session?.user ?? session?.data?.user ?? null;
+  const user = session?.user ?? session?.data?.user ?? session?.admin ?? session?.data?.admin ?? null;
 
   if (!user) {
     return [];

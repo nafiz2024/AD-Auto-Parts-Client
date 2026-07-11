@@ -30,21 +30,26 @@ export function isActiveAdminAccount(session) {
 }
 
 export function getAdminAccessState(session) {
-  const user = getCurrentUser(session);
-  const authenticated = isAuthenticated(session);
-  const admin = isAdmin(session);
-  const active = isActiveAdminAccount(session);
+  const authenticated = session?.data?.authenticated === true;
+  const user = session?.data?.admin ?? getCurrentUser(session);
+  const redirectTo = session?.data?.redirectTo ?? null;
+  const role = getSessionRole(session);
+  const admin = authenticated && isAdmin(session);
+  const active = authenticated && isActiveAdminAccount(session);
   const forbidden = authenticated && (!admin || !active);
+  const authStatus = authenticated && !forbidden ? "authenticated" : "unauthenticated";
 
   return {
     session,
     user,
-    role: getSessionRole(session),
-    isAuthenticated: authenticated,
+    role,
+    isAuthenticated: authenticated && isAuthenticated(session),
     isAdmin: admin,
     isActive: active,
     forbidden,
-    canAccessDashboard: authenticated && admin && active,
+    redirectTo,
+    authStatus,
+    canAccessDashboard: authStatus === "authenticated",
   };
 }
 

@@ -1,5 +1,5 @@
-import { AdminTotpDeprecatedPage } from "@/features/admin/admin-auth-page";
+import { AdminTotpVerifyPage as AdminTotpVerifyScreen } from "@/features/admin/admin-auth-page";
 
 export default function AdminTotpVerifyPage() {
-  return <AdminTotpDeprecatedPage />;
+  return <AdminTotpVerifyScreen />;
 }

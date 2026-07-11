@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
 import { AdminTopbar } from "@/components/layout/admin-topbar";
@@ -8,64 +8,69 @@ import { routes } from "@/constants/routes";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
+import { getErrorMessage } from "@/lib/api/error-messages";
 
 export function AdminLayoutShell({ children }) {
-  const auth = useAuth();
+  const { refresh } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useLanguage();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [adminSessionChecked, setAdminSessionChecked] = useState(false);
-  const access = useMemo(() => getAdminAccessState(auth.session), [auth.session]);
-  const guardLoading = auth.isLoading || !adminSessionChecked;
+  const [adminAuthStatus, setAdminAuthStatus] = useState("checking");
+  const [guardError, setGuardError] = useState("");
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
-    if (auth.isLoading || adminSessionChecked) {
-      return undefined;
-    }
-
     let active = true;
 
-    auth
-      .refresh({ scope: "admin" })
-      .catch(() => null)
-      .finally(() => {
-        if (active) {
-          setAdminSessionChecked(true);
+    async function verifyAdminSession() {
+      try {
+        const session = await refresh({ scope: "admin" });
+
+        if (!active) {
+          return;
         }
-      });
+
+        const access = getAdminAccessState(session);
+        setAdminAuthStatus(access.canAccessDashboard ? "authenticated" : "unauthenticated");
+        setGuardError("");
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+
+        setAdminAuthStatus("unauthenticated");
+        setGuardError(error?.status === 401 ? "" : getErrorMessage(error));
+      }
+    }
+
+    verifyAdminSession();
 
     return () => {
       active = false;
     };
-  }, [adminSessionChecked, auth, auth.isLoading]);
-
-  const redirectTarget = useMemo(() => {
-    if (guardLoading) {
-      return null;
-    }
-
-    if (!access.isAuthenticated || access.forbidden) {
-      return routes.admin.adminLogin;
-    }
-
-    return null;
-  }, [access, guardLoading]);
+  }, [refresh]);
 
   useEffect(() => {
-    if (!redirectTarget || pathname === redirectTarget) {
+    if (adminAuthStatus !== "unauthenticated" || pathname === routes.admin.adminLogin) {
       return;
     }
 
-    router.replace(redirectTarget);
-  }, [pathname, redirectTarget, router]);
+    if (hasRedirectedRef.current) {
+      return;
+    }
 
-  if (guardLoading || redirectTarget || !access.canAccessDashboard) {
+    hasRedirectedRef.current = true;
+    router.replace(routes.admin.adminLogin);
+  }, [adminAuthStatus, pathname, router]);
+
+  if (adminAuthStatus !== "authenticated") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4">
         <div className="w-full max-w-xl rounded-[2rem] border border-border bg-white px-6 py-8 text-center shadow-soft">
           <p className="text-lg font-semibold text-foreground">{t("adminRedirecting")}</p>
           <p className="mt-2 text-sm text-muted-foreground">{t("checkingAdminSession")}</p>
+          {guardError ? <p className="mt-4 text-sm text-error">{guardError}</p> : null}
         </div>
       </div>
     );

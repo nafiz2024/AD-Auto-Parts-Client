@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { getAdminAccessState } from "@/features/admin/admin-access";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
+import { getErrorMessage } from "@/lib/api/error-messages";
 import { signInWithEmail } from "@/lib/auth/session";
 
 function AuthShell({ children }) {
@@ -90,36 +91,85 @@ function AuthShell({ children }) {
   );
 }
 
+function normalizeAccountStatus(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function isSuccessfulAdminLogin(response) {
+  return (
+    response &&
+    typeof response === "object" &&
+    response.user?.role === "admin" &&
+    normalizeAccountStatus(response.user?.status) === "active"
+  );
+}
+
+function getAdminRedirectTarget(access, fallback = routes.admin.adminDashboard) {
+  return access.redirectTo || fallback;
+}
+
+function getAdminAuthErrorMessage(error, t) {
+  if (error?.status === 401) {
+    return t("adminLoginFailed");
+  }
+
+  if (error?.status === 403) {
+    return t("forbidden");
+  }
+
+  if (error?.status === 429) {
+    return getErrorMessage(error);
+  }
+
+  const message = getErrorMessage(error);
+  return typeof message === "string" ? message : t("validationError");
+}
+
 function AdminLoginForm() {
   const router = useRouter();
-  const { isLoading, logout, refresh, session } = useAuth();
+  const { logout, refresh } = useAuth();
   const toast = useToast();
   const { t } = useLanguage();
   const [isPending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const hasRedirectedRef = useRef(false);
 
   useEffect(() => {
-    if (isLoading) {
-      return;
+    let active = true;
+
+    async function checkAdminSession() {
+      try {
+        const nextSession = await refresh({ scope: "admin" });
+
+        if (!active) {
+          return;
+        }
+
+        const access = getAdminAccessState(nextSession);
+
+        if (access.canAccessDashboard && !hasRedirectedRef.current) {
+          hasRedirectedRef.current = true;
+          router.replace(getAdminRedirectTarget(access));
+        }
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+
+        if (error?.status === 401) {
+          return;
+        }
+      }
     }
 
-    const access = getAdminAccessState(session);
+    checkAdminSession();
 
-    if (!access.isAuthenticated) {
-      return;
-    }
-
-    if (access.forbidden) {
-      logout().catch(() => {});
-      return;
-    }
-
-    if (access.canAccessDashboard) {
-      router.replace(routes.admin.adminDashboard);
-    }
-  }, [isLoading, logout, router, session]);
+    return () => {
+      active = false;
+    };
+  }, [refresh, router]);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -127,27 +177,36 @@ function AdminLoginForm() {
 
     startTransition(async () => {
       try {
-        await signInWithEmail(email.trim(), password);
-        setPassword("");
+        const response = await signInWithEmail(email.trim(), password);
+
+        if (!isSuccessfulAdminLogin(response)) {
+          setPassword("");
+          setErrorMessage(t("adminLoginFailed"));
+          return;
+        }
+
+        setErrorMessage("");
         const nextSession = await refresh({ scope: "admin" });
         const access = getAdminAccessState(nextSession);
 
         if (access.forbidden) {
-          await logout();
+          await logout().catch(() => {});
           setErrorMessage(t("forbidden"));
           return;
         }
 
         if (access.canAccessDashboard) {
+          hasRedirectedRef.current = true;
           toast.success(t("adminLogin"), t("adminLoginSuccess"));
-          router.replace(routes.admin.adminDashboard);
+          router.replace(getAdminRedirectTarget(access));
           return;
         }
 
-        setErrorMessage(t("adminLoginFailed"));
-      } catch {
         setPassword("");
         setErrorMessage(t("adminLoginFailed"));
+      } catch (error) {
+        setPassword("");
+        setErrorMessage(getAdminAuthErrorMessage(error, t));
       }
     });
   }
@@ -201,51 +260,6 @@ function AdminLoginForm() {
   );
 }
 
-export function AdminTotpDeprecatedPage() {
-  const router = useRouter();
-  const { isLoading, logout, session } = useAuth();
-
-  useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    const access = getAdminAccessState(session);
-
-    if (!access.isAuthenticated) {
-      router.replace(routes.admin.adminLogin);
-      return;
-    }
-
-    if (access.forbidden) {
-      logout().finally(() => router.replace(routes.admin.adminLogin));
-      return;
-    }
-
-    router.replace(routes.admin.adminDashboard);
-  }, [isLoading, logout, router, session]);
-
-  return (
-    <AuthShell>
-      <Card className="mx-auto w-full max-w-xl rounded-[2.25rem] px-6 py-8 text-center sm:px-8 sm:py-10">
-        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-brand-red/10 text-brand-red">
-          <ShieldIcon className="size-8" />
-        </div>
-        <h1 className="mt-6 text-3xl font-semibold tracking-tight text-foreground">Admin Login Updated</h1>
-        <p className="mt-3 text-base text-muted-foreground">
-          This verification page is no longer used. Sign in with your admin email and password to continue.
-        </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Button onClick={() => router.replace(routes.admin.adminLogin)}>Go to Admin Login</Button>
-          <Button variant="outline" onClick={() => router.replace(routes.admin.adminDashboard)}>
-            Open Dashboard
-          </Button>
-        </div>
-      </Card>
-    </AuthShell>
-  );
-}
-
 export function AdminAuthPage() {
   return (
     <AuthShell>
@@ -256,34 +270,78 @@ export function AdminAuthPage() {
 
 export function AdminEntryPage() {
   const router = useRouter();
-  const { isLoading, logout, session } = useAuth();
   const { t } = useLanguage();
 
   useEffect(() => {
-    if (isLoading) {
-      return;
-    }
-
-    const access = getAdminAccessState(session);
-
-    if (!access.isAuthenticated) {
-      router.replace(routes.admin.adminLogin);
-      return;
-    }
-
-    if (access.forbidden) {
-      logout().finally(() => router.replace(routes.admin.adminLogin));
-      return;
-    }
-
     router.replace(routes.admin.adminDashboard);
-  }, [isLoading, logout, router, session]);
+  }, [router]);
 
   return (
     <Container className="flex min-h-[50vh] items-center justify-center py-16">
       <Card className="w-full max-w-xl text-center">
         <p className="text-lg font-semibold text-foreground">{t("adminRedirecting")}</p>
         <p className="mt-2 text-sm text-muted-foreground">{t("checkingAdminSession")}</p>
+      </Card>
+    </Container>
+  );
+}
+
+export function AdminTotpVerifyPage() {
+  const router = useRouter();
+  const { t } = useLanguage();
+  const { refresh } = useAuth();
+  const [errorMessage, setErrorMessage] = useState("");
+  const hasRedirectedRef = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+
+    async function routeLegacyTotpPath() {
+      try {
+        const nextSession = await refresh({ scope: "admin" });
+
+        if (!active) {
+          return;
+        }
+
+        const access = getAdminAccessState(nextSession);
+        const target = access.canAccessDashboard
+          ? getAdminRedirectTarget(access)
+          : routes.admin.adminLogin;
+
+        if (!hasRedirectedRef.current) {
+          hasRedirectedRef.current = true;
+          router.replace(target);
+        }
+      } catch (error) {
+        if (!active) {
+          return;
+        }
+
+        if (error?.status !== 401) {
+          setErrorMessage(getAdminAuthErrorMessage(error, t));
+        }
+
+        if (!hasRedirectedRef.current) {
+          hasRedirectedRef.current = true;
+          router.replace(routes.admin.adminLogin);
+        }
+      }
+    }
+
+    routeLegacyTotpPath();
+
+    return () => {
+      active = false;
+    };
+  }, [refresh, router, t]);
+
+  return (
+    <Container className="flex min-h-[50vh] items-center justify-center py-16">
+      <Card className="w-full max-w-xl text-center">
+        <p className="text-lg font-semibold text-foreground">{t("adminRedirecting")}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("checkingAdminSession")}</p>
+        {errorMessage ? <p className="mt-4 text-sm text-error">{errorMessage}</p> : null}
       </Card>
     </Container>
   );

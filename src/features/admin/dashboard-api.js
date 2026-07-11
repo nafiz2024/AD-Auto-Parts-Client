@@ -178,7 +178,10 @@ function buildStatusBreakdown(orders) {
 }
 
 async function loadList(endpoint, query) {
-  const result = await apiGet(endpoint, { query });
+  const result = await apiGet(endpoint, {
+    query,
+    credentials: "include",
+  });
   return getEnvelopeData(result);
 }
 
