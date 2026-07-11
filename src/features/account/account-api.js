@@ -231,7 +231,9 @@ function normalizeOrderStatuses(orderPayload, baseStatus) {
       normalizedOrderStatus === "picked_up" ||
       normalizedOrderStatus === "delivered"
         ? "Picked Up"
-        : "Shop Pickup";
+        : normalizedShipmentStatus === "not_applicable" || normalizedShipmentStatus === "not_required"
+          ? "Not required"
+          : "Pending Pickup";
 
     if (normalizedOrderStatus === "delivered") {
       orderStatusLabel = "Picked Up";
@@ -248,9 +250,14 @@ function normalizeOrderStatuses(orderPayload, baseStatus) {
   }
 
   return {
+    orderStatusValue: normalizedOrderStatus,
     orderStatusLabel,
+    paymentStatusValue: normalizeStatusValue(rawPaymentStatus),
     paymentStatusLabel,
+    shipmentStatusValue: normalizedShipmentStatus,
     shipmentStatusLabel,
+    pickupStatusValue: normalizedPickupStatus,
+    fulfillmentMethodValue: fulfillmentMethod,
   };
 }
 
@@ -325,40 +332,71 @@ function normalizeOrder(payload) {
     orderPayload?.deliveryMethod,
     orderPayload?.shipment?.fulfillmentMethod,
   );
+  const normalizedFulfillmentMethod = normalizeFulfillmentMethod(
+    orderPayload?.fulfillmentMethod,
+    orderPayload?.deliveryMethod,
+    orderPayload?.shipment?.fulfillmentMethod,
+  );
+  const isShopPickup = isShopPickupMethod(normalizedFulfillmentMethod);
   const invoicePdfPath = firstString(
     orderPayload?.invoice?.pdfPath,
     orderPayload?.invoice?.pdfUrl,
     orderPayload?.invoice?.downloadPath,
     orderPayload?.invoice?.downloadUrl,
   );
+  const invoiceNumber =
+    firstString(
+      orderPayload?.invoiceNumber,
+      orderPayload?.invoice?.invoiceNumber,
+      orderPayload?.invoice?.number,
+      orderPayload?.invoice?.referenceNumber,
+    ) ?? null;
+  const trackingNumber =
+    firstString(
+      orderPayload?.trackingNumber,
+      orderPayload?.trackingCode,
+      orderPayload?.shipment?.trackingNumber,
+      orderPayload?.shipment?.trackingCode,
+      orderPayload?.shipments?.[0]?.trackingNumber,
+      orderPayload?.shipments?.[0]?.trackingCode,
+    ) ?? null;
+  const pickupReference =
+    firstString(
+      orderPayload?.pickupReference,
+      orderPayload?.pickup?.reference,
+      orderPayload?.pickup?.pickupReference,
+      orderPayload?.referenceNumber,
+      trackingNumber,
+    ) ?? null;
+  const deliveryFeeResolved = isShopPickup ? 0 : deliveryFeeMinor;
 
   return {
     ...base,
     status: statuses.orderStatusLabel,
+    statusValue: statuses.orderStatusValue,
     id: firstString(orderPayload?.id, orderPayload?._id, base.orderNumber) ?? base.orderNumber,
     orderNumber: base.orderNumber ?? firstString(orderPayload?.number, orderPayload?.id),
+    paymentStatusValue: statuses.paymentStatusValue,
     paymentStatus: statuses.paymentStatusLabel,
+    shipmentStatusValue: statuses.shipmentStatusValue,
     shipmentStatus: statuses.shipmentStatusLabel,
+    pickupStatusValue: statuses.pickupStatusValue,
+    pickupStatus:
+      statuses.pickupStatusValue === "picked_up"
+        ? "Picked Up"
+        : isShopPickup
+          ? "Pending Pickup"
+          : null,
     fulfillmentMethod: fulfillmentMethod ? toDisplayLabel(fulfillmentMethod) : null,
+    fulfillmentMethodValue: normalizedFulfillmentMethod,
+    isShopPickup,
     itemTotalMinor:
       itemTotalMinor ?? (normalizedItems.length > 0 ? derivedItemTotalMinor : null),
-    deliveryFeeMinor,
+    deliveryFeeMinor: deliveryFeeResolved,
     items: normalizedItems,
-    invoiceNumber:
-      firstString(
-        orderPayload?.invoiceNumber,
-        orderPayload?.invoice?.invoiceNumber,
-        orderPayload?.invoice?.number,
-        orderPayload?.invoice?.referenceNumber,
-      ) ?? null,
+    invoiceNumber,
     invoice: {
-      invoiceNumber:
-        firstString(
-          orderPayload?.invoiceNumber,
-          orderPayload?.invoice?.invoiceNumber,
-          orderPayload?.invoice?.number,
-          orderPayload?.invoice?.referenceNumber,
-        ) ?? null,
+      invoiceNumber,
       pdfPath: invoicePdfPath || null,
     },
     customerName:
@@ -367,24 +405,19 @@ function normalizeOrder(payload) {
         orderPayload?.shippingAddress?.fullName,
         orderPayload?.deliveryAddress?.recipientName,
       ) ?? null,
-    shippingAddress:
-      normalizeAddress(orderPayload?.shippingAddress) ??
-      normalizeAddress(orderPayload?.deliveryAddress) ??
-      null,
-    billingAddress:
-      normalizeAddress(orderPayload?.billingAddress) ??
-      normalizeAddress(orderPayload?.shippingAddress) ??
-      normalizeAddress(orderPayload?.deliveryAddress) ??
-      null,
-    trackingNumber:
-      firstString(
-        orderPayload?.trackingNumber,
-        orderPayload?.trackingCode,
-        orderPayload?.shipment?.trackingNumber,
-        orderPayload?.shipment?.trackingCode,
-        orderPayload?.shipments?.[0]?.trackingNumber,
-        orderPayload?.shipments?.[0]?.trackingCode,
-      ) ?? null,
+    shippingAddress: isShopPickup
+      ? null
+      : normalizeAddress(orderPayload?.shippingAddress) ??
+        normalizeAddress(orderPayload?.deliveryAddress) ??
+        null,
+    billingAddress: isShopPickup
+      ? null
+      : normalizeAddress(orderPayload?.billingAddress) ??
+        normalizeAddress(orderPayload?.shippingAddress) ??
+        normalizeAddress(orderPayload?.deliveryAddress) ??
+        null,
+    trackingNumber,
+    pickupReference,
     courierName:
       firstString(orderPayload?.courierName, orderPayload?.shipment?.courierName) ?? null,
     notes: firstString(orderPayload?.notes, orderPayload?.customerNote),
