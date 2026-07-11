@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost } from "@/lib/api/client";
+import { apiGet, apiPatch, apiPost, resolveApiRequestUrl } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import {
   asArray,
@@ -17,6 +17,9 @@ import {
 } from "@/features/admin/order-workflow/admin-workflow-utils";
 
 const DEFAULT_PAGE_SIZE = 10;
+const ADMIN_ORDER_REQUEST_OPTIONS = {
+  credentials: "include",
+};
 const DEFAULT_ORDER_STATUSES = [
   "pending",
   "confirmed",
@@ -36,9 +39,30 @@ const DEFAULT_SHIPMENT_STATUSES = [
   "failed",
   "returned",
 ];
+const IS_DEVELOPMENT = process.env.NODE_ENV !== "production";
 
-function orderActionPath(orderNumber, action) {
-  return `${endpoints.admin.orderDetail(orderNumber)}/${action}`;
+function orderActionPath(orderId, action) {
+  return `${endpoints.admin.orderDetail(orderId)}/${action}`;
+}
+
+function orderStatusPath(orderId) {
+  return orderActionPath(orderId, "status");
+}
+
+function orderCancelPath(orderId) {
+  return orderActionPath(orderId, "cancel");
+}
+
+function orderShipmentPath(orderId) {
+  return orderActionPath(orderId, "shipment");
+}
+
+function orderPaymentStatusPath(orderId) {
+  return orderActionPath(orderId, "payment-status");
+}
+
+function normalizeOrderIdentifierValue(value) {
+  return firstString(value);
 }
 
 function normalizeOrderStatus(value) {
@@ -77,6 +101,15 @@ function normalizeShipmentStatus(value) {
   const normalized = (firstString(value) ?? "pending").toLowerCase();
 
   return normalized.replace(/\s+/g, "_");
+}
+
+function normalizePaymentMethod(value) {
+  return (firstString(value) ?? "").toLowerCase().replace(/\s+/g, "_");
+}
+
+function normalizeMajorAmountToMinor(...values) {
+  const amount = firstNumber(...values);
+  return amount === null ? null : Math.round(amount * 100);
 }
 
 function normalizeOrderSummary(item, index = 0) {
@@ -330,8 +363,8 @@ export async function getAdminOrders(filters = {}) {
   };
 
   const result = await apiGet(endpoints.admin.orders, {
+    ...ADMIN_ORDER_REQUEST_OPTIONS,
     query,
-    credentials: "include",
   });
   const payload = getEnvelopeData(result);
   const items = normalizeItems(payload).map(normalizeOrderSummary);
@@ -344,7 +377,10 @@ export async function getAdminOrders(filters = {}) {
 }
 
 export async function getAdminOrderDetail(orderNumber) {
-  const result = await apiGet(endpoints.admin.orderDetail(orderNumber));
+  const result = await apiGet(endpoints.admin.orderDetail(orderNumber), {
+    ...ADMIN_ORDER_REQUEST_OPTIONS,
+    cache: "no-store",
+  });
   const payload = getEnvelopeData(result);
   const item = payload?.order ?? payload?.data ?? payload;
 
@@ -386,6 +422,7 @@ export async function getAdminOrderDetail(orderNumber) {
 
   return {
     ...summary,
+    _id: firstString(item?._id),
     orderedItems: orderItems,
     customer: {
       name: summary.customerName,
@@ -420,7 +457,8 @@ export async function getAdminOrderDetail(orderNumber) {
       ),
     },
     payment: {
-      method: summary.paymentMethod,
+      method: normalizePaymentMethod(summary.paymentMethod),
+      methodLabel: summary.paymentMethod,
       status: summary.paymentStatus,
       statusLabel: summary.paymentStatusLabel,
       subtotalMinor:
@@ -431,11 +469,20 @@ export async function getAdminOrderDetail(orderNumber) {
           item?.subtotal?.amountMinor,
           item?.subtotal?.amount,
         ),
-      deliveryMinor: normalizeMinorAmount(
-        item?.deliveryFeeMinor,
-        item?.deliveryChargeMinor,
-        item?.shippingFeeMinor,
-      ),
+      deliveryMinor:
+        normalizeMinorAmount(
+          item?.deliveryFeeMinor,
+          item?.deliveryChargeMinor,
+          item?.shippingFeeMinor,
+        ) ??
+        normalizeMajorAmountToMinor(
+          item?.deliveryFee,
+          item?.deliveryCharge,
+          item?.shippingFee,
+          item?.delivery?.amount,
+          item?.shipping?.amount,
+        ) ??
+        0,
       discountMinor: normalizeMinorAmount(item?.discountMinor, item?.discount?.amountMinor) ?? 0,
       totalMinor: summary.totalMinor,
       transactionReference: firstString(
@@ -487,49 +534,86 @@ export async function getAdminOrderDetail(orderNumber) {
   };
 }
 
-export async function updateAdminOrderStatus(orderNumber, payload) {
-  const result = await apiPatch(endpoints.admin.orderDetail(orderNumber), payload);
-  return getEnvelopeData(result);
+export function resolveAdminOrderIdentifier(order, routeOrderNumber) {
+  return (
+    normalizeOrderIdentifierValue(order?.id) ||
+    normalizeOrderIdentifierValue(order?._id) ||
+    normalizeOrderIdentifierValue(order?.orderNumber) ||
+    normalizeOrderIdentifierValue(routeOrderNumber)
+  );
+}
+
+export async function updateAdminOrderStatus(orderIdentifier, payload) {
+  const normalizedIdentifier = resolveAdminOrderIdentifier({ id: orderIdentifier }, orderIdentifier);
+  const normalizedPayload = {
+    status: normalizeOrderStatus(payload?.status),
+    note: firstString(payload?.note) ?? "",
+  };
+  const path = orderStatusPath(normalizedIdentifier);
+
+  if (IS_DEVELOPMENT) {
+    console.log("[admin order status] URL:", resolveApiRequestUrl(path));
+    console.log("[admin order status] payload:", normalizedPayload);
+  }
+
+  try {
+    const result = await apiPatch(path, normalizedPayload, ADMIN_ORDER_REQUEST_OPTIONS);
+    const data = getEnvelopeData(result);
+
+    if (IS_DEVELOPMENT) {
+      console.log("[admin order status] response:", result?.status, data);
+    }
+
+    return data;
+  } catch (error) {
+    if (IS_DEVELOPMENT) {
+      console.log(
+        "[admin order status] response:",
+        error?.status ?? null,
+        error?.details ?? error?.message ?? null,
+      );
+    }
+
+    throw error;
+  }
 }
 
 export async function cancelAdminOrder(orderNumber, payload) {
-  try {
-    const result = await apiPost(orderActionPath(orderNumber, "cancel"), payload);
-    return getEnvelopeData(result);
-  } catch (error) {
-    const result = await apiPatch(endpoints.admin.orderDetail(orderNumber), {
-      ...payload,
-      action: "cancel",
-    });
-    return getEnvelopeData(result);
-  }
+  const result = await apiPatch(orderCancelPath(orderNumber), payload, ADMIN_ORDER_REQUEST_OPTIONS);
+  return getEnvelopeData(result);
 }
 
 export async function saveAdminOrderNote(orderNumber, note) {
   const result = await apiPatch(endpoints.admin.orderDetail(orderNumber), {
     action: "save_note",
     adminNote: note,
-  });
+  }, ADMIN_ORDER_REQUEST_OPTIONS);
   return getEnvelopeData(result);
 }
 
 export async function createAdminShipmentFromOrder(orderNumber, payload) {
-  const result = await apiPost(endpoints.admin.shipments, {
-    orderNumber,
-    ...payload,
-  });
+  const result = await apiPost(orderShipmentPath(orderNumber), payload, ADMIN_ORDER_REQUEST_OPTIONS);
+  return getEnvelopeData(result);
+}
+
+export async function updateAdminOrderPaymentStatus(orderNumber, payload) {
+  const result = await apiPatch(
+    orderPaymentStatusPath(orderNumber),
+    payload,
+    ADMIN_ORDER_REQUEST_OPTIONS,
+  );
   return getEnvelopeData(result);
 }
 
 export async function createAdminInvoiceForOrder(orderNumber) {
   const result = await apiPost(endpoints.admin.invoices, {
     orderNumber,
-  });
+  }, ADMIN_ORDER_REQUEST_OPTIONS);
   return getEnvelopeData(result);
 }
 
 export async function getAdminCourierOptions() {
-  const result = await apiGet(endpoints.admin.couriers);
+  const result = await apiGet(endpoints.admin.couriers, ADMIN_ORDER_REQUEST_OPTIONS);
   const payload = getEnvelopeData(result);
   return normalizeItems(payload).map(normalizeCourierOption);
 }

@@ -98,6 +98,11 @@ function normalizeMinorAmount(...values) {
   return amount === null ? null : Math.round(amount);
 }
 
+function normalizeMajorAmountToMinor(...values) {
+  const amount = firstNumber(...values);
+  return amount === null ? null : Math.round(amount * 100);
+}
+
 function normalizeAddress(value) {
   if (!value) {
     return null;
@@ -241,8 +246,12 @@ function normalizeOrder(payload) {
     orderPayload?.deliveryChargeMinor,
     orderPayload?.shippingFeeMinor,
     orderPayload?.delivery?.amountMinor,
-    orderPayload?.delivery?.amount,
     orderPayload?.shipping?.amountMinor,
+  ) ?? normalizeMajorAmountToMinor(
+    orderPayload?.deliveryFee,
+    orderPayload?.deliveryCharge,
+    orderPayload?.shippingFee,
+    orderPayload?.delivery?.amount,
     orderPayload?.shipping?.amount,
   );
   const itemTotalMinor = normalizeMinorAmount(

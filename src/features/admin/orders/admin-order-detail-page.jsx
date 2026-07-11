@@ -24,17 +24,28 @@ import {
   downloadAdminInvoicePdf,
 } from "@/features/admin/invoices/admin-invoices-api";
 import {
+  cancelAdminOrder,
   createAdminShipmentFromOrder,
   getAdminCourierOptions,
   getAdminOrderDetail,
+  resolveAdminOrderIdentifier,
   saveAdminOrderNote,
   updateAdminOrderStatus,
+  updateAdminOrderPaymentStatus,
 } from "@/features/admin/orders/admin-orders-api";
-import { updateAdminShipmentStatus } from "@/features/admin/shipments/admin-shipments-api";
 import { getFieldErrors } from "@/lib/api/error-messages";
+import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
+
+const ADMIN_ORDER_STATUS_OPTIONS = [
+  { label: "Confirmed", value: "confirmed" },
+  { label: "Processing", value: "processing" },
+  { label: "Delivered", value: "delivered" },
+  { label: "Cancelled", value: "cancelled" },
+];
+const IS_DEVELOPMENT = process.env.NODE_ENV !== "production";
 
 function formatDate(value) {
   if (!value) {
@@ -87,6 +98,105 @@ function DetailGroup({ title, icon: Icon, children }) {
   );
 }
 
+const TEMPORARY_COURIER_OPTIONS = [
+  { id: "shop", name: "Shop" },
+  { id: "ad-auto-parts-delivery", name: "AD Auto Parts Delivery" },
+  { id: "smsa", name: "SMSA" },
+  { id: "aramex", name: "Aramex" },
+  { id: "dhl", name: "DHL" },
+  { id: "other", name: "Other" },
+];
+
+function mergeCourierOptions(couriers = []) {
+  const seen = new Set();
+
+  return [...TEMPORARY_COURIER_OPTIONS, ...couriers].reduce((items, courier) => {
+    const id = String(courier?.id ?? courier?.name ?? "").trim();
+    const name = String(courier?.name ?? courier?.id ?? "").trim();
+
+    if (!id || !name) {
+      return items;
+    }
+
+    const key = name.toLowerCase();
+
+    if (seen.has(key)) {
+      return items;
+    }
+
+    seen.add(key);
+    items.push({ id, name });
+    return items;
+  }, []);
+}
+
+function normalizeStatusValue(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.includes("cancel")) {
+    return "cancelled";
+  }
+
+  return normalized.replace(/\s+/g, "_");
+}
+
+function getStatusLabel(value, t) {
+  const normalized = normalizeStatusValue(value);
+  const matched = ADMIN_ORDER_STATUS_OPTIONS.find((option) => option.value === normalized);
+
+  if (matched) {
+    return matched.label;
+  }
+
+  return t(normalized || "pending");
+}
+
+function sanitizeErrorMessageValue(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed && trimmed !== "[object Object]" ? trimmed : null;
+}
+
+function getStatusUpdateErrorMessage(error) {
+  const backendMessage =
+    sanitizeErrorMessageValue(error?.message) ||
+    sanitizeErrorMessageValue(error?.details?.message) ||
+    sanitizeErrorMessageValue(error?.details?.error);
+
+  if (IS_DEVELOPMENT && backendMessage) {
+    return backendMessage;
+  }
+
+  if (error?.code === "VALIDATION_ERROR" || error?.isValidationError) {
+    return backendMessage || "Please review the status update details and try again.";
+  }
+
+  if (error?.code === "RESOURCE_NOT_FOUND" || error?.status === 404) {
+    return "Order not found.";
+  }
+
+  if (error?.status === 401) {
+    return "Admin login required.";
+  }
+
+  if (error?.status === 403) {
+    return "Access denied.";
+  }
+
+  if (error?.status === 429) {
+    return "Too many requests. Please wait a moment and try again.";
+  }
+
+  return backendMessage || "Something went wrong. Please try again.";
+}
+
 export function AdminOrderDetailPage({ orderNumber }) {
   const auth = useAuth();
   const router = useRouter();
@@ -104,10 +214,10 @@ export function AdminOrderDetailPage({ orderNumber }) {
     submitting: false,
   });
   const [shipmentForm, setShipmentForm] = useState({
-    courierId: "",
+    courier: "Shop",
     trackingNumber: "",
     estimatedDeliveryDate: "",
-    shipmentNote: "",
+    note: "",
     submitting: false,
     fieldErrors: {},
   });
@@ -143,19 +253,15 @@ export function AdminOrderDetailPage({ orderNumber }) {
       return undefined;
     }
 
-    if (access.totpPending) {
-      router.replace(routes.admin.adminTotp);
-      return undefined;
-    }
-
     let active = true;
 
     async function loadPage() {
       try {
-        const [detail, couriers] = await Promise.all([
+        const [detail, courierResults] = await Promise.all([
           getAdminOrderDetail(orderNumber),
           getAdminCourierOptions().catch(() => []),
         ]);
+        const couriers = mergeCourierOptions(courierResults);
 
         if (active) {
           setState({
@@ -165,16 +271,21 @@ export function AdminOrderDetailPage({ orderNumber }) {
             couriers,
           });
           setStatusForm({
-            status: detail.orderStatus,
+            status: normalizeStatusValue(detail.orderStatus),
             note: "",
             submitting: false,
           });
-          setShipmentForm((current) => ({
-            ...current,
-            courierId: detail.shipments[0]?.courierId || couriers[0]?.id || "",
-            fieldErrors: {},
+          setShipmentForm({
+            courier:
+              detail.shipments[0]?.courier ||
+              couriers[0]?.name ||
+              TEMPORARY_COURIER_OPTIONS[0].name,
+            trackingNumber: "",
+            estimatedDeliveryDate: "",
+            note: "",
             submitting: false,
-          }));
+            fieldErrors: {},
+          });
           setNoteForm({
             value: detail.latestAdminNote || "",
             submitting: false,
@@ -203,28 +314,43 @@ export function AdminOrderDetailPage({ orderNumber }) {
   const detail = state.detail;
   const currentShipment = detail?.shipments?.[0] ?? null;
   const orderStatusOptions = useMemo(
-    () => detail?.availableOrderStatuses ?? [],
-    [detail],
-  );
-  const shipmentStatusOptions = useMemo(
-    () => detail?.availableShipmentStatuses ?? [],
-    [detail],
-  );
+    () => {
+      const allowedValues = new Set(
+        (detail?.availableOrderStatuses ?? []).map((option) => normalizeStatusValue(option?.value)),
+      );
+      const filteredOptions = ADMIN_ORDER_STATUS_OPTIONS.filter((option) => (
+        allowedValues.size === 0 || allowedValues.has(option.value)
+      ));
+      const currentStatus = normalizeStatusValue(detail?.orderStatus);
 
+      if (currentStatus && !filteredOptions.some((option) => option.value === currentStatus)) {
+        return [
+          { label: getStatusLabel(currentStatus, t), value: currentStatus },
+          ...filteredOptions,
+        ];
+      }
+
+      return filteredOptions;
+    },
+    [detail, t],
+  );
   async function handleSaveStatus(nextStatus) {
+    const orderIdentifier = resolveAdminOrderIdentifier(detail, orderNumber);
+    const normalizedStatus = normalizeStatusValue(nextStatus);
+
     setStatusForm((current) => ({ ...current, submitting: true }));
 
     try {
-      await updateAdminOrderStatus(orderNumber, {
-        status: nextStatus,
-        note: statusForm.note || undefined,
+      await updateAdminOrderStatus(orderIdentifier, {
+        status: normalizedStatus,
+        note: statusForm.note || "",
       });
       toast.success(t("orders"), t("statusUpdatedSuccessfully"));
       setStatusForm((current) => ({ ...current, note: "", submitting: false }));
       setRefreshKey((value) => value + 1);
     } catch (error) {
       setStatusForm((current) => ({ ...current, submitting: false }));
-      toast.apiError(error, t("orders"));
+      toast.error(t("orders"), getStatusUpdateErrorMessage(error));
     }
   }
 
@@ -232,16 +358,22 @@ export function AdminOrderDetailPage({ orderNumber }) {
     setDialogState((current) => ({ ...current, submitting: true }));
 
     try {
-      if (dialogState.mode === "shipment-status") {
-        await updateAdminShipmentStatus(dialogState.shipmentId, {
-          status: dialogState.shipmentStatus,
-          note: dialogState.reason || undefined,
+      if (dialogState.mode === "cancelled") {
+        await cancelAdminOrder(orderNumber, {
+          reason: dialogState.reason || "Cancelled by admin",
         });
       } else {
-        await updateAdminOrderStatus(orderNumber, {
-          status: dialogState.mode,
-          note: dialogState.reason || undefined,
-        });
+        await updateAdminOrderStatus(
+          resolveAdminOrderIdentifier(detail, orderNumber),
+          {
+            status: normalizeStatusValue(dialogState.mode),
+            note: dialogState.reason || "",
+          },
+        );
+      }
+
+      if (IS_DEVELOPMENT) {
+        console.log("[admin order status] refresh requested for:", detail?.orderNumber || orderNumber);
       }
 
       toast.success(t("orders"), t("statusUpdatedSuccessfully"));
@@ -256,7 +388,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
       setRefreshKey((value) => value + 1);
     } catch (error) {
       setDialogState((current) => ({ ...current, submitting: false }));
-      toast.apiError(error, t("orders"));
+      toast.error(t("orders"), getStatusUpdateErrorMessage(error));
     }
   }
 
@@ -280,21 +412,41 @@ export function AdminOrderDetailPage({ orderNumber }) {
 
   async function handleCreateShipment(event) {
     event.preventDefault();
+    const normalizedCourier = String(shipmentForm.courier || "").trim();
+    const normalizedTrackingNumber = shipmentForm.trackingNumber.trim();
+    const nextFieldErrors = {};
+
+    if (!normalizedCourier) {
+      nextFieldErrors.courier = t("selectCourier");
+    }
+
+    if (normalizedCourier.toLowerCase() !== "shop" && !normalizedTrackingNumber) {
+      nextFieldErrors.trackingNumber = "Tracking number is required for this courier.";
+    }
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      setShipmentForm((current) => ({
+        ...current,
+        fieldErrors: nextFieldErrors,
+      }));
+      return;
+    }
+
     setShipmentForm((current) => ({ ...current, submitting: true, fieldErrors: {} }));
 
     try {
       await createAdminShipmentFromOrder(orderNumber, {
-        courierId: shipmentForm.courierId,
-        trackingNumber: shipmentForm.trackingNumber || undefined,
+        courier: normalizedCourier,
+        trackingNumber: normalizedTrackingNumber || undefined,
         estimatedDeliveryDate: shipmentForm.estimatedDeliveryDate || undefined,
-        shipmentNote: shipmentForm.shipmentNote || undefined,
+        note: shipmentForm.note || undefined,
       });
       toast.success(t("shipments"), t("shipmentCreatedSuccessfully"));
       setShipmentForm({
-        courierId: state.couriers[0]?.id || "",
+        courier: state.couriers[0]?.name || TEMPORARY_COURIER_OPTIONS[0].name,
         trackingNumber: "",
         estimatedDeliveryDate: "",
-        shipmentNote: "",
+        note: "",
         submitting: false,
         fieldErrors: {},
       });
@@ -338,6 +490,44 @@ export function AdminOrderDetailPage({ orderNumber }) {
     }
   }
 
+  async function handleMarkAsPaid() {
+    setState((current) => ({
+      ...current,
+      detail: current.detail
+        ? {
+            ...current.detail,
+            payment: {
+              ...current.detail.payment,
+              submitting: true,
+            },
+          }
+        : current.detail,
+    }));
+
+    try {
+      await updateAdminOrderPaymentStatus(orderNumber, {
+        paymentStatus: "paid",
+        note: "Cash collected by admin",
+      });
+      toast.success(t("orders"), "Payment marked as paid");
+      setRefreshKey((value) => value + 1);
+    } catch (error) {
+      setState((current) => ({
+        ...current,
+        detail: current.detail
+          ? {
+              ...current.detail,
+              payment: {
+                ...current.detail.payment,
+                submitting: false,
+              },
+            }
+          : current.detail,
+      }));
+      toast.apiError(error, t("orders"));
+    }
+  }
+
   if (state.loading) {
     return (
       <div className="space-y-6">
@@ -362,7 +552,9 @@ export function AdminOrderDetailPage({ orderNumber }) {
     return (
       <ErrorState
         title={t("failedToLoad")}
-        description={t("adminOrderLoadError")}
+        description={resolveApiUiMessage(state.error, t("adminOrderLoadError"), {
+          routeScope: "Admin order detail",
+        })}
         actionLabel={t("retry")}
         onAction={() => setRefreshKey((value) => value + 1)}
       />
@@ -586,7 +778,11 @@ export function AdminOrderDetailPage({ orderNumber }) {
               </div>
               <div className="grid gap-1 pt-2">
                 <p className="text-muted-foreground">{t("paymentMethod")}</p>
-                <p className="font-medium text-foreground">{detail.payment.method}</p>
+                <p className="font-medium text-foreground">
+                  {detail.payment.method === "cash_on_delivery"
+                    ? t("cashOnDelivery")
+                    : detail.payment.methodLabel}
+                </p>
               </div>
               <div className="grid gap-1">
                 <p className="text-muted-foreground">{t("paymentStatus")}</p>
@@ -594,6 +790,18 @@ export function AdminOrderDetailPage({ orderNumber }) {
                   <Badge variant={getStatusVariant(detail.payment.status)}>{detail.payment.statusLabel}</Badge>
                 </div>
               </div>
+              {detail.payment.method === "cash_on_delivery" && detail.payment.status !== "paid" ? (
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleMarkAsPaid}
+                    disabled={detail.payment.submitting === true}
+                  >
+                    {detail.payment.submitting === true ? t("saving") : "Mark as Paid"}
+                  </Button>
+                </div>
+              ) : null}
               {detail.payment.transactionReference ? (
                 <div className="grid gap-1">
                   <p className="text-muted-foreground">{t("referenceNumber")}</p>
@@ -625,51 +833,31 @@ export function AdminOrderDetailPage({ orderNumber }) {
                     </p>
                   ) : null}
                 </div>
-                <div className="space-y-2">
-                  <Select
-                    value={currentShipment.status}
-                    onChange={(event) =>
-                      setDialogState({
-                        open: true,
-                        mode: "shipment-status",
-                        shipmentId: currentShipment.id,
-                        shipmentStatus: event.target.value,
-                        reason: "",
-                        submitting: false,
-                      })
-                    }
-                  >
-                    <option value={currentShipment.status}>{t("updateStatus")}</option>
-                    {shipmentStatusOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {t(option.value)}
-                      </option>
-                    ))}
-                  </Select>
-                  <p className="text-xs text-muted-foreground">{t("shipmentStatusManagedByBackend")}</p>
-                </div>
               </div>
             ) : detail.availableActions.canCreateShipment ? (
               <form className="space-y-4" onSubmit={handleCreateShipment}>
                 <Select
-                  value={shipmentForm.courierId}
-                  onChange={(event) => setShipmentForm((current) => ({ ...current, courierId: event.target.value }))}
+                  value={shipmentForm.courier}
+                  onChange={(event) => setShipmentForm((current) => ({ ...current, courier: event.target.value }))}
                 >
                   <option value="">{t("selectCourier")}</option>
                   {state.couriers.map((courier) => (
-                    <option key={courier.id} value={courier.id}>
+                    <option key={courier.id} value={courier.name}>
                       {courier.name}
                     </option>
                   ))}
                 </Select>
-                {shipmentForm.fieldErrors.courierId ? (
-                  <p className="text-sm text-error">{shipmentForm.fieldErrors.courierId}</p>
+                {shipmentForm.fieldErrors.courier ? (
+                  <p className="text-sm text-error">{shipmentForm.fieldErrors.courier}</p>
                 ) : null}
                 <Input
                   value={shipmentForm.trackingNumber}
                   onChange={(event) => setShipmentForm((current) => ({ ...current, trackingNumber: event.target.value }))}
                   placeholder={t("trackingNumber")}
                 />
+                {shipmentForm.fieldErrors.trackingNumber ? (
+                  <p className="text-sm text-error">{shipmentForm.fieldErrors.trackingNumber}</p>
+                ) : null}
                 <Input
                   type="date"
                   value={shipmentForm.estimatedDeliveryDate}
@@ -678,8 +866,8 @@ export function AdminOrderDetailPage({ orderNumber }) {
                   }
                 />
                 <Textarea
-                  value={shipmentForm.shipmentNote}
-                  onChange={(event) => setShipmentForm((current) => ({ ...current, shipmentNote: event.target.value }))}
+                  value={shipmentForm.note}
+                  onChange={(event) => setShipmentForm((current) => ({ ...current, note: event.target.value }))}
                   placeholder={t("shipmentNote")}
                 />
                 <Button type="submit" disabled={shipmentForm.submitting}>
@@ -695,16 +883,21 @@ export function AdminOrderDetailPage({ orderNumber }) {
             <div className="space-y-4">
               <Select
                 value={statusForm.status}
-                onChange={(event) => setStatusForm((current) => ({ ...current, status: event.target.value }))}
+                onChange={(event) =>
+                  setStatusForm((current) => ({
+                    ...current,
+                    status: normalizeStatusValue(event.target.value),
+                  }))
+                }
               >
                 {orderStatusOptions.length === 0 ? (
                   <option value={statusForm.status || "pending"}>
-                    {t(statusForm.status || "pending")}
+                    {getStatusLabel(statusForm.status || "pending", t)}
                   </option>
                 ) : null}
                 {orderStatusOptions.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {t(option.value)}
+                    {option.label}
                   </option>
                 ))}
               </Select>
@@ -715,11 +908,12 @@ export function AdminOrderDetailPage({ orderNumber }) {
               />
               <div className="flex flex-wrap gap-3">
                 <Button
+                  type="button"
                   onClick={() => {
-                    if (["cancelled", "shipped", "delivered"].includes(statusForm.status)) {
+                    if (statusForm.status === "cancelled") {
                       setDialogState({
                         open: true,
-                        mode: statusForm.status,
+                        mode: normalizeStatusValue(statusForm.status),
                         shipmentId: "",
                         shipmentStatus: "",
                         reason: statusForm.note,
@@ -736,6 +930,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
                 </Button>
                 {detail.availableActions.canCancel ? (
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={() =>
                       setDialogState({
@@ -763,20 +958,20 @@ export function AdminOrderDetailPage({ orderNumber }) {
       <ConfirmationDialog
         open={dialogState.open}
         title={
-          dialogState.mode === "shipment-status"
-            ? t("updateShipmentStatus")
+          dialogState.mode === "cancelled" ? t("cancelOrder") : t("updateStatus")
+        }
+        description={
+          dialogState.mode === "cancelled"
+            ? "Are you sure you want to cancel this order?"
+            : t("confirmOrderStatusChange")
+        }
+        confirmLabel={
+          dialogState.submitting
+            ? t("saving")
             : dialogState.mode === "cancelled"
               ? t("cancelOrder")
               : t("updateStatus")
         }
-        description={
-          dialogState.mode === "shipment-status"
-            ? t("confirmShipmentStatusChange")
-            : dialogState.mode === "cancelled"
-              ? t("cancelOrderConfirmation")
-              : t("confirmOrderStatusChange")
-        }
-        confirmLabel={dialogState.submitting ? t("saving") : t("updateStatus")}
         cancelLabel={t("cancel")}
         onCancel={() =>
           setDialogState({
