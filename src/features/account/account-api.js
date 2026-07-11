@@ -140,6 +140,32 @@ function toDisplayLabel(value, fallback = "Pending") {
     .join(" ");
 }
 
+function normalizeStatusValue(value) {
+  const normalized = firstString(value)?.toLowerCase();
+
+  if (!normalized) {
+    return "";
+  }
+
+  if (normalized.includes("cancel")) {
+    return "cancelled";
+  }
+
+  if (normalized.includes("pick")) {
+    return "picked_up";
+  }
+
+  return normalized.replace(/\s+/g, "_");
+}
+
+function normalizeFulfillmentMethod(...values) {
+  return (firstString(...values) ?? "").toLowerCase().replace(/\s+/g, "_");
+}
+
+function isShopPickupMethod(value) {
+  return normalizeFulfillmentMethod(value) === "shop_pickup" || normalizeFulfillmentMethod(value) === "shop_receive";
+}
+
 function mapLifecycleStatus(value, fallback = "Pending") {
   const normalizedValue = firstString(value)?.toLowerCase();
 
@@ -171,24 +197,53 @@ function mapLifecycleStatus(value, fallback = "Pending") {
 }
 
 function normalizeOrderStatuses(orderPayload, baseStatus) {
+  const fulfillmentMethod = normalizeFulfillmentMethod(
+    orderPayload?.fulfillmentMethod,
+    orderPayload?.deliveryMethod,
+    orderPayload?.shipment?.fulfillmentMethod,
+  );
   const rawOrderStatus = firstString(baseStatus, orderPayload?.status, orderPayload?.orderStatus);
   const rawShipmentStatus = firstString(
     orderPayload?.shipmentStatus,
     orderPayload?.shipment?.status,
     orderPayload?.deliveryStatus,
   );
+  const rawDeliveryStatus = firstString(orderPayload?.deliveryStatus, orderPayload?.delivery?.status);
+  const rawPickupStatus = firstString(orderPayload?.pickupStatus, orderPayload?.pickup?.status);
   const rawPaymentStatus = firstString(
     orderPayload?.paymentStatus,
     orderPayload?.payment?.status,
   );
-  let shipmentStatusLabel = mapLifecycleStatus(rawShipmentStatus, "Pending");
+  const normalizedOrderStatus = normalizeStatusValue(rawOrderStatus);
+  const normalizedShipmentStatus = normalizeStatusValue(rawShipmentStatus);
+  const normalizedDeliveryStatus = normalizeStatusValue(rawDeliveryStatus);
+  const normalizedPickupStatus = normalizeStatusValue(rawPickupStatus);
   const paymentStatusLabel = toDisplayLabel(rawPaymentStatus, "Pending");
-  const normalizedOrderStatus = rawOrderStatus?.toLowerCase() ?? "";
-  let orderStatusLabel = mapLifecycleStatus(rawOrderStatus, "Pending");
+  let orderStatusLabel =
+    normalizedOrderStatus === "picked_up"
+      ? "Picked Up"
+      : mapLifecycleStatus(rawOrderStatus, "Pending");
+  let shipmentStatusLabel = mapLifecycleStatus(rawShipmentStatus, "Pending");
 
-  if (shipmentStatusLabel === "Delivered") {
+  if (isShopPickupMethod(fulfillmentMethod)) {
+    shipmentStatusLabel =
+      normalizedPickupStatus === "picked_up" ||
+      normalizedOrderStatus === "picked_up" ||
+      normalizedOrderStatus === "delivered"
+        ? "Picked Up"
+        : "Shop Pickup";
+
+    if (normalizedOrderStatus === "delivered") {
+      orderStatusLabel = "Picked Up";
+    }
+  } else if (
+    normalizedOrderStatus === "delivered" ||
+    normalizedShipmentStatus === "delivered" ||
+    normalizedDeliveryStatus === "delivered"
+  ) {
     orderStatusLabel = "Delivered";
-  } else if (normalizedOrderStatus.includes("cancel")) {
+    shipmentStatusLabel = "Delivered";
+  } else if (normalizedOrderStatus === "cancelled") {
     orderStatusLabel = "Cancelled";
   }
 

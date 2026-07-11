@@ -20,6 +20,7 @@ const DEFAULT_PAGE_SIZE = 10;
 const ADMIN_ORDER_REQUEST_OPTIONS = {
   credentials: "include",
 };
+const SHOP_PICKUP_METHODS = new Set(["shop_pickup", "shop_receive"]);
 const DEFAULT_ORDER_STATUSES = [
   "pending",
   "confirmed",
@@ -61,8 +62,26 @@ function orderPaymentStatusPath(orderId) {
   return orderActionPath(orderId, "payment-status");
 }
 
+function logAdminOrderAction(url, payload, responseStatus, responseData) {
+  if (!IS_DEVELOPMENT) {
+    return;
+  }
+
+  console.log("[admin order action]", url, payload, responseStatus, responseData);
+}
+
 function normalizeOrderIdentifierValue(value) {
   return firstString(value);
+}
+
+function toDisplayLabel(value, fallback = "Pending") {
+  const source = firstString(value) ?? fallback;
+
+  return source
+    .split(/[_-\s]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase())
+    .join(" ");
 }
 
 function normalizeOrderStatus(value) {
@@ -98,9 +117,21 @@ function normalizePaymentStatus(value) {
 }
 
 function normalizeShipmentStatus(value) {
-  const normalized = (firstString(value) ?? "pending").toLowerCase();
+  const normalized = firstString(value);
 
-  return normalized.replace(/\s+/g, "_");
+  if (!normalized) {
+    return "";
+  }
+
+  return normalized.toLowerCase().replace(/\s+/g, "_");
+}
+
+function normalizeFulfillmentMethod(value) {
+  return (firstString(value) ?? "").toLowerCase().replace(/\s+/g, "_");
+}
+
+function isShopPickupFulfillmentMethod(value) {
+  return SHOP_PICKUP_METHODS.has(normalizeFulfillmentMethod(value));
 }
 
 function normalizePaymentMethod(value) {
@@ -112,7 +143,116 @@ function normalizeMajorAmountToMinor(...values) {
   return amount === null ? null : Math.round(amount * 100);
 }
 
+function resolveBackendMessage(data) {
+  if (!data) {
+    return null;
+  }
+
+  if (typeof data === "string") {
+    const trimmed = data.trim();
+    return trimmed && trimmed !== "[object Object]" ? trimmed : null;
+  }
+
+  if (typeof data !== "object") {
+    return null;
+  }
+
+  const directMessage = firstString(data.message, data.error);
+
+  if (directMessage && directMessage !== "[object Object]") {
+    return directMessage;
+  }
+
+  const firstError = asArray(data.errors)[0];
+  const firstErrorMessage = firstString(firstError?.message, firstError?.error, firstError);
+  return firstErrorMessage && firstErrorMessage !== "[object Object]" ? firstErrorMessage : null;
+}
+
+function resolveOrderState(item) {
+  const fulfillmentMethod = normalizeFulfillmentMethod(
+    item?.fulfillmentMethod ??
+      item?.deliveryMethod ??
+      item?.shippingMethod ??
+      item?.shipment?.method ??
+      item?.shipment?.fulfillmentMethod,
+  );
+  const rawOrderStatus = firstString(item?.status, item?.orderStatus) ?? "pending";
+  const rawPaymentStatus = firstString(
+    item?.paymentStatus,
+    item?.payment?.status,
+    item?.payment_state,
+  ) ?? "pending";
+  const rawShipmentStatus = firstString(
+    item?.shipmentStatus,
+    item?.shipment?.status,
+    item?.deliveryStatus,
+  );
+  const rawDeliveryStatus = firstString(item?.deliveryStatus, item?.delivery?.status);
+  const rawPickupStatus = firstString(item?.pickupStatus, item?.pickup?.status);
+  const orderStatus = normalizeOrderStatus(rawOrderStatus);
+  const paymentStatus = normalizePaymentStatus(rawPaymentStatus);
+  const deliveryStatus = normalizeShipmentStatus(rawDeliveryStatus);
+  const pickupStatus = normalizeShipmentStatus(rawPickupStatus);
+  let shipmentStatus = normalizeShipmentStatus(rawShipmentStatus);
+  let shipmentStatusLabel = firstString(
+    item?.shipmentStatusLabel,
+    item?.shipment?.statusLabel,
+    item?.shipment?.status,
+    item?.shipmentStatus,
+  );
+
+  if (isShopPickupFulfillmentMethod(fulfillmentMethod)) {
+    const pickupComplete =
+      pickupStatus === "picked_up" ||
+      pickupStatus === "completed" ||
+      pickupStatus === "complete" ||
+      orderStatus === "picked_up" ||
+      orderStatus === "delivered" ||
+      orderStatus === "completed" ||
+      deliveryStatus === "delivered";
+
+    if (pickupComplete) {
+      shipmentStatus = "picked_up";
+      shipmentStatusLabel = "Picked Up";
+    } else {
+      shipmentStatus = "not_required";
+      shipmentStatusLabel = "Shop Pickup";
+    }
+  } else if (
+    orderStatus === "delivered" ||
+    deliveryStatus === "delivered" ||
+    shipmentStatus === "delivered"
+  ) {
+    shipmentStatus = "delivered";
+    shipmentStatusLabel = "Delivered";
+  } else if (!shipmentStatus) {
+    shipmentStatus = "pending";
+    shipmentStatusLabel = "Pending";
+  } else if (!shipmentStatusLabel) {
+    shipmentStatusLabel = toDisplayLabel(shipmentStatus, "Pending");
+  }
+
+  return {
+    fulfillmentMethod,
+    fulfillmentMethodLabel: fulfillmentMethod ? toDisplayLabel(fulfillmentMethod) : "—",
+    orderStatus,
+    orderStatusLabel:
+      firstString(item?.statusLabel, item?.orderStatusLabel) ??
+      (orderStatus === "picked_up" ? "Picked Up" : toDisplayLabel(orderStatus, "Pending")),
+    paymentStatus,
+    paymentStatusLabel:
+      firstString(item?.paymentStatusLabel, item?.payment?.statusLabel, item?.payment?.status) ??
+      toDisplayLabel(paymentStatus, "Pending"),
+    shipmentStatus,
+    shipmentStatusLabel,
+    deliveryStatus,
+    pickupStatus,
+    isShopPickup: isShopPickupFulfillmentMethod(fulfillmentMethod),
+  };
+}
+
 function normalizeOrderSummary(item, index = 0) {
+  const orderState = resolveOrderState(item);
   const customerName = firstString(
     item?.customer?.name,
     item?.customerName,
@@ -159,32 +299,17 @@ function normalizeOrderSummary(item, index = 0) {
     paymentMethod:
       firstString(item?.paymentMethod, item?.payment?.method, item?.paymentType) ??
       "—",
-    fulfillmentMethod:
-      firstString(
-        item?.fulfillmentMethod,
-        item?.deliveryMethod,
-        item?.shippingMethod,
-        item?.shipment?.method,
-      ) ?? "—",
-    paymentStatus: normalizePaymentStatus(
-      item?.paymentStatus ?? item?.payment?.status ?? item?.payment_state,
-    ),
-    paymentStatusLabel:
-      firstString(item?.paymentStatusLabel, item?.payment?.status, item?.paymentStatus) ??
-      "Pending",
-    orderStatus: normalizeOrderStatus(item?.status ?? item?.orderStatus),
-    orderStatusLabel:
-      firstString(item?.statusLabel, item?.orderStatusLabel, item?.status, item?.orderStatus) ??
-      "Pending",
-    shipmentStatus: normalizeShipmentStatus(
-      item?.shipmentStatus ?? item?.shipment?.status ?? item?.deliveryStatus,
-    ),
-    shipmentStatusLabel:
-      firstString(
-        item?.shipmentStatusLabel,
-        item?.shipment?.status,
-        item?.shipmentStatus,
-      ) ?? "Pending",
+    fulfillmentMethod: orderState.fulfillmentMethodLabel,
+    fulfillmentMethodValue: orderState.fulfillmentMethod,
+    paymentStatus: orderState.paymentStatus,
+    paymentStatusLabel: orderState.paymentStatusLabel,
+    orderStatus: orderState.orderStatus,
+    orderStatusLabel: orderState.orderStatusLabel,
+    shipmentStatus: orderState.shipmentStatus,
+    shipmentStatusLabel: orderState.shipmentStatusLabel,
+    deliveryStatus: orderState.deliveryStatus,
+    pickupStatus: orderState.pickupStatus,
+    isShopPickup: orderState.isShopPickup,
     createdAt: firstString(item?.createdAt, item?.placedAt, item?.date, item?.updatedAt),
     invoiceNumber: firstString(item?.invoiceNumber, item?.invoice?.invoiceNumber),
     invoiceUrl: sanitizeDisplayUrl(item?.invoiceUrl ?? item?.invoice?.pdfUrl),
@@ -383,6 +508,7 @@ export async function getAdminOrderDetail(orderNumber) {
   });
   const payload = getEnvelopeData(result);
   const item = payload?.order ?? payload?.data ?? payload;
+  const orderState = resolveOrderState(item);
 
   const summary = normalizeOrderSummary(item);
   const orderItems = uniqueBy(
@@ -423,6 +549,18 @@ export async function getAdminOrderDetail(orderNumber) {
   return {
     ...summary,
     _id: firstString(item?._id),
+    status: orderState.orderStatus,
+    fulfillmentMethod: orderState.fulfillmentMethod,
+    fulfillmentMethodLabel: orderState.fulfillmentMethodLabel,
+    paymentStatus: orderState.paymentStatus,
+    paymentStatusLabel: orderState.paymentStatusLabel,
+    shipmentStatus: orderState.shipmentStatus,
+    shipmentStatusLabel: orderState.shipmentStatusLabel,
+    deliveryStatus: orderState.deliveryStatus,
+    pickupStatus: orderState.pickupStatus,
+    orderStatus: orderState.orderStatus,
+    orderStatusLabel: orderState.orderStatusLabel,
+    isShopPickup: orderState.isShopPickup,
     orderedItems: orderItems,
     customer: {
       name: summary.customerName,
@@ -459,8 +597,8 @@ export async function getAdminOrderDetail(orderNumber) {
     payment: {
       method: normalizePaymentMethod(summary.paymentMethod),
       methodLabel: summary.paymentMethod,
-      status: summary.paymentStatus,
-      statusLabel: summary.paymentStatusLabel,
+      status: orderState.paymentStatus,
+      statusLabel: orderState.paymentStatusLabel,
       subtotalMinor:
         summary.subtotalMinor ??
         normalizeMinorAmount(
@@ -509,12 +647,15 @@ export async function getAdminOrderDetail(orderNumber) {
     availableActions: {
       canCancel:
         summary.canCancel ||
-        (normalizeOrderStatus(summary.orderStatus) !== "cancelled" &&
-          normalizeOrderStatus(summary.orderStatus) !== "delivered"),
+        (orderState.orderStatus !== "cancelled" &&
+          orderState.orderStatus !== "delivered" &&
+          orderState.orderStatus !== "picked_up"),
       canCreateShipment:
-        summary.canCreateShipment ||
-        shipments.length === 0 ||
-        normalizeOrderStatus(summary.orderStatus) === "processing",
+        !orderState.isShopPickup &&
+        (summary.canCreateShipment ||
+          shipments.length === 0 ||
+          orderState.orderStatus === "processing" ||
+          orderState.orderStatus === "confirmed"),
       canUpdateStatus: true,
       canSaveNote:
         firstBoolean(
@@ -550,30 +691,20 @@ export async function updateAdminOrderStatus(orderIdentifier, payload) {
     note: firstString(payload?.note) ?? "",
   };
   const path = orderStatusPath(normalizedIdentifier);
-
-  if (IS_DEVELOPMENT) {
-    console.log("[admin order status] URL:", resolveApiRequestUrl(path));
-    console.log("[admin order status] payload:", normalizedPayload);
-  }
+  const url = resolveApiRequestUrl(path);
 
   try {
     const result = await apiPatch(path, normalizedPayload, ADMIN_ORDER_REQUEST_OPTIONS);
     const data = getEnvelopeData(result);
-
-    if (IS_DEVELOPMENT) {
-      console.log("[admin order status] response:", result?.status, data);
-    }
-
+    logAdminOrderAction(url, normalizedPayload, result?.status, data);
     return data;
   } catch (error) {
-    if (IS_DEVELOPMENT) {
-      console.log(
-        "[admin order status] response:",
-        error?.status ?? null,
-        error?.details ?? error?.message ?? null,
-      );
-    }
-
+    logAdminOrderAction(
+      url,
+      normalizedPayload,
+      error?.status ?? null,
+      error?.details ?? error?.message ?? null,
+    );
     throw error;
   }
 }
@@ -584,31 +715,75 @@ export async function cancelAdminOrder(orderNumber, payload) {
 }
 
 export async function saveAdminOrderNote(orderNumber, note) {
-  const result = await apiPatch(endpoints.admin.orderDetail(orderNumber), {
-    action: "save_note",
-    adminNote: note,
-  }, ADMIN_ORDER_REQUEST_OPTIONS);
-  return getEnvelopeData(result);
-}
-
-export async function createAdminShipmentFromOrder(orderNumber, payload) {
-  const result = await apiPost(orderShipmentPath(orderNumber), payload, ADMIN_ORDER_REQUEST_OPTIONS);
-  return getEnvelopeData(result);
-}
-
-export async function updateAdminOrderPaymentStatus(orderNumber, payload) {
   const result = await apiPatch(
-    orderPaymentStatusPath(orderNumber),
-    payload,
+    endpoints.admin.orderDetail(orderNumber),
+    {
+      action: "save_note",
+      adminNote: note,
+    },
     ADMIN_ORDER_REQUEST_OPTIONS,
   );
   return getEnvelopeData(result);
 }
 
+export async function createAdminShipmentFromOrder(orderIdentifier, payload) {
+  const normalizedPayload = {
+    courier: firstString(payload?.courier) ?? "Shop",
+    trackingNumber: firstString(payload?.trackingNumber) ?? "",
+    estimatedDeliveryDate: firstString(payload?.estimatedDeliveryDate) ?? null,
+    note: firstString(payload?.note) ?? "",
+  };
+  const path = orderShipmentPath(orderIdentifier);
+  const url = resolveApiRequestUrl(path);
+
+  try {
+    const result = await apiPost(path, normalizedPayload, ADMIN_ORDER_REQUEST_OPTIONS);
+    const data = getEnvelopeData(result);
+    logAdminOrderAction(url, normalizedPayload, result?.status, data);
+    return data;
+  } catch (error) {
+    logAdminOrderAction(
+      url,
+      normalizedPayload,
+      error?.status ?? null,
+      error?.details ?? error?.message ?? null,
+    );
+    throw error;
+  }
+}
+
+export async function updateAdminOrderPaymentStatus(orderIdentifier, payload) {
+  const normalizedPayload = {
+    paymentStatus: normalizePaymentStatus(payload?.paymentStatus),
+    note: firstString(payload?.note) ?? "",
+  };
+  const path = orderPaymentStatusPath(orderIdentifier);
+  const url = resolveApiRequestUrl(path);
+
+  try {
+    const result = await apiPatch(path, normalizedPayload, ADMIN_ORDER_REQUEST_OPTIONS);
+    const data = getEnvelopeData(result);
+    logAdminOrderAction(url, normalizedPayload, result?.status, data);
+    return data;
+  } catch (error) {
+    logAdminOrderAction(
+      url,
+      normalizedPayload,
+      error?.status ?? null,
+      error?.details ?? error?.message ?? null,
+    );
+    throw error;
+  }
+}
+
 export async function createAdminInvoiceForOrder(orderNumber) {
-  const result = await apiPost(endpoints.admin.invoices, {
-    orderNumber,
-  }, ADMIN_ORDER_REQUEST_OPTIONS);
+  const result = await apiPost(
+    endpoints.admin.invoices,
+    {
+      orderNumber,
+    },
+    ADMIN_ORDER_REQUEST_OPTIONS,
+  );
   return getEnvelopeData(result);
 }
 
@@ -617,3 +792,11 @@ export async function getAdminCourierOptions() {
   const payload = getEnvelopeData(result);
   return normalizeItems(payload).map(normalizeCourierOption);
 }
+
+export {
+  isShopPickupFulfillmentMethod,
+  normalizeFulfillmentMethod,
+  resolveBackendMessage,
+  resolveOrderState,
+  toDisplayLabel,
+};

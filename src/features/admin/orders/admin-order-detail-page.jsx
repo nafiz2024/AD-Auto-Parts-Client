@@ -28,8 +28,12 @@ import {
   createAdminShipmentFromOrder,
   getAdminCourierOptions,
   getAdminOrderDetail,
+  isShopPickupFulfillmentMethod,
+  normalizeFulfillmentMethod,
   resolveAdminOrderIdentifier,
+  resolveBackendMessage,
   saveAdminOrderNote,
+  toDisplayLabel,
   updateAdminOrderStatus,
   updateAdminOrderPaymentStatus,
 } from "@/features/admin/orders/admin-orders-api";
@@ -42,6 +46,7 @@ import { useToast } from "@/hooks/use-toast";
 const ADMIN_ORDER_STATUS_OPTIONS = [
   { label: "Confirmed", value: "confirmed" },
   { label: "Processing", value: "processing" },
+  { label: "Shipped", value: "shipped" },
   { label: "Delivered", value: "delivered" },
   { label: "Cancelled", value: "cancelled" },
 ];
@@ -67,7 +72,12 @@ function formatDate(value) {
 function getStatusVariant(status) {
   const normalized = String(status).toLowerCase();
 
-  if (normalized.includes("deliver") || normalized.includes("paid") || normalized.includes("approve")) {
+  if (
+    normalized.includes("deliver") ||
+    normalized.includes("paid") ||
+    normalized.includes("approve") ||
+    normalized.includes("picked")
+  ) {
     return "success";
   }
 
@@ -75,7 +85,12 @@ function getStatusVariant(status) {
     return "warning";
   }
 
-  if (normalized.includes("ship") || normalized.includes("confirm")) {
+  if (
+    normalized.includes("ship") ||
+    normalized.includes("confirm") ||
+    normalized.includes("pickup") ||
+    normalized.includes("not_required")
+  ) {
     return "info";
   }
 
@@ -141,10 +156,14 @@ function normalizeStatusValue(value) {
     return "cancelled";
   }
 
+  if (normalized.includes("pick")) {
+    return "picked_up";
+  }
+
   return normalized.replace(/\s+/g, "_");
 }
 
-function getStatusLabel(value, t) {
+function getStatusLabel(value, t, { isShopPickup = false } = {}) {
   const normalized = normalizeStatusValue(value);
   const matched = ADMIN_ORDER_STATUS_OPTIONS.find((option) => option.value === normalized);
 
@@ -152,23 +171,17 @@ function getStatusLabel(value, t) {
     return matched.label;
   }
 
+  if (isShopPickup && (normalized === "delivered" || normalized === "picked_up")) {
+    return "Picked Up";
+  }
+
   return t(normalized || "pending");
 }
 
-function sanitizeErrorMessageValue(value) {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  return trimmed && trimmed !== "[object Object]" ? trimmed : null;
-}
-
-function getStatusUpdateErrorMessage(error) {
+function getAdminActionErrorMessage(error) {
   const backendMessage =
-    sanitizeErrorMessageValue(error?.message) ||
-    sanitizeErrorMessageValue(error?.details?.message) ||
-    sanitizeErrorMessageValue(error?.details?.error);
+    resolveBackendMessage(error?.details) ||
+    resolveBackendMessage(error?.message);
 
   if (IS_DEVELOPMENT && backendMessage) {
     return backendMessage;
@@ -313,29 +326,46 @@ export function AdminOrderDetailPage({ orderNumber }) {
 
   const detail = state.detail;
   const currentShipment = detail?.shipments?.[0] ?? null;
+  const orderIdentifier = resolveAdminOrderIdentifier(detail, orderNumber);
+  const fulfillmentMethod = normalizeFulfillmentMethod(detail?.fulfillmentMethod);
+  const isShopPickupOrder =
+    detail?.isShopPickup === true || isShopPickupFulfillmentMethod(fulfillmentMethod);
   const orderStatusOptions = useMemo(
     () => {
       const allowedValues = new Set(
         (detail?.availableOrderStatuses ?? []).map((option) => normalizeStatusValue(option?.value)),
       );
-      const filteredOptions = ADMIN_ORDER_STATUS_OPTIONS.filter((option) => (
+      const baseOptions = ADMIN_ORDER_STATUS_OPTIONS.filter((option) => (
         allowedValues.size === 0 || allowedValues.has(option.value)
-      ));
+      )).map((option) => {
+        if (isShopPickupOrder && option.value === "delivered") {
+          return { ...option, label: "Picked Up" };
+        }
+
+        return option;
+      });
+      const pickupOptionAvailable = allowedValues.has("picked_up");
+      const filteredOptions =
+        isShopPickupOrder && pickupOptionAvailable
+          ? [...baseOptions, { label: "Picked Up", value: "picked_up" }]
+          : baseOptions;
       const currentStatus = normalizeStatusValue(detail?.orderStatus);
 
       if (currentStatus && !filteredOptions.some((option) => option.value === currentStatus)) {
         return [
-          { label: getStatusLabel(currentStatus, t), value: currentStatus },
+          {
+            label: getStatusLabel(currentStatus, t, { isShopPickup: isShopPickupOrder }),
+            value: currentStatus,
+          },
           ...filteredOptions,
         ];
       }
 
       return filteredOptions;
     },
-    [detail, t],
+    [detail, isShopPickupOrder, t],
   );
   async function handleSaveStatus(nextStatus) {
-    const orderIdentifier = resolveAdminOrderIdentifier(detail, orderNumber);
     const normalizedStatus = normalizeStatusValue(nextStatus);
 
     setStatusForm((current) => ({ ...current, submitting: true }));
@@ -350,7 +380,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
       setRefreshKey((value) => value + 1);
     } catch (error) {
       setStatusForm((current) => ({ ...current, submitting: false }));
-      toast.error(t("orders"), getStatusUpdateErrorMessage(error));
+      toast.error(t("orders"), getAdminActionErrorMessage(error));
     }
   }
 
@@ -364,7 +394,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
         });
       } else {
         await updateAdminOrderStatus(
-          resolveAdminOrderIdentifier(detail, orderNumber),
+          orderIdentifier,
           {
             status: normalizeStatusValue(dialogState.mode),
             note: dialogState.reason || "",
@@ -388,7 +418,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
       setRefreshKey((value) => value + 1);
     } catch (error) {
       setDialogState((current) => ({ ...current, submitting: false }));
-      toast.error(t("orders"), getStatusUpdateErrorMessage(error));
+      toast.error(t("orders"), getAdminActionErrorMessage(error));
     }
   }
 
@@ -435,11 +465,11 @@ export function AdminOrderDetailPage({ orderNumber }) {
     setShipmentForm((current) => ({ ...current, submitting: true, fieldErrors: {} }));
 
     try {
-      await createAdminShipmentFromOrder(orderNumber, {
+      await createAdminShipmentFromOrder(orderIdentifier, {
         courier: normalizedCourier,
-        trackingNumber: normalizedTrackingNumber || undefined,
-        estimatedDeliveryDate: shipmentForm.estimatedDeliveryDate || undefined,
-        note: shipmentForm.note || undefined,
+        trackingNumber: normalizedTrackingNumber || "",
+        estimatedDeliveryDate: shipmentForm.estimatedDeliveryDate || null,
+        note: shipmentForm.note || "",
       });
       toast.success(t("shipments"), t("shipmentCreatedSuccessfully"));
       setShipmentForm({
@@ -457,7 +487,17 @@ export function AdminOrderDetailPage({ orderNumber }) {
         submitting: false,
         fieldErrors: getFieldErrors(error),
       }));
-      toast.apiError(error, t("shipments"));
+      const backendMessage = getAdminActionErrorMessage(error);
+      const shipmentNotRequired =
+        backendMessage?.toLowerCase().includes("shipment") &&
+        backendMessage.toLowerCase().includes("required") &&
+        backendMessage.toLowerCase().includes("pickup");
+      toast.error(
+        t("shipments"),
+        shipmentNotRequired
+          ? "Shipment is not required for shop pickup orders."
+          : backendMessage,
+      );
     }
   }
 
@@ -505,7 +545,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
     }));
 
     try {
-      await updateAdminOrderPaymentStatus(orderNumber, {
+      await updateAdminOrderPaymentStatus(orderIdentifier, {
         paymentStatus: "paid",
         note: "Cash collected by admin",
       });
@@ -524,7 +564,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
             }
           : current.detail,
       }));
-      toast.apiError(error, t("orders"));
+      toast.error(t("orders"), getAdminActionErrorMessage(error));
     }
   }
 
@@ -812,7 +852,30 @@ export function AdminOrderDetailPage({ orderNumber }) {
           </DetailGroup>
 
           <DetailGroup title={t("shipmentSummary")} icon={TruckIcon}>
-            {currentShipment ? (
+            {isShopPickupOrder ? (
+              <div className="space-y-4">
+                <Alert title="Shop pickup" variant="info">
+                  {detail.shipmentStatus === "picked_up"
+                    ? "Order was picked up from the shop."
+                    : "Shipment is not required for shop pickup orders."}
+                </Alert>
+                <div className="rounded-3xl border border-border/70 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        {detail.fulfillmentMethodLabel || toDisplayLabel(fulfillmentMethod)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {detail.pickupStatus ? toDisplayLabel(detail.pickupStatus) : "Pickup at shop"}
+                      </p>
+                    </div>
+                    <Badge variant={getStatusVariant(detail.shipmentStatus)}>
+                      {detail.shipmentStatusLabel}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ) : currentShipment ? (
               <div className="space-y-4">
                 <div className="rounded-3xl border border-border/70 p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
@@ -820,7 +883,9 @@ export function AdminOrderDetailPage({ orderNumber }) {
                       <p className="font-semibold text-foreground">{currentShipment.shipmentNumber}</p>
                       <p className="text-sm text-muted-foreground">{currentShipment.courier}</p>
                     </div>
-                    <Badge variant={getStatusVariant(currentShipment.status)}>{currentShipment.statusLabel}</Badge>
+                    <Badge variant={getStatusVariant(detail.shipmentStatus)}>
+                      {detail.shipmentStatusLabel}
+                    </Badge>
                   </div>
                   {currentShipment.trackingNumber ? (
                     <p className="mt-3 text-sm text-muted-foreground">
@@ -892,7 +957,9 @@ export function AdminOrderDetailPage({ orderNumber }) {
               >
                 {orderStatusOptions.length === 0 ? (
                   <option value={statusForm.status || "pending"}>
-                    {getStatusLabel(statusForm.status || "pending", t)}
+                    {getStatusLabel(statusForm.status || "pending", t, {
+                      isShopPickup: isShopPickupOrder,
+                    })}
                   </option>
                 ) : null}
                 {orderStatusOptions.map((option) => (
