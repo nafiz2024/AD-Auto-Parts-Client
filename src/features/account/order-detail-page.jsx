@@ -17,6 +17,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { getCustomerOrderDetail } from "@/features/account/account-api";
 import { downloadCustomerInvoicePdf } from "@/features/invoices/invoice-api";
+import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 
 function formatDate(value) {
@@ -171,23 +172,8 @@ export function AccountOrderDetailPage({ orderNumber }) {
 
     load();
 
-    function refreshOrder() {
-      load(false);
-    }
-
-    function handleVisibilityChange() {
-      if (document.visibilityState === "visible") {
-        refreshOrder();
-      }
-    }
-
-    window.addEventListener("focus", refreshOrder);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
     return () => {
       active = false;
-      window.removeEventListener("focus", refreshOrder);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [accessState, orderNumber]);
 
@@ -238,7 +224,7 @@ export function AccountOrderDetailPage({ orderNumber }) {
     return (
       <Container className="py-10">
         <Alert variant="warning" title={t("failedToLoad")}>
-          {error.message}
+          {resolveApiUiMessage(error, t("failedToLoadDescription"), { routeScope: "Account API" })}
         </Alert>
       </Container>
     );
@@ -265,7 +251,7 @@ export function AccountOrderDetailPage({ orderNumber }) {
     setDownloadingInvoice(true);
 
     try {
-      await downloadCustomerInvoicePdf(order.invoiceNumber);
+      await downloadCustomerInvoicePdf(order.invoice);
     } catch (nextError) {
       toast.apiError(nextError, t("failedToDownloadInvoice"));
     } finally {
@@ -382,9 +368,11 @@ export function AccountOrderDetailPage({ orderNumber }) {
                 <Link href={routes.customer.accountInvoiceDetail(invoiceNumber)}>
                   <Button variant="outline">{t("viewInvoice")}</Button>
                 </Link>
-                <Button onClick={handleDownloadInvoice} disabled={downloadingInvoice}>
-                  {downloadingInvoice ? t("downloadingPdf") : t("downloadPdf")}
-                </Button>
+                {order.invoice?.pdfPath ? (
+                  <Button onClick={handleDownloadInvoice} disabled={downloadingInvoice}>
+                    {downloadingInvoice ? t("downloadingPdf") : t("downloadPdf")}
+                  </Button>
+                ) : null}
               </div>
             </div>
           ) : null}

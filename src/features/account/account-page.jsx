@@ -27,9 +27,6 @@ import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 import {
-  createCustomerEnquiry,
-  createCustomerReturn,
-  downloadCustomerInvoicePdf,
   getCustomerAccountSummary,
   getCustomerEnquiries,
   getCustomerInvoices,
@@ -39,6 +36,8 @@ import {
   getCustomerReturns,
   updateCustomerProfile,
 } from "@/features/account/account-api";
+import { downloadCustomerInvoicePdf } from "@/features/invoices/invoice-api";
+import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 import { CustomerQuestionsPage } from "@/features/questions/customer-questions-page";
 import { getCustomerQuestions } from "@/features/questions/question-api";
 import { CustomerReviewsPage } from "@/features/reviews/customer-reviews-page";
@@ -266,7 +265,7 @@ function OverviewSection() {
     <div className="space-y-6">
       {error ? (
         <Alert variant="warning" title={t("failedToLoad")}>
-          {error.message}
+          {resolveApiUiMessage(error, t("failedToLoadDescription"), { routeScope: "Account API" })}
         </Alert>
       ) : null}
 
@@ -406,7 +405,7 @@ function OrdersSection() {
 
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
-        {error.message}
+        {resolveApiUiMessage(error, t("failedToLoadDescription"), { routeScope: "Account API" })}
       </Alert>
     );
   }
@@ -511,12 +510,13 @@ function InvoicesSection() {
     setDownloading(invoiceNumber);
 
     try {
-      const result = await downloadCustomerInvoicePdf(invoiceNumber);
-      const link = document.createElement("a");
-      link.href = result.objectUrl;
-      link.download = result.fileName;
-      link.click();
-      result.dispose(result.objectUrl);
+      const invoice = invoices.find((item) => item.invoiceNumber === invoiceNumber);
+
+      if (!invoice?.pdfPath) {
+        throw new Error("A secure backend PDF route is not available for this invoice.");
+      }
+
+      await downloadCustomerInvoicePdf(invoice);
     } catch (nextError) {
       toast.apiError(nextError);
     } finally {
@@ -535,7 +535,7 @@ function InvoicesSection() {
 
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
-        {error.message}
+        {resolveApiUiMessage(error, t("failedToLoadDescription"), { routeScope: "Account API" })}
       </Alert>
     );
   }
@@ -639,7 +639,7 @@ function NotificationsSection() {
 
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
-        {error.message}
+        {resolveApiUiMessage(error, t("failedToLoadDescription"), { routeScope: "Account API" })}
       </Alert>
     );
   }
@@ -672,16 +672,9 @@ function NotificationsSection() {
 
 function EnquiriesSection() {
   const { t } = useLanguage();
-  const toast = useToast();
   const [enquiries, setEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isPending, startTransition] = useTransition();
-  const [form, setForm] = useState({
-    subject: "",
-    message: "",
-    enquiryType: "general",
-  });
 
   useEffect(() => {
     let active = true;
@@ -714,29 +707,6 @@ function EnquiriesSection() {
     };
   }, []);
 
-  function updateField(key, value) {
-    setForm((current) => ({ ...current, [key]: value }));
-  }
-
-  function handleSubmit(event) {
-    event.preventDefault();
-
-    startTransition(async () => {
-      try {
-        const enquiry = await createCustomerEnquiry(form);
-        setEnquiries((current) => [enquiry, ...current]);
-        setForm({
-          subject: "",
-          message: "",
-          enquiryType: "general",
-        });
-        toast.success(t("enquirySent"), t("weWillReplySoon"));
-      } catch (nextError) {
-        toast.apiError(nextError);
-      }
-    });
-  }
-
   if (loading) {
     return <LoadingCard />;
   }
@@ -751,7 +721,7 @@ function EnquiriesSection() {
         <h2 className="text-xl font-semibold text-foreground">{t("enquiries")}</h2>
         {error ? (
           <Alert variant="warning" title={t("failedToLoad")}>
-            {error.message}
+            {resolveApiUiMessage(error, t("failedToLoadDescription"), { routeScope: "Account API" })}
           </Alert>
         ) : null}
         {enquiries.length === 0 ? (
@@ -775,40 +745,9 @@ function EnquiriesSection() {
 
       <Card>
         <h2 className="text-xl font-semibold text-foreground">{t("sendNewEnquiry")}</h2>
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="account-enquiry-type">{t("enquiryType")}</Label>
-            <Select
-              id="account-enquiry-type"
-              value={form.enquiryType}
-              onChange={(event) => updateField("enquiryType", event.target.value)}
-            >
-              <option value="general">{t("generalSupport")}</option>
-              <option value="compatibility">{t("compatibilitySupport")}</option>
-              <option value="delivery">{t("deliverySupport")}</option>
-              <option value="returns">{t("returnsSupport")}</option>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="account-enquiry-subject">{t("subject")}</Label>
-            <Input
-              id="account-enquiry-subject"
-              value={form.subject}
-              onChange={(event) => updateField("subject", event.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="account-enquiry-message">{t("message")}</Label>
-            <Textarea
-              id="account-enquiry-message"
-              value={form.message}
-              onChange={(event) => updateField("message", event.target.value)}
-            />
-          </div>
-          <Button type="submit" disabled={isPending}>
-            {isPending ? t("sending") : t("sendMessage")}
-          </Button>
-        </form>
+        <p className="mt-6 text-sm leading-6 text-muted-foreground">
+          Existing enquiries are loaded from your account records. New enquiry submission is not available from this page right now.
+        </p>
       </Card>
     </div>
   );
@@ -974,17 +913,10 @@ function QuestionsSection() {
 
 function ReturnsSection() {
   const { t } = useLanguage();
-  const toast = useToast();
   const [returns, setReturns] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isPending, startTransition] = useTransition();
-  const [form, setForm] = useState({
-    orderNumber: "",
-    reason: "",
-    message: "",
-  });
 
   useEffect(() => {
     let active = true;
@@ -1002,10 +934,6 @@ function ReturnsSection() {
         if (active) {
           setReturns(nextReturns);
           setOrders(nextOrders);
-          setForm((current) => ({
-            ...current,
-            orderNumber: current.orderNumber || nextOrders[0]?.orderNumber || "",
-          }));
         }
       } catch (nextError) {
         if (active) {
@@ -1025,25 +953,6 @@ function ReturnsSection() {
     };
   }, []);
 
-  function updateField(key, value) {
-    setForm((current) => ({ ...current, [key]: value }));
-  }
-
-  function handleSubmit(event) {
-    event.preventDefault();
-
-    startTransition(async () => {
-      try {
-        const nextReturn = await createCustomerReturn(form);
-        setReturns((current) => [nextReturn, ...current]);
-        setForm((current) => ({ ...current, reason: "", message: "" }));
-        toast.success(t("returnRequestSubmitted"), t("returnRequestSubmittedDescription"));
-      } catch (nextError) {
-        toast.apiError(nextError);
-      }
-    });
-  }
-
   if (loading) {
     return <LoadingCard />;
   }
@@ -1058,7 +967,7 @@ function ReturnsSection() {
         <h2 className="text-xl font-semibold text-foreground">{t("returns")}</h2>
         {error ? (
           <Alert variant="warning" title={t("failedToLoad")}>
-            {error.message}
+            {resolveApiUiMessage(error, t("failedToLoadDescription"), { routeScope: "Account API" })}
           </Alert>
         ) : null}
         {returns.length === 0 ? (
@@ -1085,42 +994,19 @@ function ReturnsSection() {
 
       <Card>
         <h2 className="text-xl font-semibold text-foreground">{t("requestReturnReview")}</h2>
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
-            <Label htmlFor="return-order">{t("yourOrderNumber")}</Label>
-            <Select
-              id="return-order"
-              value={form.orderNumber}
-              onChange={(event) => updateField("orderNumber", event.target.value)}
-            >
-              <option value="">{t("selectOrder")}</option>
-              {orders.map((order) => (
-                <option key={order.orderNumber} value={order.orderNumber}>
-                  {order.orderNumber}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="return-reason">{t("returnReason")}</Label>
-            <Input
-              id="return-reason"
-              value={form.reason}
-              onChange={(event) => updateField("reason", event.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="return-message">{t("message")}</Label>
-            <Textarea
-              id="return-message"
-              value={form.message}
-              onChange={(event) => updateField("message", event.target.value)}
-            />
-          </div>
-          <Button type="submit" disabled={isPending || !form.orderNumber}>
-            {isPending ? t("sending") : t("submitReturnRequest")}
-          </Button>
-        </form>
+        <div className="mt-6 space-y-4">
+          <p className="text-sm leading-6 text-muted-foreground">
+            {orders.length > 0
+              ? "Return requests shown here are loaded from your account records."
+              : t("noOrdersDescription")}
+          </p>
+          {orders.length > 0 ? (
+            <div className="rounded-3xl border border-border p-4">
+              <p className="text-sm text-muted-foreground">{t("orders")}</p>
+              <p className="mt-2 font-medium text-foreground">{orders[0].orderNumber}</p>
+            </div>
+          ) : null}
+        </div>
       </Card>
     </div>
   );
@@ -1212,7 +1098,7 @@ function ProfileSection() {
     <Card>
       {error ? (
         <Alert variant="warning" title={t("failedToLoad")}>
-          {error.message}
+          {resolveApiUiMessage(error, t("failedToLoadDescription"), { routeScope: "Account API" })}
         </Alert>
       ) : null}
       <form className="mt-6 grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>

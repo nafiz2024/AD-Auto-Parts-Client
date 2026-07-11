@@ -1,27 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { FileTextIcon } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
-import { useToast } from "@/hooks/use-toast";
 import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
-import {
-  deleteCustomerReview,
-  getCustomerReviews,
-  updateCustomerReview,
-} from "@/features/reviews/review-api";
+import { resolveApiUiMessage } from "@/lib/api/ui-errors";
+import { getCustomerReviews } from "@/features/reviews/review-api";
 
 function formatDate(value, locale) {
   if (!value) {
@@ -53,105 +46,14 @@ function getVariant(status) {
   return "warning";
 }
 
-function ReviewEditor({ review, onCancel, onSaved }) {
-  const { t } = useLanguage();
-  const toast = useToast();
-  const [isPending, startTransition] = useTransition();
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [form, setForm] = useState({
-    rating: review.rating ?? 0,
-    title: review.title ?? "",
-    comment: review.comment ?? "",
-  });
-
-  function updateField(key, value) {
-    setForm((current) => ({ ...current, [key]: value }));
-    setFieldErrors((current) => ({ ...current, [key]: undefined }));
-  }
-
-  function handleSubmit(event) {
-    event.preventDefault();
-
-    startTransition(async () => {
-      try {
-        const updated = await updateCustomerReview(review.id, {
-          rating: form.rating,
-          title: form.title || undefined,
-          comment: form.comment,
-        });
-        setFieldErrors({});
-        onSaved?.(updated);
-        toast.success(t("productUpdatedSuccessfully"), t("reviewUpdatedDescription"));
-      } catch (error) {
-        setFieldErrors(error?.fieldErrors ?? {});
-        toast.apiError(error, t("reviews"));
-      }
-    });
-  }
-
-  return (
-    <Card className="space-y-4 rounded-[1.75rem] border-brand-red/20">
-      <div>
-        <h3 className="text-lg font-semibold text-foreground">{t("editReview")}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{review.productName}</p>
-      </div>
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <Label htmlFor="review-edit-rating">{t("rating")}</Label>
-          <Input
-            id="review-edit-rating"
-            type="number"
-            min="1"
-            max="5"
-            value={form.rating}
-            onChange={(event) => updateField("rating", event.target.value)}
-          />
-          {fieldErrors.rating ? <p className="text-sm text-error">{fieldErrors.rating}</p> : null}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="review-edit-title">{t("reviewTitle")}</Label>
-          <Input
-            id="review-edit-title"
-            value={form.title}
-            onChange={(event) => updateField("title", event.target.value)}
-          />
-          {fieldErrors.title ? <p className="text-sm text-error">{fieldErrors.title}</p> : null}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="review-edit-comment">{t("reviewComment")}</Label>
-          <Textarea
-            id="review-edit-comment"
-            className="min-h-28"
-            value={form.comment}
-            onChange={(event) => updateField("comment", event.target.value)}
-          />
-          {fieldErrors.comment ? <p className="text-sm text-error">{fieldErrors.comment}</p> : null}
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={isPending}>
-            {isPending ? t("saving") : t("saveChanges")}
-          </Button>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            {t("cancel")}
-          </Button>
-        </div>
-      </form>
-    </Card>
-  );
-}
-
 export function CustomerReviewsPage() {
   const { t, locale } = useLanguage();
-  const toast = useToast();
   const [filters, setFilters] = useState({ status: "", q: "" });
   const [state, setState] = useState({
     loading: true,
     error: null,
     items: [],
   });
-  const [editingReview, setEditingReview] = useState(null);
-  const [deletingReview, setDeletingReview] = useState(null);
-  const [isDeleting, startDelete] = useTransition();
 
   function renderSignInRequired() {
     return (
@@ -172,24 +74,13 @@ export function CustomerReviewsPage() {
       setState((current) => ({ ...current, loading: true, error: null }));
 
       try {
-        const result = await getCustomerReviews(filters);
-        const normalizedQuery = filters.q.trim().toLowerCase();
-        const items = result.items.filter((item) => {
-          const matchesStatus = !filters.status || item.status === filters.status;
-          const matchesQuery =
-            !normalizedQuery ||
-            [item.productName, item.title, item.comment, item.reviewNumber]
-              .filter(Boolean)
-              .some((value) => String(value).toLowerCase().includes(normalizedQuery));
-
-          return matchesStatus && matchesQuery;
-        });
+        const result = await getCustomerReviews();
 
         if (active) {
           setState({
             loading: false,
             error: null,
-            items,
+            items: result.items,
           });
         }
       } catch (error) {
@@ -208,27 +99,22 @@ export function CustomerReviewsPage() {
     return () => {
       active = false;
     };
-  }, [filters]);
+  }, []);
 
-  function handleDelete() {
-    if (!deletingReview) {
-      return;
-    }
+  const filteredItems = useMemo(() => {
+    const normalizedQuery = filters.q.trim().toLowerCase();
 
-    startDelete(async () => {
-      try {
-        await deleteCustomerReview(deletingReview.id);
-        setState((current) => ({
-          ...current,
-          items: current.items.filter((item) => item.id !== deletingReview.id),
-        }));
-        setDeletingReview(null);
-        toast.success(t("productDeleted"), t("reviewDeletedDescription"));
-      } catch (error) {
-        toast.apiError(error, t("reviews"));
-      }
+    return state.items.filter((item) => {
+      const matchesStatus = !filters.status || item.status === filters.status;
+      const matchesQuery =
+        !normalizedQuery ||
+        [item.productName, item.title, item.comment, item.reviewNumber]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedQuery));
+
+      return matchesStatus && matchesQuery;
     });
-  }
+  }, [filters.q, filters.status, state.items]);
 
   return (
     <div className="space-y-6">
@@ -258,20 +144,6 @@ export function CustomerReviewsPage() {
         </div>
       </Card>
 
-      {editingReview ? (
-        <ReviewEditor
-          review={editingReview}
-          onCancel={() => setEditingReview(null)}
-          onSaved={(updated) => {
-            setState((current) => ({
-              ...current,
-              items: current.items.map((item) => (item.id === updated.id ? updated : item)),
-            }));
-            setEditingReview(null);
-          }}
-        />
-      ) : null}
-
       {state.loading ? (
         <Card className="space-y-4">
           <div className="h-6 w-48 animate-pulse rounded-full bg-muted" />
@@ -285,12 +157,12 @@ export function CustomerReviewsPage() {
       {state.error ? (
         state.error?.status === 401 ? null : (
           <Alert variant="warning" title={t("failedToLoad")}>
-            {state.error.message}
+            {resolveApiUiMessage(state.error, t("failedToLoadDescription"), { routeScope: "Account API" })}
           </Alert>
         )
       ) : null}
 
-      {!state.loading && !state.error && state.items.length === 0 ? (
+      {!state.loading && !state.error && filteredItems.length === 0 ? (
         <EmptyState
           icon={FileTextIcon}
           title={t("noReviewsYet")}
@@ -298,9 +170,9 @@ export function CustomerReviewsPage() {
         />
       ) : null}
 
-      {!state.loading && state.items.length > 0 ? (
+      {!state.loading && filteredItems.length > 0 ? (
         <div className="space-y-4">
-          {state.items.map((review) => {
+          {filteredItems.map((review) => {
             const productHref = routes.public.productDetail(review.productSlug || review.productId || review.id);
 
             return (
@@ -331,33 +203,12 @@ export function CustomerReviewsPage() {
                   <Link href={productHref}>
                     <Button variant="outline">{t("viewProduct")}</Button>
                   </Link>
-                  {review.availableActions.canEdit ? (
-                    <Button variant="outline" onClick={() => setEditingReview(review)}>
-                      {t("editReview")}
-                    </Button>
-                  ) : null}
-                  {review.availableActions.canDelete ? (
-                    <Button variant="danger" onClick={() => setDeletingReview(review)}>
-                      {t("deleteReview")}
-                    </Button>
-                  ) : null}
                 </div>
               </Card>
             );
           })}
         </div>
       ) : null}
-
-      <ConfirmationDialog
-        open={Boolean(deletingReview)}
-        title={t("deleteReview")}
-        description={t("deleteReviewConfirmation")}
-        confirmLabel={isDeleting ? t("deleting") : t("deleteReview")}
-        cancelLabel={t("cancel")}
-        onConfirm={handleDelete}
-        onCancel={() => setDeletingReview(null)}
-        tone="destructive"
-      />
     </div>
   );
 }

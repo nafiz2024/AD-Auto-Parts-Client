@@ -333,9 +333,24 @@ export function AdminProductsPage() {
     pagination: null,
     categories: [],
   });
+  const filters = buildFilters(searchParams);
   const [dialogState, setDialogState] = useState({ open: false, action: "", product: null });
   const [refreshKey, setRefreshKey] = useState(0);
-  const filters = buildFilters(searchParams);
+  const [searchDraftState, setSearchDraftState] = useState(null);
+  const searchDraft = searchDraftState?.baseQuery === filters.q ? searchDraftState.value : filters.q;
+
+  useEffect(() => {
+    if (searchDraft === filters.q) {
+      return undefined;
+    }
+
+    const timeoutId = setTimeout(() => {
+      const query = updateSearchParams(searchParams.toString(), { q: searchDraft, page: 1 });
+      router.replace(query ? `${pathname}?${query}` : pathname);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [filters.q, pathname, router, searchDraft, searchParams]);
 
   useEffect(() => {
     if (auth.isLoading) {
@@ -458,8 +473,8 @@ export function AdminProductsPage() {
       <Card className="space-y-5 rounded-[2rem]">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
           <Input
-            value={filters.q}
-            onChange={(event) => replaceFilters({ q: event.target.value, page: 1 })}
+            value={searchDraft}
+            onChange={(event) => setSearchDraftState({ baseQuery: filters.q, value: event.target.value })}
             placeholder={t("searchProducts")}
             className="xl:col-span-2"
           />

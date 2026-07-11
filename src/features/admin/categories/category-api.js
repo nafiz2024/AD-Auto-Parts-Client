@@ -79,11 +79,11 @@ function buildQuery(filters = {}) {
   };
 
   if (filters.q) {
-    query.q = filters.q;
+    query.search = filters.q;
   }
 
   if (filters.status) {
-    query.status = filters.status;
+    query.isActive = filters.status === "active";
   }
 
   if (filters.sort) {

@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { ArrowLeftIcon, ExternalLinkIcon, FileTextIcon, ShoppingCartIcon, TruckIcon, UserIcon, WalletIcon } from "@/components/ui/icons";
+import { ArrowLeftIcon, FileTextIcon, ShoppingCartIcon, TruckIcon, UserIcon, WalletIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { PriceDisplay } from "@/components/ui/price-display";
@@ -481,40 +481,6 @@ export function AdminOrderDetailPage({ orderNumber }) {
                       <p className="mt-2 text-xs text-muted-foreground">
                         {t("trackingNumber")}: {entry.trackingNumber}
                       </p>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
-          </DetailGroup>
-
-          <DetailGroup title={t("manualPayments")} icon={WalletIcon}>
-            {detail.manualPayments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("noManualPaymentSubmissions")}</p>
-            ) : (
-              <div className="space-y-4">
-                {detail.manualPayments.map((payment) => (
-                  <div key={payment.id} className="rounded-3xl border border-border/70 p-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="font-semibold text-foreground">{payment.referenceNumber || payment.id}</p>
-                        <p className="text-sm text-muted-foreground">{formatDate(payment.paymentDate)}</p>
-                      </div>
-                      <Badge variant={getStatusVariant(payment.status)}>{payment.statusLabel}</Badge>
-                    </div>
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                      <PriceDisplay amountMinor={payment.amountMinor} />
-                      {payment.proofUrl ? (
-                        <a href={payment.proofUrl} target="_blank" rel="noopener noreferrer">
-                          <Button size="sm" variant="outline">
-                            <ExternalLinkIcon className="size-4" />
-                            {t("viewSubmission")}
-                          </Button>
-                        </a>
-                      ) : null}
-                    </div>
-                    {payment.note ? (
-                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{payment.note}</p>
                     ) : null}
                   </div>
                 ))}

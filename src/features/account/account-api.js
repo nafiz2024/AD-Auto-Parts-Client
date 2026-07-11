@@ -1,14 +1,8 @@
 "use client";
 
 import {
-  apiDownload,
   apiGet,
   apiPatch,
-  apiPost,
-  apiPut,
-  apiUpload,
-  createObjectUrl,
-  revokeObjectUrl,
 } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { normalizeOrderSummary } from "@/features/checkout/checkout-api";
@@ -267,6 +261,12 @@ function normalizeOrder(payload) {
     orderPayload?.deliveryMethod,
     orderPayload?.shipment?.fulfillmentMethod,
   );
+  const invoicePdfPath = firstString(
+    orderPayload?.invoice?.pdfPath,
+    orderPayload?.invoice?.pdfUrl,
+    orderPayload?.invoice?.downloadPath,
+    orderPayload?.invoice?.downloadUrl,
+  );
 
   return {
     ...base,
@@ -287,6 +287,16 @@ function normalizeOrder(payload) {
         orderPayload?.invoice?.number,
         orderPayload?.invoice?.referenceNumber,
       ) ?? null,
+    invoice: {
+      invoiceNumber:
+        firstString(
+          orderPayload?.invoiceNumber,
+          orderPayload?.invoice?.invoiceNumber,
+          orderPayload?.invoice?.number,
+          orderPayload?.invoice?.referenceNumber,
+        ) ?? null,
+      pdfPath: invoicePdfPath || null,
+    },
     customerName:
       firstString(
         orderPayload?.customerName,
@@ -523,45 +533,9 @@ export async function getCustomerPayments() {
   return normalizePaymentCollection(result);
 }
 
-export async function submitManualPayment(payload) {
-  const formData = new FormData();
-  formData.append("orderNumber", payload.orderNumber);
-
-  if (payload.amount) {
-    formData.append("amount", payload.amount);
-  }
-
-  if (payload.referenceNumber) {
-    formData.append("referenceNumber", payload.referenceNumber);
-  }
-
-  if (payload.transferDate) {
-    formData.append("transferDate", payload.transferDate);
-  }
-
-  if (payload.notes) {
-    formData.append("notes", payload.notes);
-  }
-
-  if (payload.receipt) {
-    formData.append("receipt", payload.receipt);
-  }
-
-  return apiUpload(endpoints.customer.manualPaymentSubmission, formData);
-}
-
 export async function getCustomerInvoices() {
   const result = await apiGet(endpoints.account.invoices, ACCOUNT_REQUEST_OPTIONS);
   return getCollectionItems(result).map(normalizeInvoice);
-}
-
-export async function downloadCustomerInvoicePdf(invoiceNumber) {
-  const result = await apiDownload(endpoints.customer.invoicePdf(invoiceNumber));
-  return {
-    fileName: result?.fileName ?? `${invoiceNumber}.pdf`,
-    objectUrl: createObjectUrl(result.blob),
-    dispose: (objectUrl) => revokeObjectUrl(objectUrl),
-  };
 }
 
 export async function getCustomerNotifications() {
@@ -572,11 +546,6 @@ export async function getCustomerNotifications() {
 export async function getCustomerEnquiries() {
   const result = await apiGet(endpoints.account.enquiries, ACCOUNT_REQUEST_OPTIONS);
   return getCollectionItems(result).map(normalizeEnquiry);
-}
-
-export async function createCustomerEnquiry(payload) {
-  const result = await apiPost(endpoints.customer.enquiries, payload);
-  return normalizeEnquiry(getEnvelopeData(result));
 }
 
 export async function getCustomerReviews() {
@@ -594,26 +563,19 @@ export async function getCustomerReturns() {
   return getCollectionItems(result).map(normalizeReturn);
 }
 
-export async function createCustomerReturn(payload) {
-  const result = await apiPost(endpoints.customer.returns, payload);
-  return normalizeReturn(getEnvelopeData(result));
-}
-
 export async function getCustomerProfile() {
   const result = await apiGet(endpoints.account.profile, ACCOUNT_REQUEST_OPTIONS);
   return normalizeProfile(getEnvelopeData(result));
 }
 
 export async function updateCustomerProfile(payload) {
-  try {
-    const result = await apiPatch(endpoints.account.profile, payload, ACCOUNT_REQUEST_OPTIONS);
-    return normalizeProfile(getEnvelopeData(result));
-  } catch (error) {
-    if (error?.status !== 405) {
-      throw error;
-    }
-
-    const result = await apiPut(endpoints.account.profile, payload, ACCOUNT_REQUEST_OPTIONS);
-    return normalizeProfile(getEnvelopeData(result));
-  }
+  const result = await apiPatch(
+    endpoints.account.profile,
+    {
+      name: payload.fullName || payload.name || undefined,
+      phone: payload.phone || undefined,
+    },
+    ACCOUNT_REQUEST_OPTIONS,
+  );
+  return normalizeProfile(getEnvelopeData(result));
 }

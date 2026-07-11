@@ -72,11 +72,11 @@ export async function getAdminShipments(filters = {}) {
   const query = {
     page: filters.page ?? 1,
     limit: filters.limit ?? DEFAULT_PAGE_SIZE,
-    status: filters.status || undefined,
+    shipmentStatus: filters.status || undefined,
     courier: filters.courier || undefined,
-    orderNumber: filters.orderNumber || undefined,
-    dateFrom: filters.dateFrom || undefined,
-    dateTo: filters.dateTo || undefined,
+    search: filters.orderNumber || undefined,
+    createdFrom: filters.dateFrom || undefined,
+    createdTo: filters.dateTo || undefined,
   };
 
   const result = await apiGet(endpoints.admin.shipments, { query });

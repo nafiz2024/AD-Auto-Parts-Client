@@ -79,11 +79,11 @@ function buildQuery(filters = {}) {
   };
 
   if (filters.q) {
-    query.q = filters.q;
+    query.search = filters.q;
   }
 
   if (filters.status) {
-    query.status = filters.status;
+    query.isActive = filters.status === "active";
   }
 
   if (filters.sort) {
@@ -149,8 +149,13 @@ function cleanObject(value) {
   return Object.keys(entries).length > 0 ? entries : undefined;
 }
 
-function normalizeBrand(item, type) {
+function normalizeBrand(item, fallbackType) {
   const active = firstBoolean(item?.isActive, item?.active, item?.status) ?? true;
+  const normalizedType = (
+    firstString(item?.type, item?.brandType, item?.category, item?.scope) || fallbackType
+  ).toLowerCase();
+  const type =
+    normalizedType.includes("part") ? "parts" : normalizedType.includes("vehicle") ? "vehicle" : fallbackType;
 
   return {
     id: item?.id ?? item?._id ?? item?.slug ?? item?.name ?? "brand",
@@ -182,18 +187,10 @@ function buildBrandPayload(values) {
 }
 
 function configByType(type) {
-  if (type === "parts") {
-    return {
-      endpoint: endpoints.admin.partsBrands,
-      detailPath: (id) => `${endpoints.admin.partsBrands}/${id}`,
-      normalize: (item) => normalizeBrand(item, "parts"),
-    };
-  }
-
   return {
-    endpoint: endpoints.admin.vehicleBrands,
-    detailPath: (id) => `${endpoints.admin.vehicleBrands}/${id}`,
-    normalize: (item) => normalizeBrand(item, "vehicle"),
+    endpoint: endpoints.admin.brands,
+    detailPath: (id) => `${endpoints.admin.brands}/${id}`,
+    normalize: (item) => normalizeBrand(item, type === "parts" ? "parts" : "vehicle"),
   };
 }
 
@@ -216,7 +213,7 @@ export async function getAdminBrands(type, filters) {
 }
 
 export async function getAdminVehicleBrandOptions() {
-  const response = await apiGet(endpoints.admin.vehicleBrands);
+  const response = await apiGet(endpoints.admin.brands);
 
   return normalizeItems(response.data).map((item) => ({
     id: item?.id ?? item?._id ?? item?.slug ?? item?.name ?? "brand",

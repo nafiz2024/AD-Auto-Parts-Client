@@ -239,10 +239,10 @@ export async function getAdminEnquiries(filters = {}) {
   const query = {
     page: filters.page ?? 1,
     limit: filters.limit ?? DEFAULT_PAGE_SIZE,
-    q: filters.q || undefined,
+    search: filters.q || undefined,
     status: filters.status || undefined,
-    dateFrom: filters.dateFrom || undefined,
-    dateTo: filters.dateTo || undefined,
+    createdFrom: filters.dateFrom || undefined,
+    createdTo: filters.dateTo || undefined,
   };
 
   const result = await apiGet(endpoints.admin.enquiries, { query });

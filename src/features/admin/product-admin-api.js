@@ -414,7 +414,7 @@ function buildListQuery(filters = {}) {
   };
 
   if (filters.q) {
-    query.q = filters.q;
+    query.search = filters.q;
   }
 
   if (filters.sort) {
@@ -422,7 +422,7 @@ function buildListQuery(filters = {}) {
   }
 
   if (filters.status) {
-    query.status = filters.status;
+    query.publicationStatus = filters.status;
   }
 
   if (filters.condition) {
@@ -430,14 +430,14 @@ function buildListQuery(filters = {}) {
   }
 
   if (filters.categoryId) {
-    query.categoryId = filters.categoryId;
+    query.category = filters.categoryId;
   }
 
   if (filters.stock) {
-    query.stock = filters.stock;
+    query.inventoryStatus = filters.stock;
   }
 
-  if (filters.featured) {
+  if (typeof filters.featured === "boolean") {
     query.featured = filters.featured;
   }
 

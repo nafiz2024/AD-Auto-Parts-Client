@@ -1,27 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { MessageCircleIcon } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import { useLanguage } from "@/hooks/use-language";
-import { useToast } from "@/hooks/use-toast";
 import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
-import {
-  deleteCustomerQuestion,
-  getCustomerQuestions,
-  updateCustomerQuestion,
-} from "@/features/questions/question-api";
+import { resolveApiUiMessage } from "@/lib/api/ui-errors";
+import { getCustomerQuestions } from "@/features/questions/question-api";
 
 function formatDate(value, locale) {
   if (!value) {
@@ -53,93 +46,14 @@ function getVariant(status) {
   return "warning";
 }
 
-function QuestionEditor({ questionItem, onCancel, onSaved }) {
-  const { t } = useLanguage();
-  const toast = useToast();
-  const [isPending, startTransition] = useTransition();
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [form, setForm] = useState({
-    question: questionItem.question ?? "",
-    vehicleContext: questionItem.vehicleContext ?? "",
-  });
-
-  function updateField(key, value) {
-    setForm((current) => ({ ...current, [key]: value }));
-    setFieldErrors((current) => ({ ...current, [key]: undefined }));
-  }
-
-  function handleSubmit(event) {
-    event.preventDefault();
-
-    startTransition(async () => {
-      try {
-        const updated = await updateCustomerQuestion(questionItem.id, {
-          question: form.question,
-          vehicleContext: form.vehicleContext || undefined,
-        });
-        setFieldErrors({});
-        onSaved?.(updated);
-        toast.success(t("productUpdatedSuccessfully"), t("questionUpdatedDescription"));
-      } catch (error) {
-        setFieldErrors(error?.fieldErrors ?? {});
-        toast.apiError(error, t("questions"));
-      }
-    });
-  }
-
-  return (
-    <Card className="space-y-4 rounded-[1.75rem] border-brand-red/20">
-      <div>
-        <h3 className="text-lg font-semibold text-foreground">{t("editQuestion")}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{questionItem.productName}</p>
-      </div>
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        <div className="space-y-2">
-          <Label htmlFor="question-edit-message">{t("question")}</Label>
-          <Textarea
-            id="question-edit-message"
-            className="min-h-28"
-            value={form.question}
-            onChange={(event) => updateField("question", event.target.value)}
-          />
-          {fieldErrors.question ? <p className="text-sm text-error">{fieldErrors.question}</p> : null}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="question-edit-vehicle">{t("vehicleCompatibilityContext")}</Label>
-          <Textarea
-            id="question-edit-vehicle"
-            value={form.vehicleContext}
-            onChange={(event) => updateField("vehicleContext", event.target.value)}
-          />
-          {fieldErrors.vehicleContext ? (
-            <p className="text-sm text-error">{fieldErrors.vehicleContext}</p>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" disabled={isPending}>
-            {isPending ? t("saving") : t("saveChanges")}
-          </Button>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            {t("cancel")}
-          </Button>
-        </div>
-      </form>
-    </Card>
-  );
-}
-
 export function CustomerQuestionsPage() {
   const { t, locale } = useLanguage();
-  const toast = useToast();
   const [filters, setFilters] = useState({ status: "", q: "" });
   const [state, setState] = useState({
     loading: true,
     error: null,
     items: [],
   });
-  const [editingQuestion, setEditingQuestion] = useState(null);
-  const [deletingQuestion, setDeletingQuestion] = useState(null);
-  const [isDeleting, startDelete] = useTransition();
 
   function renderSignInRequired() {
     return (
@@ -160,24 +74,13 @@ export function CustomerQuestionsPage() {
       setState((current) => ({ ...current, loading: true, error: null }));
 
       try {
-        const result = await getCustomerQuestions(filters);
-        const normalizedQuery = filters.q.trim().toLowerCase();
-        const items = result.items.filter((item) => {
-          const matchesStatus = !filters.status || item.status === filters.status;
-          const matchesQuery =
-            !normalizedQuery ||
-            [item.productName, item.question, item.answer, item.questionNumber]
-              .filter(Boolean)
-              .some((value) => String(value).toLowerCase().includes(normalizedQuery));
-
-          return matchesStatus && matchesQuery;
-        });
+        const result = await getCustomerQuestions();
 
         if (active) {
           setState({
             loading: false,
             error: null,
-            items,
+            items: result.items,
           });
         }
       } catch (error) {
@@ -196,27 +99,22 @@ export function CustomerQuestionsPage() {
     return () => {
       active = false;
     };
-  }, [filters]);
+  }, []);
 
-  function handleDelete() {
-    if (!deletingQuestion) {
-      return;
-    }
+  const filteredItems = useMemo(() => {
+    const normalizedQuery = filters.q.trim().toLowerCase();
 
-    startDelete(async () => {
-      try {
-        await deleteCustomerQuestion(deletingQuestion.id);
-        setState((current) => ({
-          ...current,
-          items: current.items.filter((item) => item.id !== deletingQuestion.id),
-        }));
-        setDeletingQuestion(null);
-        toast.success(t("productDeleted"), t("questionDeletedDescription"));
-      } catch (error) {
-        toast.apiError(error, t("questions"));
-      }
+    return state.items.filter((item) => {
+      const matchesStatus = !filters.status || item.status === filters.status;
+      const matchesQuery =
+        !normalizedQuery ||
+        [item.productName, item.question, item.answer, item.questionNumber]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(normalizedQuery));
+
+      return matchesStatus && matchesQuery;
     });
-  }
+  }, [filters.q, filters.status, state.items]);
 
   return (
     <div className="space-y-6">
@@ -245,20 +143,6 @@ export function CustomerQuestionsPage() {
         </div>
       </Card>
 
-      {editingQuestion ? (
-        <QuestionEditor
-          questionItem={editingQuestion}
-          onCancel={() => setEditingQuestion(null)}
-          onSaved={(updated) => {
-            setState((current) => ({
-              ...current,
-              items: current.items.map((item) => (item.id === updated.id ? updated : item)),
-            }));
-            setEditingQuestion(null);
-          }}
-        />
-      ) : null}
-
       {state.loading ? (
         <Card className="space-y-4">
           <div className="h-6 w-48 animate-pulse rounded-full bg-muted" />
@@ -272,12 +156,12 @@ export function CustomerQuestionsPage() {
       {state.error ? (
         state.error?.status === 401 ? null : (
           <Alert variant="warning" title={t("failedToLoad")}>
-            {state.error.message}
+            {resolveApiUiMessage(state.error, t("failedToLoadDescription"), { routeScope: "Account API" })}
           </Alert>
         )
       ) : null}
 
-      {!state.loading && !state.error && state.items.length === 0 ? (
+      {!state.loading && !state.error && filteredItems.length === 0 ? (
         <EmptyState
           icon={MessageCircleIcon}
           title={t("noQuestionsYet")}
@@ -285,9 +169,9 @@ export function CustomerQuestionsPage() {
         />
       ) : null}
 
-      {!state.loading && state.items.length > 0 ? (
+      {!state.loading && filteredItems.length > 0 ? (
         <div className="space-y-4">
-          {state.items.map((questionItem) => {
+          {filteredItems.map((questionItem) => {
             const productHref = routes.public.productDetail(
               questionItem.productSlug || questionItem.productId || questionItem.id,
             );
@@ -324,33 +208,12 @@ export function CustomerQuestionsPage() {
                   <Link href={productHref}>
                     <Button variant="outline">{t("viewProduct")}</Button>
                   </Link>
-                  {questionItem.availableActions.canEdit ? (
-                    <Button variant="outline" onClick={() => setEditingQuestion(questionItem)}>
-                      {t("editQuestion")}
-                    </Button>
-                  ) : null}
-                  {questionItem.availableActions.canDelete ? (
-                    <Button variant="danger" onClick={() => setDeletingQuestion(questionItem)}>
-                      {t("deleteQuestion")}
-                    </Button>
-                  ) : null}
                 </div>
               </Card>
             );
           })}
         </div>
       ) : null}
-
-      <ConfirmationDialog
-        open={Boolean(deletingQuestion)}
-        title={t("deleteQuestion")}
-        description={t("deleteQuestionConfirmation")}
-        confirmLabel={isDeleting ? t("deleting") : t("deleteQuestion")}
-        cancelLabel={t("cancel")}
-        onConfirm={handleDelete}
-        onCancel={() => setDeletingQuestion(null)}
-        tone="destructive"
-      />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 import { routes } from "@/constants/routes";
 import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
+import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 import {
   downloadCustomerInvoicePdf,
   getCustomerInvoices,
@@ -116,10 +117,17 @@ export function CustomerInvoicesSection() {
   }, []);
 
   async function handleDownload(invoiceNumber) {
+    const invoice = state.invoices.find((item) => item.invoiceNumber === invoiceNumber);
+
+    if (!invoice?.pdfPath) {
+      toast.apiError(new Error("A secure backend PDF route is not available for this invoice."));
+      return;
+    }
+
     setState((current) => ({ ...current, downloading: invoiceNumber }));
 
     try {
-      await downloadCustomerInvoicePdf(invoiceNumber);
+      await downloadCustomerInvoicePdf(invoice);
     } catch (error) {
       toast.apiError(error, t("failedToDownloadInvoice"));
     } finally {
@@ -150,7 +158,7 @@ export function CustomerInvoicesSection() {
   if (state.error) {
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
-        {state.error.message}
+        {resolveApiUiMessage(state.error, t("failedToLoadDescription"), { routeScope: "Account API" })}
       </Alert>
     );
   }
@@ -173,7 +181,7 @@ export function CustomerInvoicesSection() {
           locale={locale}
           t={t}
           viewHref={routes.customer.accountInvoiceDetail(invoice.invoiceNumber)}
-          onDownload={() => handleDownload(invoice.invoiceNumber)}
+          onDownload={invoice.pdfPath ? () => handleDownload(invoice.invoiceNumber) : null}
           downloadPending={state.downloading === invoice.invoiceNumber}
         />
       ))}

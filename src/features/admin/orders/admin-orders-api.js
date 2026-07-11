@@ -313,16 +313,20 @@ export async function getAdminOrders(filters = {}) {
   const query = {
     page: filters.page ?? 1,
     limit: filters.limit ?? DEFAULT_PAGE_SIZE,
-    status: filters.status || undefined,
+    search:
+      filters.orderNumber ||
+      filters.customerPhone ||
+      filters.customerEmail ||
+      filters.q ||
+      undefined,
+    orderStatus: filters.status || undefined,
     paymentStatus: filters.paymentStatus || undefined,
-    orderNumber: filters.orderNumber || undefined,
-    q: filters.q || undefined,
-    customerPhone: filters.customerPhone || undefined,
-    customerEmail: filters.customerEmail || undefined,
-    dateFrom: filters.dateFrom || undefined,
-    dateTo: filters.dateTo || undefined,
-    minAmount: filters.minAmount || undefined,
-    maxAmount: filters.maxAmount || undefined,
+    fulfillmentMethod: filters.fulfillmentMethod || undefined,
+    shipmentStatus: filters.shipmentStatus || undefined,
+    createdFrom: filters.dateFrom || undefined,
+    createdTo: filters.dateTo || undefined,
+    minTotalMinor: filters.minAmount || undefined,
+    maxTotalMinor: filters.maxAmount || undefined,
   };
 
   const result = await apiGet(endpoints.admin.orders, { query });

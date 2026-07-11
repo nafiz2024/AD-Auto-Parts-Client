@@ -131,6 +131,7 @@ function resolveSafeApiPath(value) {
 
   if (
     normalized.startsWith("/api/") ||
+    normalized.startsWith("/account/") ||
     normalized.startsWith("/customer/") ||
     normalized.startsWith("/admin/")
   ) {
@@ -244,24 +245,20 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
       item?.status,
     ) ?? "Pending";
   const pdfPath =
-    scope === "customer"
-      ? backendInvoiceNumber
-        ? endpoints.customer.invoicePdf(backendInvoiceNumber)
-        : null
-      : resolveSafeApiPath(
-          firstString(
-            invoice?.pdfPath,
-            invoice?.pdfUrl,
-            invoice?.downloadPath,
-            invoice?.downloadUrl,
-            item?.pdfPath,
-            item?.pdfUrl,
-            item?.downloadPath,
-            item?.downloadUrl,
-            invoice?.links?.pdf,
-            item?.links?.pdf,
-          ),
-        );
+    resolveSafeApiPath(
+      firstString(
+        invoice?.pdfPath,
+        invoice?.pdfUrl,
+        invoice?.downloadPath,
+        invoice?.downloadUrl,
+        item?.pdfPath,
+        item?.pdfUrl,
+        item?.downloadPath,
+        item?.downloadUrl,
+        invoice?.links?.pdf,
+        item?.links?.pdf,
+      ),
+    );
 
   const items = asArray(
     invoice?.items ??
@@ -389,9 +386,18 @@ export async function downloadInvoicePdf({
   return fileName;
 }
 
-export async function downloadCustomerInvoicePdf(invoiceNumber) {
+export async function downloadCustomerInvoicePdf(invoice) {
+  const invoiceNumber =
+    typeof invoice === "string" ? invoice : invoice?.invoiceNumber;
+  const pdfPath =
+    typeof invoice === "string" ? null : invoice?.pdfPath;
+
+  if (!pdfPath) {
+    throw new Error("A secure backend PDF route is not available for this invoice.");
+  }
+
   return downloadInvoicePdf({
-    path: endpoints.customer.invoicePdf(invoiceNumber),
+    path: pdfPath,
     invoiceNumber,
   });
 }

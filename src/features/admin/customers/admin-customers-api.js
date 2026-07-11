@@ -259,10 +259,11 @@ export async function getAdminCustomers(filters = {}) {
   const query = {
     page: filters.page ?? 1,
     limit: filters.limit ?? DEFAULT_PAGE_SIZE,
-    q: filters.q || undefined,
-    status: filters.status || undefined,
-    dateFrom: filters.dateFrom || undefined,
-    dateTo: filters.dateTo || undefined,
+    search: filters.q || undefined,
+    searchField: filters.searchField || undefined,
+    accountStatus: filters.status || undefined,
+    createdFrom: filters.dateFrom || undefined,
+    createdTo: filters.dateTo || undefined,
   };
 
   const result = await apiGet(endpoints.admin.customers, { query });

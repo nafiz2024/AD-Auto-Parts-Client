@@ -18,6 +18,7 @@ import {
 } from "@/features/invoices/invoice-api";
 import { InvoicePreview } from "@/features/invoices/invoice-ui";
 import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
+import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 
 function LoadingState() {
   return (
@@ -126,7 +127,7 @@ export function CustomerInvoiceDetailPage({ invoiceNumber }) {
     setState((current) => ({ ...current, downloading: true }));
 
     try {
-      await downloadCustomerInvoicePdf(invoiceNumber);
+      await downloadCustomerInvoicePdf(state.invoice);
     } catch (error) {
       toast.apiError(error, t("failedToDownloadInvoice"));
     } finally {
@@ -145,7 +146,7 @@ export function CustomerInvoiceDetailPage({ invoiceNumber }) {
   if (state.error) {
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
-        {state.error.message}
+        {resolveApiUiMessage(state.error, t("failedToLoadDescription"), { routeScope: "Account API" })}
       </Alert>
     );
   }
@@ -176,9 +177,11 @@ export function CustomerInvoiceDetailPage({ invoiceNumber }) {
               {t("backToInvoices")}
             </Button>
           </Link>
-          <Button onClick={handleDownload} disabled={state.downloading}>
-            {state.downloading ? t("downloadingPdf") : t("downloadPdf")}
-          </Button>
+          {state.invoice?.pdfPath ? (
+            <Button onClick={handleDownload} disabled={state.downloading}>
+              {state.downloading ? t("downloadingPdf") : t("downloadPdf")}
+            </Button>
+          ) : null}
         </div>
       }
     />
