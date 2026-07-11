@@ -91,7 +91,7 @@ export function AdminSidebar({ mobileOpen = false, onClose }) {
       />
       <aside
         className={cn(
-          "fixed inset-y-0 inset-inline-start-0 z-50 flex w-[min(20rem,calc(100vw-1.5rem))] shrink-0 flex-col bg-admin-sidebar px-5 py-6 text-white shadow-soft transition lg:static lg:z-auto lg:w-72 lg:opacity-100 lg:shadow-none",
+          "fixed inset-y-0 inset-inline-start-0 z-50 flex h-dvh w-[min(20rem,calc(100vw-1.5rem))] shrink-0 flex-col overflow-hidden bg-admin-sidebar px-5 py-6 text-white shadow-soft transition lg:sticky lg:top-0 lg:h-screen lg:w-72 lg:opacity-100 lg:shadow-none",
           mobileOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0 lg:pointer-events-auto",
         )}
       >
@@ -117,7 +117,7 @@ export function AdminSidebar({ mobileOpen = false, onClose }) {
           className="hidden lg:inline-flex"
           imageClassName="max-w-[14rem]"
         />
-        <div className="mt-8 space-y-2">
+        <div className="mt-8 flex-1 space-y-2 overflow-y-auto overflow-x-hidden pe-1">
           {adminNavItems.map((item) => {
             const Icon = item.icon;
             const active = isNavActive(pathname, item.href);

@@ -65,7 +65,7 @@ export function AdminTopbar({ onMenuClick }) {
   const subtitle = getAdminSubtitle(auth.session);
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-white px-4 py-4 sm:px-6">
+    <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-4 border-b border-border bg-white px-4 py-4 sm:px-6">
       <div className="flex flex-1 items-center gap-4">
         <button
           type="button"
