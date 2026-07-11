@@ -1,4 +1,4 @@
-import { APP_URL, AUTH_BASE_URL } from "@/config/env";
+import { APP_URL, API_BASE_URL, AUTH_BASE_URL } from "@/config/env";
 import { apiGet, apiPost } from "@/lib/api/client";
 import { isApiError } from "@/lib/api/errors";
 import { endpoints } from "@/lib/api/endpoints";
@@ -38,6 +38,14 @@ export function getSessionRequest(options) {
     [endpoints.auth.getSession, "/get-session"],
     options,
   );
+}
+
+export function getAdminSessionRequest(options) {
+  return apiGet(endpoints.adminAuth.session, {
+    ...options,
+    baseUrl: API_BASE_URL,
+    credentials: options?.credentials ?? "include",
+  });
 }
 
 export function signInWithEmailRequest(email, password, options) {

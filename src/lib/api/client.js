@@ -32,11 +32,11 @@ function redirectClientAdminAuth(error) {
     return;
   }
 
-  if (!error?.isAuthError && !error?.isTotpRequired) {
+  if (!error?.isAuthError) {
     return;
   }
 
-  const target = error.isTotpRequired ? routes.admin.adminTotp : routes.admin.adminLogin;
+  const target = routes.admin.adminLogin;
   const currentPath = `${window.location.pathname}${window.location.search}`;
 
   if (currentPath !== target) {

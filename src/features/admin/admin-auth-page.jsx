@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/alert";
@@ -8,58 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { Input } from "@/components/ui/input";
-import { CheckIcon, ShieldIcon } from "@/components/ui/icons";
+import { ShieldIcon } from "@/components/ui/icons";
 import { Label } from "@/components/ui/label";
 import { LanguageToggle } from "@/components/ui/language-toggle";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { routes } from "@/constants/routes";
+import { getAdminAccessState } from "@/features/admin/admin-access";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
-import { getAdminAccessState } from "@/features/admin/admin-access";
-import { getAdminTotpState } from "@/features/admin/admin-access";
-import { getTotpStatus, signInWithEmail, verifyTotp } from "@/lib/auth/session";
-
-async function resolveAdminNextStep(session) {
-  const access = getAdminAccessState(session);
-
-  if (access.forbidden) {
-    return "FORBIDDEN";
-  }
-
-  if (access.totpPending) {
-    return "TOTP_VERIFICATION_REQUIRED";
-  }
-
-  if (access.canAccessDashboard) {
-    return "ADMIN_READY";
-  }
-
-  if (!access.isAuthenticated || !access.isAdmin || !access.isActive) {
-    return "INVALID_CREDENTIALS";
-  }
-
-  try {
-    const totpStatus = await getTotpStatus();
-    const totpState = getAdminTotpState(session, totpStatus);
-
-    if (totpState.enrollmentRequired) {
-      return "TOTP_ENROLLMENT_REQUIRED";
-    }
-
-    if (totpState.verificationRequired) {
-      return "TOTP_VERIFICATION_REQUIRED";
-    }
-  } catch {
-    // Fall through to the default invalid state if the backend does not expose a status route.
-  }
-
-  return "INVALID_CREDENTIALS";
-}
+import { signInWithEmail } from "@/lib/auth/session";
 
 function AuthShell({ children }) {
-  const { t } = useLanguage();
-
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,#fff8ef,transparent_40%),linear-gradient(135deg,#fffdf8_0%,#f6f4ef_100%)]">
       <div className="flex min-h-screen flex-col lg:grid lg:grid-cols-[1.05fr_0.95fr]">
@@ -76,31 +35,31 @@ function AuthShell({ children }) {
           <div className="relative z-10 mt-24 max-w-xl space-y-8">
             <div className="space-y-6">
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-white/60">
-                {t("secureAdminAccess")}
+                Authorized administrators only
               </p>
               <h1 className="text-6xl font-black leading-none tracking-tight">
-                {t("adminPanelTitle")}
+                Admin Control Center
               </h1>
               <div className="h-1 w-20 rounded-full bg-brand-red" />
               <p className="max-w-lg text-xl leading-9 text-white/78">
-                {t("adminPanelDescription")}
+                Sign in with your administrator email and password to manage products, orders, and operations.
               </p>
             </div>
             <div className="overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-soft backdrop-blur">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm text-white/60">{t("adminSecurityStat")}</p>
+                  <p className="text-sm text-white/60">Access Window</p>
                   <p className="mt-2 text-3xl font-semibold">24/7</p>
                 </div>
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-sm text-white/60">{t("adminTfaStat")}</p>
-                  <p className="mt-2 text-3xl font-semibold">TOTP</p>
+                  <p className="text-sm text-white/60">Access Type</p>
+                  <p className="mt-2 text-3xl font-semibold">Admin</p>
                 </div>
               </div>
               <div className="mt-6 rounded-3xl border border-brand-red/30 bg-brand-red/8 p-5">
-                <p className="text-xl font-semibold">{t("securityPriority")}</p>
+                <p className="text-xl font-semibold">Authorized administrators only.</p>
                 <p className="mt-2 text-sm leading-7 text-white/75">
-                  {t("securityPriorityDescription")}
+                  Use your approved admin account to access the dashboard. Unauthenticated sessions are redirected to the admin login screen.
                 </p>
               </div>
             </div>
@@ -118,8 +77,10 @@ function AuthShell({ children }) {
                 <ShieldIcon className="size-5" />
               </div>
               <div className="space-y-1">
-                <p className="font-semibold text-foreground">{t("secureAdminAccess")}</p>
-                <p className="leading-7">{t("adminSecurityMessage")}</p>
+                <p className="font-semibold text-foreground">Authorized administrators only.</p>
+                <p className="leading-7">
+                  This area is protected by the backend admin session and requires a valid administrator account.
+                </p>
               </div>
             </div>
           </div>
@@ -131,7 +92,7 @@ function AuthShell({ children }) {
 
 function AdminLoginForm() {
   const router = useRouter();
-  const auth = useAuth();
+  const { isLoading, logout, refresh, session } = useAuth();
   const toast = useToast();
   const { t } = useLanguage();
   const [isPending, startTransition] = useTransition();
@@ -140,30 +101,25 @@ function AdminLoginForm() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (auth.isLoading) {
+    if (isLoading) {
       return;
     }
 
-    const access = getAdminAccessState(auth.session);
+    const access = getAdminAccessState(session);
 
     if (!access.isAuthenticated) {
       return;
     }
 
     if (access.forbidden) {
-      auth.logout().catch(() => {});
-      return;
-    }
-
-    if (access.totpPending) {
-      router.replace(routes.admin.adminTotp);
+      logout().catch(() => {});
       return;
     }
 
     if (access.canAccessDashboard) {
       router.replace(routes.admin.adminDashboard);
     }
-  }, [auth, router, t]);
+  }, [isLoading, logout, router, session]);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -171,55 +127,26 @@ function AdminLoginForm() {
 
     startTransition(async () => {
       try {
-        const signInResult = await signInWithEmail(email.trim(), password);
+        await signInWithEmail(email.trim(), password);
         setPassword("");
-        const session = await auth.refresh().catch(() => signInResult);
-        const nextStep = await resolveAdminNextStep(session);
+        const nextSession = await refresh({ scope: "admin" });
+        const access = getAdminAccessState(nextSession);
 
-        if (nextStep === "FORBIDDEN") {
-          await auth.logout();
+        if (access.forbidden) {
+          await logout();
           setErrorMessage(t("forbidden"));
           return;
         }
 
-        if (nextStep === "TOTP_ENROLLMENT_REQUIRED") {
-          setErrorMessage(t("adminTotpEnrollmentRequired"));
-          return;
-        }
-
-        if (nextStep === "TOTP_VERIFICATION_REQUIRED") {
-          router.replace(routes.admin.adminTotp);
-          return;
-        }
-
-        if (nextStep === "ADMIN_READY") {
+        if (access.canAccessDashboard) {
           toast.success(t("adminLogin"), t("adminLoginSuccess"));
           router.replace(routes.admin.adminDashboard);
           return;
         }
 
         setErrorMessage(t("adminLoginFailed"));
-      } catch (error) {
+      } catch {
         setPassword("");
-        if (error?.isTotpRequired) {
-          try {
-            const session = await auth.refresh().catch(() => null);
-            const nextStep = await resolveAdminNextStep(session);
-
-            if (nextStep === "TOTP_ENROLLMENT_REQUIRED") {
-              setErrorMessage(t("adminTotpEnrollmentRequired"));
-              return;
-            }
-
-            if (nextStep === "TOTP_VERIFICATION_REQUIRED") {
-              router.replace(routes.admin.adminTotp);
-              return;
-            }
-          } catch {
-            // Safe fallback to generic login error below.
-          }
-        }
-
         setErrorMessage(t("adminLoginFailed"));
       }
     });
@@ -232,7 +159,7 @@ function AdminLoginForm() {
       </div>
       <div className="mt-6 space-y-3 text-center">
         <h1 className="text-4xl font-semibold tracking-tight text-foreground">{t("adminLogin")}</h1>
-        <p className="text-base text-muted-foreground">{t("signInToAdminPanel")}</p>
+        <p className="text-base text-muted-foreground">Authorized administrators only.</p>
       </div>
 
       {errorMessage ? (
@@ -274,21 +201,16 @@ function AdminLoginForm() {
   );
 }
 
-function AdminTotpForm() {
+export function AdminTotpDeprecatedPage() {
   const router = useRouter();
-  const auth = useAuth();
-  const toast = useToast();
-  const { t } = useLanguage();
-  const [isPending, startTransition] = useTransition();
-  const [code, setCode] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const { isLoading, logout, session } = useAuth();
 
   useEffect(() => {
-    if (auth.isLoading) {
+    if (isLoading) {
       return;
     }
 
-    const access = getAdminAccessState(auth.session);
+    const access = getAdminAccessState(session);
 
     if (!access.isAuthenticated) {
       router.replace(routes.admin.adminLogin);
@@ -296,121 +218,53 @@ function AdminTotpForm() {
     }
 
     if (access.forbidden) {
-      auth.logout().finally(() => router.replace(routes.admin.adminLogin));
+      logout().finally(() => router.replace(routes.admin.adminLogin));
       return;
     }
 
-    if (!access.totpPending && access.canAccessDashboard) {
-      router.replace(routes.admin.adminDashboard);
-    }
-  }, [auth, router]);
-
-  function handleVerify(event) {
-    event.preventDefault();
-    setErrorMessage("");
-
-    const normalizedCode = code.replace(/\D/g, "").slice(0, 6);
-    setCode(normalizedCode);
-
-    if (normalizedCode.length !== 6) {
-      setErrorMessage(t("invalidTotpCode"));
-      return;
-    }
-
-    startTransition(async () => {
-      try {
-        await verifyTotp({ code: normalizedCode });
-        setCode("");
-        const session = await auth.refresh();
-        const access = getAdminAccessState(session);
-
-        if (access.canAccessDashboard) {
-          toast.success(t("verifyTotp"), t("totpVerifiedSuccess"));
-          router.replace(routes.admin.adminDashboard);
-          return;
-        }
-
-        setErrorMessage(t("totpVerificationRequired"));
-      } catch {
-        setCode("");
-        setErrorMessage(t("invalidTotpCode"));
-      }
-    });
-  }
-
-  async function handleLogout() {
-    try {
-      await auth.logout();
-    } finally {
-      router.replace(routes.admin.adminLogin);
-    }
-  }
+    router.replace(routes.admin.adminDashboard);
+  }, [isLoading, logout, router, session]);
 
   return (
-    <Card className="mx-auto w-full max-w-xl rounded-[2.25rem] px-6 py-8 sm:px-8 sm:py-10">
-      <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-brand-red/10 text-brand-red">
-        <CheckIcon className="size-8" />
-      </div>
-      <div className="mt-6 space-y-3 text-center">
-        <h1 className="text-4xl font-semibold tracking-tight text-foreground">{t("verifyTotp")}</h1>
-        <p className="text-base text-muted-foreground">{t("enterAuthenticationCode")}</p>
-      </div>
-
-      {errorMessage ? (
-        <Alert className="mt-6" variant="error" title={t("totpVerificationRequired")}>
-          {errorMessage}
-        </Alert>
-      ) : null}
-
-      <form className="mt-8 space-y-5" onSubmit={handleVerify}>
-        <div className="space-y-2">
-          <Label htmlFor="admin-totp-code">{t("authenticationCode")}</Label>
-          <Input
-            id="admin-totp-code"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            autoComplete="one-time-code"
-            value={code}
-            maxLength={6}
-            onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
-            placeholder="123456"
-            className="text-center text-2xl tracking-[0.35em]"
-            required
-          />
+    <AuthShell>
+      <Card className="mx-auto w-full max-w-xl rounded-[2.25rem] px-6 py-8 text-center sm:px-8 sm:py-10">
+        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-brand-red/10 text-brand-red">
+          <ShieldIcon className="size-8" />
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" className="flex-1" size="lg" disabled={isPending}>
-            {isPending ? t("verifying") : t("verifyTotp")}
-          </Button>
-          <Button type="button" variant="outline" size="lg" onClick={handleLogout}>
-            {t("logout")}
+        <h1 className="mt-6 text-3xl font-semibold tracking-tight text-foreground">Admin Login Updated</h1>
+        <p className="mt-3 text-base text-muted-foreground">
+          This verification page is no longer used. Sign in with your admin email and password to continue.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <Button onClick={() => router.replace(routes.admin.adminLogin)}>Go to Admin Login</Button>
+          <Button variant="outline" onClick={() => router.replace(routes.admin.adminDashboard)}>
+            Open Dashboard
           </Button>
         </div>
-      </form>
-    </Card>
+      </Card>
+    </AuthShell>
   );
 }
 
-export function AdminAuthPage({ mode }) {
+export function AdminAuthPage() {
   return (
     <AuthShell>
-      {mode === "login" ? <AdminLoginForm /> : null}
-      {mode === "totp" ? <AdminTotpForm /> : null}
+      <AdminLoginForm />
     </AuthShell>
   );
 }
 
 export function AdminEntryPage() {
   const router = useRouter();
-  const auth = useAuth();
+  const { isLoading, logout, session } = useAuth();
   const { t } = useLanguage();
 
   useEffect(() => {
-    if (auth.isLoading) {
+    if (isLoading) {
       return;
     }
 
-    const access = getAdminAccessState(auth.session);
+    const access = getAdminAccessState(session);
 
     if (!access.isAuthenticated) {
       router.replace(routes.admin.adminLogin);
@@ -418,17 +272,12 @@ export function AdminEntryPage() {
     }
 
     if (access.forbidden) {
-      auth.logout().finally(() => router.replace(routes.admin.adminLogin));
-      return;
-    }
-
-    if (access.totpPending) {
-      router.replace(routes.admin.adminTotp);
+      logout().finally(() => router.replace(routes.admin.adminLogin));
       return;
     }
 
     router.replace(routes.admin.adminDashboard);
-  }, [auth, router]);
+  }, [isLoading, logout, router, session]);
 
   return (
     <Container className="flex min-h-[50vh] items-center justify-center py-16">

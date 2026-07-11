@@ -253,6 +253,7 @@ export function AdminOrdersPage() {
   const toast = useToast();
   const searchKey = searchParams.toString();
   const filters = useMemo(() => buildFilters(searchKey), [searchKey]);
+  const access = useMemo(() => getAdminAccessState(auth.session), [auth.session]);
   const [draftState, setDraftState] = useState({
     key: searchKey,
     values: filters,
@@ -284,24 +285,7 @@ export function AdminOrdersPage() {
   }
 
   useEffect(() => {
-    if (auth.isLoading) {
-      return undefined;
-    }
-
-    const access = getAdminAccessState(auth.session);
-
-    if (!access.isAuthenticated) {
-      router.replace(routes.admin.adminLogin);
-      return undefined;
-    }
-
-    if (access.forbidden) {
-      auth.logout().finally(() => router.replace(routes.admin.adminLogin));
-      return undefined;
-    }
-
-    if (access.totpPending) {
-      router.replace(routes.admin.adminTotp);
+    if (auth.isLoading || !access.canAccessDashboard) {
       return undefined;
     }
 
@@ -341,7 +325,7 @@ export function AdminOrdersPage() {
     return () => {
       active = false;
     };
-  }, [auth, filters, refreshKey, router]);
+  }, [access.canAccessDashboard, auth.isLoading, filters, refreshKey]);
 
   function replaceFilters(updates) {
     const query = updateSearchParams(searchParams.toString(), updates);

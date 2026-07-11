@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { DashboardCardSkeleton, TableRowSkeleton } from "@/components/states/loading-states";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -432,32 +431,15 @@ function AdminDashboardContent({ data }) {
 }
 
 export function AdminDashboardPage() {
-  const router = useRouter();
   const auth = useAuth();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
+  const access = useMemo(() => getAdminAccessState(auth.session), [auth.session]);
 
   useEffect(() => {
-    if (auth.isLoading) {
-      return undefined;
-    }
-
-    const access = getAdminAccessState(auth.session);
-
-    if (!access.isAuthenticated) {
-      router.replace(routes.admin.adminLogin);
-      return undefined;
-    }
-
-    if (access.forbidden) {
-      auth.logout().finally(() => router.replace(routes.admin.adminLogin));
-      return undefined;
-    }
-
-    if (access.totpPending) {
-      router.replace(routes.admin.adminTotp);
+    if (auth.isLoading || !access.canAccessDashboard) {
       return undefined;
     }
 
@@ -489,7 +471,7 @@ export function AdminDashboardPage() {
     return () => {
       active = false;
     };
-  }, [auth, router]);
+  }, [access.canAccessDashboard, auth.isLoading]);
 
   if (auth.isLoading || loading) {
     return (

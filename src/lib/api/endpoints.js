@@ -46,6 +46,10 @@ export const accountApi = {
   profile: "/account/profile",
 };
 
+export const adminAuthApi = {
+  session: "/admin/auth/session",
+};
+
 // These paths are centralized for easy backend alignment.
 // Verify exact resource names against the backend contract if they change.
 export const endpoints = {
@@ -64,6 +68,9 @@ export const endpoints = {
     totpStatus: "/two-factor/status",
     totpVerify: "/two-factor/verify",
     totpChallenge: "/two-factor/challenge",
+  },
+  adminAuth: {
+    session: adminAuthApi.session,
   },
   public: {
     settings: resource("public/settings"),

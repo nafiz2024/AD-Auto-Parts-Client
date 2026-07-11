@@ -38,7 +38,7 @@ export const routes = {
   admin: {
     adminRoot: "/admin",
     adminLogin: "/admin/login",
-    adminTotp: "/admin/totp",
+    adminTotp: "/admin/totp/verify",
     adminDashboard: "/admin/dashboard",
     adminProducts: "/admin/products",
     adminProductNew: "/admin/products/new",

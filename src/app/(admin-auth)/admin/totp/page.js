@@ -1,5 +1,6 @@
-import { AdminAuthPage } from "@/features/admin/admin-auth-page";
+import { redirect } from "next/navigation";
+import { routes } from "@/constants/routes";
 
 export default function AdminTotpPage() {
-  return <AdminAuthPage mode="totp" />;
+  redirect(routes.admin.adminTotp);
 }

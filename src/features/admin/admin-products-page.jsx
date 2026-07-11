@@ -334,6 +334,7 @@ export function AdminProductsPage() {
     categories: [],
   });
   const filters = buildFilters(searchParams);
+  const access = getAdminAccessState(auth.session);
   const [dialogState, setDialogState] = useState({ open: false, action: "", product: null });
   const [refreshKey, setRefreshKey] = useState(0);
   const [searchDraftState, setSearchDraftState] = useState(null);
@@ -353,24 +354,7 @@ export function AdminProductsPage() {
   }, [filters.q, pathname, router, searchDraft, searchParams]);
 
   useEffect(() => {
-    if (auth.isLoading) {
-      return undefined;
-    }
-
-    const access = getAdminAccessState(auth.session);
-
-    if (!access.isAuthenticated) {
-      router.replace(routes.admin.adminLogin);
-      return undefined;
-    }
-
-    if (access.forbidden) {
-      auth.logout().finally(() => router.replace(routes.admin.adminLogin));
-      return undefined;
-    }
-
-    if (access.totpPending) {
-      router.replace(routes.admin.adminTotp);
+    if (auth.isLoading || !access.canAccessDashboard) {
       return undefined;
     }
 
@@ -424,7 +408,18 @@ export function AdminProductsPage() {
     return () => {
       active = false;
     };
-  }, [auth, filters.categoryId, filters.condition, filters.page, filters.q, filters.sort, filters.status, filters.stock, refreshKey, router]);
+  }, [
+    access.canAccessDashboard,
+    auth.isLoading,
+    filters.categoryId,
+    filters.condition,
+    filters.page,
+    filters.q,
+    filters.sort,
+    filters.status,
+    filters.stock,
+    refreshKey,
+  ]);
 
   function replaceFilters(updates) {
     const query = updateSearchParams(searchParams.toString(), updates);

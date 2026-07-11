@@ -21,6 +21,7 @@ function inferErrorFlags(status, code) {
     isAuthError: status === 401,
     isForbidden: status === 403,
     isTotpRequired:
+      status === 428 ||
       normalizedCode.includes("TOTP") ||
       normalizedCode.includes("TWO_FACTOR") ||
       normalizedCode.includes("2FA") ||

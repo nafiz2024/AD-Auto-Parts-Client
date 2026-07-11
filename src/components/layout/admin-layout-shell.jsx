@@ -15,9 +15,33 @@ export function AdminLayoutShell({ children }) {
   const pathname = usePathname();
   const { t } = useLanguage();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [adminSessionChecked, setAdminSessionChecked] = useState(false);
   const access = useMemo(() => getAdminAccessState(auth.session), [auth.session]);
+  const guardLoading = auth.isLoading || !adminSessionChecked;
+
+  useEffect(() => {
+    if (auth.isLoading || adminSessionChecked) {
+      return undefined;
+    }
+
+    let active = true;
+
+    auth
+      .refresh({ scope: "admin" })
+      .catch(() => null)
+      .finally(() => {
+        if (active) {
+          setAdminSessionChecked(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [adminSessionChecked, auth, auth.isLoading]);
+
   const redirectTarget = useMemo(() => {
-    if (auth.isLoading) {
+    if (guardLoading) {
       return null;
     }
 
@@ -25,12 +49,8 @@ export function AdminLayoutShell({ children }) {
       return routes.admin.adminLogin;
     }
 
-    if (access.totpPending) {
-      return routes.admin.adminTotp;
-    }
-
     return null;
-  }, [access, auth.isLoading]);
+  }, [access, guardLoading]);
 
   useEffect(() => {
     if (!redirectTarget || pathname === redirectTarget) {
@@ -40,7 +60,7 @@ export function AdminLayoutShell({ children }) {
     router.replace(redirectTarget);
   }, [pathname, redirectTarget, router]);
 
-  if (auth.isLoading || redirectTarget || !access.canAccessDashboard) {
+  if (guardLoading || redirectTarget || !access.canAccessDashboard) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4">
         <div className="w-full max-w-xl rounded-[2rem] border border-border bg-white px-6 py-8 text-center shadow-soft">

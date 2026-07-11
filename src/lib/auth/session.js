@@ -1,4 +1,5 @@
 import {
+  getAdminSessionRequest,
   getTotpStatusRequest,
   getSessionRequest,
   signInWithEmailRequest,
@@ -16,6 +17,23 @@ import {
 export async function getCurrentSession(options) {
   const result = await getSessionRequest(options);
   return result.data ?? result.raw ?? null;
+}
+
+export async function getCurrentAdminSession(options) {
+  try {
+    const result = await getAdminSessionRequest(options);
+    return result.data ?? result.raw ?? null;
+  } catch (error) {
+    if (error?.status === 401) {
+      return null;
+    }
+
+    if (error?.isTotpRequired || error?.status === 428) {
+      return getCurrentSession(options).catch(() => null);
+    }
+
+    throw error;
+  }
 }
 
 export async function refreshSession(options) {

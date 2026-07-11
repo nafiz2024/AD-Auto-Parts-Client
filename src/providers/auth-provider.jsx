@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
+  getCurrentAdminSession,
   getCurrentSession,
   getCurrentUser,
   hasVerifiedTotp,
@@ -30,15 +31,22 @@ function buildState(session, isLoading) {
 export function AuthProvider({ children }) {
   const [state, setState] = useState(() => buildState(null, true));
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (options = {}) => {
     setState((currentState) => ({ ...currentState, isLoading: true }));
 
     try {
-      const session = await getCurrentSession();
+      const session =
+        options.scope === "admin"
+          ? await getCurrentAdminSession(options)
+          : await getCurrentSession(options);
       setState(buildState(session, false));
       return session;
     } catch (error) {
-      setState(buildState(null, false));
+      if (error?.status === 401) {
+        setState(buildState(null, false));
+      } else {
+        setState((currentState) => ({ ...currentState, isLoading: false }));
+      }
       throw error;
     }
   }, []);
