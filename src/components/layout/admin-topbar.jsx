@@ -76,15 +76,12 @@ export function AdminTopbar({ onMenuClick }) {
           <MenuIcon />
         </button>
         <div className="relative hidden max-w-xl flex-1 sm:block">
-          <SearchIcon className="absolute inset-block-start-1/2 inset-inline-start-4 -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon className="pointer-events-none absolute inset-block-start-1/2 inset-inline-end-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={t("searchAnything")}
-            className="ps-12 pe-24"
+            className="ps-5 pe-12"
             aria-label={t("searchAdminArea")}
           />
-          <span className="absolute inset-block-start-1/2 inset-inline-end-4 hidden -translate-y-1/2 rounded-lg bg-muted px-2 py-1 text-xs text-muted-foreground sm:inline-flex">
-            Ctrl + K
-          </span>
         </div>
       </div>
       <div className="flex items-center gap-3">
