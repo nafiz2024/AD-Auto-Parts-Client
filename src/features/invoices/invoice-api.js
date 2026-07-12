@@ -402,13 +402,17 @@ export async function downloadCustomerInvoicePdf(invoice) {
 }
 
 export async function downloadAdminInvoicePdf(invoice) {
-  if (!invoice?.pdfPath) {
-    throw new Error("A secure backend PDF route is not available for this invoice.");
-  }
+  const invoiceNumber =
+    typeof invoice === "string" ? invoice : invoice?.invoiceNumber;
+  const pdfPath =
+    typeof invoice === "string"
+      ? endpoints.admin.invoicePdf(invoice)
+      : invoice?.pdfPath ?? endpoints.admin.invoicePdf(invoiceNumber);
 
   return downloadInvoicePdf({
-    path: invoice.pdfPath,
-    invoiceNumber: invoice.invoiceNumber,
+    path: pdfPath,
+    invoiceNumber,
+    fallbackFileName: `invoice-${invoiceNumber}.pdf`,
   });
 }
 

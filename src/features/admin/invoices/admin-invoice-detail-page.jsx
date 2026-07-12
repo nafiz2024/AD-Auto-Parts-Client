@@ -23,10 +23,12 @@ import { useToast } from "@/hooks/use-toast";
 
 function LoadingState() {
   return (
-    <Card className="space-y-4">
-      <div className="h-8 w-64 animate-pulse rounded-full bg-muted" />
-      <div className="h-[520px] animate-pulse rounded-[2rem] bg-muted" />
-    </Card>
+    <div className="invoice-print-shell">
+      <Card className="invoice-print-card space-y-4">
+        <div className="h-8 w-64 animate-pulse rounded-full bg-muted" />
+        <div className="h-[520px] animate-pulse rounded-[2rem] bg-muted" />
+      </Card>
+    </div>
   );
 }
 
@@ -110,10 +112,14 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
     try {
       await downloadAdminInvoicePdf(state.invoice);
     } catch (error) {
-      toast.apiError(error, t("failedToDownloadInvoice"));
+      toast.error(t("failedToDownloadInvoice"), "Could not download invoice right now.");
     } finally {
       setState((current) => ({ ...current, downloading: false }));
     }
+  }
+
+  function handlePrint() {
+    window.print();
   }
 
   async function handleVoidInvoice() {
@@ -163,47 +169,92 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
 
   return (
     <>
-      <InvoicePreview
-        invoice={state.invoice}
-        locale={locale}
-        t={t}
-        title={state.invoice.invoiceNumber}
-        description={t("adminInvoicePreviewDescription")}
-        action={
-          <div className="flex flex-wrap gap-3">
-            <Link href={routes.admin.adminInvoices}>
-              <Button variant="outline">
-                <ArrowLeftIcon className="size-4" />
-                {t("backToInvoices")}
-              </Button>
-            </Link>
-            {state.invoice.orderNumber ? (
-              <Link href={routes.admin.adminOrderDetail(state.invoice.orderNumber)}>
-                <Button variant="outline">{t("viewOrder")}</Button>
-              </Link>
-            ) : null}
-            {state.invoice.availableActions.canDownloadPdf ? (
+      <div className="invoice-print-shell">
+        <InvoicePreview
+          invoice={state.invoice}
+          locale={locale}
+          t={t}
+          title={state.invoice.invoiceNumber}
+          description={t("adminInvoicePreviewDescription")}
+          action={
+            <div className="invoice-print-hide flex flex-wrap gap-3">
               <Button onClick={handleDownload} disabled={state.downloading}>
-                {state.downloading ? t("downloadingPdf") : t("downloadPdf")}
+                {state.downloading ? "Downloading..." : "Download Invoice"}
               </Button>
-            ) : null}
-          </div>
+              {state.invoice.orderNumber ? (
+                <Link href={routes.admin.adminOrderDetail(state.invoice.orderNumber)}>
+                  <Button variant="outline">{t("viewOrder")}</Button>
+                </Link>
+              ) : null}
+              <Link href={routes.admin.adminInvoices}>
+                <Button variant="outline">
+                  <ArrowLeftIcon className="size-4" />
+                  {t("backToInvoices")}
+                </Button>
+              </Link>
+            </div>
+          }
+          secondaryAction={
+            <div className="invoice-print-hide flex flex-wrap gap-3 lg:justify-end">
+              <Button variant="outline" onClick={handlePrint}>
+                Print / Save PDF
+              </Button>
+              {state.invoice.customer.id ? (
+                <Link href={routes.admin.adminCustomerDetail(state.invoice.customer.id)}>
+                  <Button variant="outline">{t("viewCustomer")}</Button>
+                </Link>
+              ) : null}
+            </div>
+          }
+          tertiaryAction={
+            state.invoice.availableActions.void ? (
+              <div className="invoice-print-hide">
+                <Button variant="outline" onClick={() => setState((current) => ({ ...current, dialogOpen: true }))}>
+                  {t("voidInvoice")}
+                </Button>
+              </div>
+            ) : null
+          }
+        />
+      </div>
+
+      <style jsx global>{`
+        @media print {
+          body {
+            background: white !important;
+          }
+
+          body * {
+            visibility: hidden;
+          }
+
+          .invoice-print-shell,
+          .invoice-print-shell * {
+            visibility: visible;
+          }
+
+          .invoice-print-shell {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          .invoice-print-card {
+            box-shadow: none !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: white !important;
+          }
+
+          .invoice-print-hide {
+            display: none !important;
+          }
         }
-        secondaryAction={
-          state.invoice.customer.id ? (
-            <Link href={routes.admin.adminCustomerDetail(state.invoice.customer.id)}>
-              <Button variant="outline">{t("viewCustomer")}</Button>
-            </Link>
-          ) : null
-        }
-        tertiaryAction={
-          state.invoice.availableActions.void ? (
-            <Button variant="outline" onClick={() => setState((current) => ({ ...current, dialogOpen: true }))}>
-              {t("voidInvoice")}
-            </Button>
-          ) : null
-        }
-      />
+      `}</style>
 
       <ConfirmationDialog
         open={state.dialogOpen}
