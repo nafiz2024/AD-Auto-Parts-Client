@@ -176,10 +176,10 @@ export function InvoicePreview({
   const lines = invoice?.items ?? [];
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
       <PageHeader title={title} description={description} action={action} />
 
-      <Card className="overflow-hidden rounded-[2rem] p-0">
+      <Card className="invoice-print-card w-full overflow-hidden rounded-[2rem] p-0">
         <div className="border-b border-border px-6 py-6 sm:px-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-4">

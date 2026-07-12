@@ -22,10 +22,12 @@ import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 
 function LoadingState() {
   return (
-    <Card className="space-y-4">
-      <div className="h-8 w-64 animate-pulse rounded-full bg-muted" />
-      <div className="h-[480px] animate-pulse rounded-[2rem] bg-muted" />
-    </Card>
+    <Container className="invoice-print-shell py-8" size="lg">
+      <Card className="invoice-print-card space-y-4">
+        <div className="h-8 w-64 animate-pulse rounded-full bg-muted" />
+        <div className="h-[480px] animate-pulse rounded-[2rem] bg-muted" />
+      </Card>
+    </Container>
   );
 }
 
@@ -129,10 +131,14 @@ export function CustomerInvoiceDetailPage({ invoiceNumber }) {
     try {
       await downloadCustomerInvoicePdf(state.invoice);
     } catch (error) {
-      toast.apiError(error, t("failedToDownloadInvoice"));
+      toast.error(t("failedToDownloadInvoice"), "Could not download invoice right now.");
     } finally {
       setState((current) => ({ ...current, downloading: false }));
     }
+  }
+
+  function handlePrint() {
+    window.print();
   }
 
   if (accessState) {
@@ -163,27 +169,74 @@ export function CustomerInvoiceDetailPage({ invoiceNumber }) {
   }
 
   return (
-    <InvoicePreview
-      invoice={state.invoice}
-      locale={locale}
-      t={t}
-      title={t("invoice")}
-      description={t("customerInvoicePreviewDescription")}
-      action={
-        <div className="flex flex-wrap gap-3">
-          <Link href={routes.customer.accountInvoices}>
-            <Button variant="outline">
-              <ArrowLeftIcon className="size-4" />
-              {t("backToInvoices")}
-            </Button>
-          </Link>
-          {state.invoice?.pdfPath ? (
-            <Button onClick={handleDownload} disabled={state.downloading}>
-              {state.downloading ? t("downloadingPdf") : t("downloadPdf")}
-            </Button>
-          ) : null}
-        </div>
-      }
-    />
+    <>
+      <Container className="invoice-print-shell py-8" size="lg">
+        <InvoicePreview
+          invoice={state.invoice}
+          locale={locale}
+          t={t}
+          title={t("invoice")}
+          description={t("customerInvoicePreviewDescription")}
+          action={
+            <div className="invoice-print-hide flex flex-wrap gap-3">
+              <Link href={routes.customer.accountInvoices}>
+                <Button variant="outline">
+                  <ArrowLeftIcon className="size-4" />
+                  {t("backToInvoices")}
+                </Button>
+              </Link>
+            </div>
+          }
+          secondaryAction={
+            <div className="invoice-print-hide flex flex-wrap gap-3">
+              <Button onClick={handleDownload} disabled={state.downloading}>
+                {state.downloading ? t("downloadingPdf") : t("downloadPdf")}
+              </Button>
+              <Button variant="outline" onClick={handlePrint}>
+                Print / Save PDF
+              </Button>
+            </div>
+          }
+        />
+      </Container>
+
+      <style jsx global>{`
+        @media print {
+          body {
+            background: white !important;
+          }
+
+          body * {
+            visibility: hidden;
+          }
+
+          .invoice-print-shell,
+          .invoice-print-shell * {
+            visibility: visible;
+          }
+
+          .invoice-print-shell {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          .invoice-print-card {
+            box-shadow: none !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: white !important;
+          }
+
+          .invoice-print-hide {
+            display: none !important;
+          }
+        }
+      `}</style>
+    </>
   );
 }

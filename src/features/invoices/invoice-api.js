@@ -390,15 +390,14 @@ export async function downloadCustomerInvoicePdf(invoice) {
   const invoiceNumber =
     typeof invoice === "string" ? invoice : invoice?.invoiceNumber;
   const pdfPath =
-    typeof invoice === "string" ? null : invoice?.pdfPath;
-
-  if (!pdfPath) {
-    throw new Error("A secure backend PDF route is not available for this invoice.");
-  }
+    typeof invoice === "string"
+      ? endpoints.customer.invoicePdf(invoice)
+      : invoice?.pdfPath ?? endpoints.customer.invoicePdf(invoiceNumber);
 
   return downloadInvoicePdf({
     path: pdfPath,
     invoiceNumber,
+    fallbackFileName: `invoice-${invoiceNumber}.pdf`,
   });
 }
 
