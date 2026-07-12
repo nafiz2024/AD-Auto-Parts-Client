@@ -187,6 +187,16 @@ function normalizeStatusToken(value) {
     return "issued";
   }
 
+  if (
+    normalized.includes("deliver") ||
+    normalized.includes("complete") ||
+    normalized.includes("picked_up") ||
+    normalized.includes("picked up") ||
+    normalized.includes("pickup")
+  ) {
+    return "delivered";
+  }
+
   if (normalized.includes("pend")) {
     return "pending";
   }
@@ -198,7 +208,10 @@ function normalizeInvoiceStatus(...values) {
   for (const value of values) {
     const normalized = normalizeStatusToken(value);
 
-    if (normalized && ["issued", "cancelled", "void", "paid"].includes(normalized)) {
+    if (
+      normalized &&
+      ["issued", "pending", "delivered", "completed", "cancelled", "void"].includes(normalized)
+    ) {
       return normalized;
     }
   }
@@ -216,6 +229,24 @@ function normalizePaymentStatus(...values) {
   }
 
   return null;
+}
+
+function getInvoiceStatusLabel(status) {
+  switch (status) {
+    case "issued":
+      return "Issued";
+    case "pending":
+      return "Pending";
+    case "delivered":
+    case "completed":
+      return "Delivered";
+    case "cancelled":
+      return "Cancelled";
+    case "void":
+      return "Void";
+    default:
+      return toDisplayLabel(status);
+  }
 }
 
 function normalizeFulfillmentMethod(...values) {
@@ -387,14 +418,26 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
     item?.invoiceNumber,
     item?.number,
   );
-  const invoiceStatus = normalizeInvoiceStatus(
-    invoice?.invoiceStatus,
-    item?.invoiceStatus,
-    invoice?.state,
-    item?.state,
-    invoice?.status,
-    item?.status,
+  const orderStatus = normalizeStatusToken(
+    firstString(
+      order?.orderStatus,
+      order?.status,
+      invoice?.orderStatus,
+      item?.orderStatus,
+      shipment?.status,
+      shipment?.shipmentStatus,
+    ),
   );
+  const invoiceStatus =
+    normalizeInvoiceStatus(
+      invoice?.invoiceStatus,
+      invoice?.status,
+      item?.invoiceStatus,
+      item?.status,
+      invoice?.state,
+      item?.state,
+    ) ??
+    (["delivered", "completed", "picked_up"].includes(orderStatus) ? "delivered" : "issued");
   const paymentStatus = normalizePaymentStatus(
     invoice?.paymentStatus,
     payment?.status,
@@ -482,7 +525,7 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
     orderNumber:
       firstString(invoice?.orderNumber, order?.orderNumber, item?.orderNumber, order?.number),
     invoiceStatus,
-    invoiceStatusLabel: toDisplayLabel(invoiceStatus),
+    invoiceStatusLabel: getInvoiceStatusLabel(invoiceStatus),
     paymentStatus,
     paymentStatusLabel: toDisplayLabel(paymentStatus),
     issuedAt:

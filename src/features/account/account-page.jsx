@@ -92,6 +92,32 @@ function mapStatusTone(value = "") {
   return "neutral";
 }
 
+function getInvoiceBadgeVariant(value = "") {
+  const normalized = String(value).toLowerCase();
+
+  if (normalized.includes("cancel")) {
+    return "error";
+  }
+
+  if (normalized.includes("void")) {
+    return "neutral";
+  }
+
+  if (normalized.includes("pending")) {
+    return "warning";
+  }
+
+  if (normalized.includes("delivered")) {
+    return "success";
+  }
+
+  if (normalized.includes("issued")) {
+    return "info";
+  }
+
+  return "neutral";
+}
+
 function StatusPill({ value }) {
   return <Badge variant={mapStatusTone(value)}>{value}</Badge>;
 }
@@ -561,7 +587,24 @@ function InvoicesSection() {
                 {t("yourOrderNumber")}: {invoice.orderNumber || "—"}
               </p>
             </div>
-            <StatusPill value={invoice.status} />
+            <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2 sm:justify-items-end">
+              <div className="flex min-w-[140px] flex-col gap-2">
+                <p className="text-sm text-muted-foreground">{t("invoiceStatus")}</p>
+                <div className="sm:flex sm:justify-end">
+                  <Badge variant={getInvoiceBadgeVariant(invoice.invoiceStatus)}>
+                    {invoice.invoiceStatusLabel || invoice.invoiceStatus || "--"}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex min-w-[140px] flex-col gap-2">
+                <p className="text-sm text-muted-foreground">{t("paymentStatus")}</p>
+                <div className="sm:flex sm:justify-end">
+                  <Badge variant={mapStatusTone(invoice.paymentStatus)}>
+                    {invoice.paymentStatusLabel || invoice.paymentStatus || "--"}
+                  </Badge>
+                </div>
+              </div>
+            </div>
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-3">
             <div>

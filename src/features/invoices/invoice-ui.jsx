@@ -44,8 +44,12 @@ export function formatInvoiceDate(value, locale, withTime = false) {
 function getStatusVariant(value = "") {
   const normalized = String(value).toLowerCase();
 
-  if (normalized.includes("cancel") || normalized.includes("void")) {
+  if (normalized.includes("cancel")) {
     return "error";
+  }
+
+  if (normalized.includes("void")) {
+    return "neutral";
   }
 
   if (normalized.includes("unpaid") || normalized.includes("pending")) {
@@ -56,7 +60,12 @@ function getStatusVariant(value = "") {
     return "info";
   }
 
-  if (normalized.includes("paid") || normalized.includes("success") || normalized.includes("completed")) {
+  if (
+    normalized.includes("delivered") ||
+    normalized.includes("paid") ||
+    normalized.includes("success") ||
+    normalized.includes("completed")
+  ) {
     return "success";
   }
 
@@ -75,12 +84,15 @@ function StatusBadge({ value, fallback = "--" }) {
 }
 
 function StatusField({ label, value, fallback = "--", align = "start" }) {
-  const justifyClass = align === "end" ? "lg:items-end" : "items-start";
+  const containerClass =
+    align === "end"
+      ? "min-w-[140px] items-start sm:items-end"
+      : "min-w-[140px] items-start";
 
   return (
-    <div className={`flex flex-col gap-2 ${justifyClass}`}>
+    <div className={`flex flex-col gap-2 ${containerClass}`}>
       <p className="text-sm text-muted-foreground">{label}</p>
-      <div className={align === "end" ? "lg:flex lg:justify-end" : ""}>
+      <div className={align === "end" ? "sm:flex sm:justify-end" : ""}>
         <StatusBadge value={value} fallback={fallback} />
       </div>
     </div>
@@ -126,13 +138,13 @@ export function InvoiceListCard({
             {t("orderNumber")}: {invoice.orderNumber || "--"}
           </p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid w-full gap-3 sm:w-auto sm:grid-cols-2 sm:justify-items-end">
           <StatusField label={t("invoiceStatus")} value={invoiceStatus} align="end" />
           <StatusField label={t("paymentStatus")} value={paymentStatus} align="end" />
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div>
           <p className="text-sm text-muted-foreground">{t("invoiceDate")}</p>
           <p className="font-medium text-foreground">
@@ -140,12 +152,10 @@ export function InvoiceListCard({
           </p>
         </div>
         <div>
-          <p className="text-sm text-muted-foreground">{t("paymentStatus")}</p>
-          <p className="font-medium text-foreground">{paymentStatus || "--"}</p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">{t("invoiceStatus")}</p>
-          <p className="font-medium text-foreground">{invoiceStatus || "--"}</p>
+          <p className="text-sm text-muted-foreground">{t("dueDate")}</p>
+          <p className="font-medium text-foreground">
+            {formatInvoiceDate(invoice.dueAt, locale)}
+          </p>
         </div>
         <div>
           <p className="text-sm text-muted-foreground">{t("total")}</p>
