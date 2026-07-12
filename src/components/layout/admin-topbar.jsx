@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   BellIcon,
@@ -12,19 +14,69 @@ import {
   UserIcon,
 } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
+import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import {
   getAdminAccessState,
   getAdminDisplayName,
   getAdminSubtitle,
 } from "@/features/admin/admin-access";
-import { getAdminNotificationPreview } from "@/features/admin/dashboard-api";
+import {
+  getAdminDashboardData,
+  markAdminNotificationRead,
+  markAllAdminNotificationsRead,
+  subscribeToAdminDashboardRefresh,
+} from "@/features/admin/dashboard-api";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 
+function formatDateTime(value, locale) {
+  if (!value) {
+    return "--";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export function AdminTopbar({ onMenuClick }) {
   const auth = useAuth();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [activeNotificationId, setActiveNotificationId] = useState("");
+  const [error, setError] = useState(null);
+  const dropdownRef = useRef(null);
+
+  const loadNotificationSummary = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const dashboard = await getAdminDashboardData();
+      setUnreadCount(dashboard.unreadNotifications ?? 0);
+      setNotifications(dashboard.notifications ?? []);
+    } catch (nextError) {
+      setError(nextError);
+      setUnreadCount(0);
+      setNotifications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (auth.isLoading) {
@@ -37,28 +89,75 @@ export function AdminTopbar({ onMenuClick }) {
       return undefined;
     }
 
-    let active = true;
+    const timeoutId = window.setTimeout(() => {
+      void loadNotificationSummary();
+    }, 0);
 
-    async function loadNotificationPreview() {
-      try {
-        const preview = await getAdminNotificationPreview();
+    const unsubscribe = subscribeToAdminDashboardRefresh(loadNotificationSummary);
 
-        if (active) {
-          setUnreadCount(preview.unreadCount ?? 0);
-        }
-      } catch {
-        if (active) {
-          setUnreadCount(0);
-        }
+    return () => {
+      window.clearTimeout(timeoutId);
+      unsubscribe();
+    };
+  }, [auth.isLoading, auth.session, loadNotificationSummary]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    function handleOutsideClick(event) {
+      if (!dropdownRef.current?.contains(event.target)) {
+        setIsOpen(false);
       }
     }
 
-    loadNotificationPreview();
+    function handleEscape(event) {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("keydown", handleEscape);
 
     return () => {
-      active = false;
+      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener("keydown", handleEscape);
     };
-  }, [auth.isLoading, auth.session]);
+  }, [isOpen]);
+
+  async function handleNotificationClick(notification) {
+    if (!notification || notification.read) {
+      return;
+    }
+
+    setActiveNotificationId(notification.id);
+    setError(null);
+
+    try {
+      await markAdminNotificationRead(notification.id);
+      await loadNotificationSummary();
+    } catch (nextError) {
+      setError(nextError);
+    } finally {
+      setActiveNotificationId("");
+    }
+  }
+
+  async function handleMarkAllRead() {
+    setIsMarkingAll(true);
+    setError(null);
+
+    try {
+      await markAllAdminNotificationsRead();
+      await loadNotificationSummary();
+    } catch (nextError) {
+      setError(nextError);
+    } finally {
+      setIsMarkingAll(false);
+    }
+  }
 
   const displayName = getAdminDisplayName(auth.session);
   const subtitle = getAdminSubtitle(auth.session);
@@ -90,18 +189,96 @@ export function AdminTopbar({ onMenuClick }) {
             {t("viewStore")}
           </Button>
         </Link>
-        <button
-          type="button"
-          className="relative rounded-2xl border border-border p-3 text-foreground transition hover:bg-muted"
-          aria-label={t("recentNotifications")}
-        >
-          <BellIcon />
-          {unreadCount > 0 ? (
-            <span className="absolute -inset-block-start-2 -inset-inline-end-1 flex size-5 items-center justify-center rounded-full bg-brand-red text-[10px] font-semibold text-white">
-              {Math.min(unreadCount, 99)}
-            </span>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            className="relative rounded-2xl border border-border p-3 text-foreground transition hover:bg-muted"
+            aria-label={t("recentNotifications")}
+            aria-expanded={isOpen}
+            aria-haspopup="menu"
+            onClick={() => {
+              const nextOpen = !isOpen;
+              setIsOpen(nextOpen);
+
+              if (nextOpen) {
+                loadNotificationSummary();
+              }
+            }}
+          >
+            <BellIcon />
+            {unreadCount > 0 ? (
+              <span className="absolute -inset-block-start-2 -inset-inline-end-1 flex min-w-5 items-center justify-center rounded-full bg-brand-red px-1 text-[10px] font-semibold text-white">
+                {Math.min(unreadCount, 99)}
+              </span>
+            ) : null}
+          </button>
+
+          {isOpen ? (
+            <div className="absolute right-0 top-full z-40 mt-3 w-[22rem] max-w-[calc(100vw-2rem)] rounded-[1.75rem] border border-border bg-white p-4 shadow-soft">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-foreground">{t("recentNotifications")}</p>
+                  <p className="text-sm text-muted-foreground">{unreadCount} unread</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleMarkAllRead}
+                  disabled={isMarkingAll || unreadCount === 0}
+                >
+                  {isMarkingAll ? t("loading") : "Mark all as read"}
+                </Button>
+              </div>
+
+              {error ? (
+                <Alert className="mt-4" variant={error?.isForbidden ? "warning" : "error"} title={t("failedToLoad")}>
+                  {resolveAdminLoadMessage(error, t("failedToLoadDescription"))}
+                </Alert>
+              ) : null}
+
+              {isLoading ? (
+                <div className="mt-4 space-y-3">
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <div key={index} className="animate-pulse rounded-2xl border border-border p-4">
+                      <div className="h-4 w-1/2 rounded bg-muted" />
+                      <div className="mt-3 h-4 w-full rounded bg-muted" />
+                      <div className="mt-2 h-4 w-2/3 rounded bg-muted" />
+                    </div>
+                  ))}
+                </div>
+              ) : notifications.length === 0 ? (
+                <p className="mt-4 rounded-2xl border border-border p-4 text-sm text-muted-foreground">
+                  {t("noNotificationsYet")}
+                </p>
+              ) : (
+                <div className="mt-4 max-h-96 space-y-3 overflow-y-auto pr-1">
+                  {notifications.map((notification) => (
+                    <button
+                      key={notification.id}
+                      type="button"
+                      onClick={() => handleNotificationClick(notification)}
+                      disabled={activeNotificationId === notification.id}
+                      className={`w-full rounded-2xl border p-4 text-left transition hover:border-brand-red/40 hover:bg-muted/40 ${
+                        notification.read ? "border-border bg-white" : "border-brand-red/20 bg-brand-red/5"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-foreground">{notification.title}</p>
+                        <Badge variant={notification.read ? "neutral" : "info"}>
+                          {notification.read ? t("statusRead") : t("statusUnread")}
+                        </Badge>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{notification.message}</p>
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        {formatDateTime(notification.createdAt, locale)}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : null}
-        </button>
+        </div>
         <button
           type="button"
           className="flex items-center gap-3 rounded-2xl border border-border px-3 py-2 transition hover:bg-muted"

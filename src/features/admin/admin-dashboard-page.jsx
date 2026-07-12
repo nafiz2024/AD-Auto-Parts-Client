@@ -21,7 +21,10 @@ import { PriceDisplay } from "@/components/ui/price-display";
 import { routes } from "@/constants/routes";
 import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
-import { getAdminDashboardData } from "@/features/admin/dashboard-api";
+import {
+  getAdminDashboardData,
+  subscribeToAdminDashboardRefresh,
+} from "@/features/admin/dashboard-api";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 
@@ -328,8 +331,11 @@ function AdminDashboardContent({ data }) {
           </div>
           <div className="mt-6 space-y-4 rounded-[1.75rem] border border-border p-5">
             <h3 className="text-lg font-semibold text-foreground">{t("adminQueueSummary")}</h3>
-            {[data.pendingShipments, data.pendingReturns, data.pendingEnquiries].map(
-              (items, index) => {
+            {[
+              data.summaryCounts?.pendingShipments ?? data.pendingShipments.length,
+              data.summaryCounts?.pendingReturns ?? data.pendingReturns.length,
+              data.summaryCounts?.pendingEnquiries ?? data.pendingEnquiries.length,
+            ].map((count, index) => {
                 const titles = [
                   t("pendingShipments"),
                   t("pendingReturns"),
@@ -339,7 +345,7 @@ function AdminDashboardContent({ data }) {
                 return (
                   <div key={titles[index]} className="flex items-center justify-between gap-3">
                     <span className="text-sm text-muted-foreground">{titles[index]}</span>
-                    <Badge variant="warning">{items.length}</Badge>
+                    <Badge variant="warning">{count}</Badge>
                   </div>
                 );
               },
@@ -436,6 +442,7 @@ export function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const access = useMemo(() => getAdminAccessState(auth.session), [auth.session]);
 
   useEffect(() => {
@@ -471,13 +478,15 @@ export function AdminDashboardPage() {
     return () => {
       active = false;
     };
-  }, [access.canAccessDashboard, auth.isLoading]);
+  }, [access.canAccessDashboard, auth.isLoading, reloadKey]);
+
+  useEffect(() => subscribeToAdminDashboardRefresh(() => setReloadKey((current) => current + 1)), []);
 
   if (auth.isLoading || loading) {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
+          {Array.from({ length: 8 }).map((_, index) => (
             <DashboardCardSkeleton key={index} />
           ))}
         </div>
@@ -492,9 +501,16 @@ export function AdminDashboardPage() {
 
   if (error) {
     return (
-      <Alert variant="warning" title={t("failedToLoad")}>
-        {resolveAdminLoadMessage(error, t("failedToLoadDescription"))}
-      </Alert>
+      <div className="space-y-4">
+        <Alert variant={error?.isForbidden ? "warning" : "error"} title={t("failedToLoad")}>
+          {resolveAdminLoadMessage(error, t("failedToLoadDescription"))}
+        </Alert>
+        <div>
+          <Button variant="outline" onClick={() => setReloadKey((current) => current + 1)}>
+            {t("retry")}
+          </Button>
+        </div>
+      </div>
     );
   }
 

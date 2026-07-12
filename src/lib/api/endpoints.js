@@ -16,6 +16,7 @@ function byNumber(path, value) {
 
 export const adminApi = {
   dashboard: "/admin/dashboard",
+  dashboardSummary: "/admin/dashboard/summary",
   products: "/admin/products",
   productDetail: (productId) => `/admin/products/${productId}`,
   orders: "/admin/orders",
@@ -31,6 +32,8 @@ export const adminApi = {
   enquiries: "/admin/enquiries",
   settings: "/admin/settings",
   notifications: "/admin/notifications",
+  notificationMarkRead: (notificationId) => `/admin/notifications/${notificationId}/read`,
+  notificationsReadAll: "/admin/notifications/read-all",
 };
 
 export const accountApi = {
@@ -128,6 +131,7 @@ export const endpoints = {
   },
   admin: {
     dashboard: adminApi.dashboard,
+    dashboardSummary: adminApi.dashboardSummary,
     categories: adminApi.categories,
     vehicleBrands: resource("admin/vehicle-brands"),
     vehicleModels: resource("admin/vehicle-models"),
@@ -152,6 +156,8 @@ export const endpoints = {
     analytics: resource("admin/analytics"),
     settings: adminApi.settings,
     notifications: adminApi.notifications,
+    notificationMarkRead: adminApi.notificationMarkRead,
+    notificationsReadAll: adminApi.notificationsReadAll,
     auditLogs: resource("admin/audit-logs"),
   },
 };

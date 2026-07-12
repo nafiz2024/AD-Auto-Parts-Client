@@ -1,7 +1,9 @@
 "use client";
 
-import { apiGet } from "@/lib/api/client";
+import { apiGet, apiPatch } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
+
+const ADMIN_DASHBOARD_REFRESH_EVENT = "admin-dashboard:refresh";
 
 function firstString(...values) {
   for (const value of values) {
@@ -55,7 +57,7 @@ function getEnvelopeData(result) {
   return result?.data ?? result?.raw ?? result ?? {};
 }
 
-function extractMetric(payload, candidatePaths = []) {
+function extractValue(payload, candidatePaths = []) {
   for (const path of candidatePaths) {
     let current = payload;
 
@@ -63,10 +65,8 @@ function extractMetric(payload, candidatePaths = []) {
       current = current?.[key];
     }
 
-    const numeric = firstNumber(current);
-
-    if (numeric !== null) {
-      return numeric;
+    if (current !== undefined && current !== null) {
+      return current;
     }
   }
 
@@ -91,8 +91,28 @@ function extractCollection(payload, candidatePaths = []) {
   return [];
 }
 
-function extractCount(payload, candidatePaths = [], fallback = 0) {
-  return extractMetric(payload, candidatePaths) ?? fallback;
+function emitRefreshEvent() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent(ADMIN_DASHBOARD_REFRESH_EVENT));
+}
+
+export function subscribeToAdminDashboardRefresh(callback) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  window.addEventListener(ADMIN_DASHBOARD_REFRESH_EVENT, callback);
+
+  return () => {
+    window.removeEventListener(ADMIN_DASHBOARD_REFRESH_EVENT, callback);
+  };
+}
+
+export function requestAdminDashboardRefresh() {
+  emitRefreshEvent();
 }
 
 function buildMetric(key, label, value, format = "number") {
@@ -104,7 +124,27 @@ function buildMetric(key, label, value, format = "number") {
   };
 }
 
+function normalizeCount(value, fallback = 0) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
 function normalizeOrder(item, index = 0) {
+  const minorAmount = firstNumber(
+    item?.totalMinor,
+    item?.grandTotalMinor,
+    item?.amountMinor,
+    item?.total?.amountMinor,
+    item?.totalAmountMinor,
+  );
+  const majorAmount = firstNumber(
+    item?.total,
+    item?.totalAmount,
+    item?.grandTotal,
+    item?.amount,
+    item?.total?.amount,
+  );
+
   return {
     id: firstString(item?.id, item?._id, item?.orderNumber, `order-${index}`) ?? `order-${index}`,
     orderNumber:
@@ -113,11 +153,10 @@ function normalizeOrder(item, index = 0) {
       firstString(item?.customerName, item?.customer?.name, item?.shippingAddress?.fullName) ??
       "Customer",
     customerPhone:
-      firstString(item?.customerPhone, item?.phone, item?.shippingAddress?.phone) ?? "—",
-    amountMinor:
-      firstNumber(item?.totalMinor, item?.total?.amount, item?.grandTotalMinor) ?? null,
+      firstString(item?.customerPhone, item?.phone, item?.shippingAddress?.phone) ?? "--",
+    amountMinor: minorAmount ?? (majorAmount !== null ? Math.round(majorAmount * 100) : null),
     paymentMethod:
-      firstString(item?.paymentMethod, item?.payment?.method, item?.paymentType) ?? "—",
+      firstString(item?.paymentMethod, item?.payment?.method, item?.paymentType) ?? "--",
     paymentStatus:
       firstString(item?.paymentStatus, item?.payment?.status) ?? "Pending",
     orderStatus: firstString(item?.status, item?.orderStatus) ?? "Pending",
@@ -137,13 +176,19 @@ function normalizeNotification(item, index = 0) {
 
 function normalizeProduct(item, index = 0) {
   const stock = firstNumber(item?.stockQuantity, item?.stock, item?.qty, item?.quantity) ?? 0;
+  const priceMinor = firstNumber(
+    item?.priceMinor,
+    item?.price?.amountMinor,
+    item?.salePriceMinor,
+  );
+  const priceMajor = firstNumber(item?.price, item?.price?.amount, item?.salePrice);
 
   return {
     id: firstString(item?.id, item?._id, item?.sku, `product-${index}`) ?? `product-${index}`,
     name: firstString(item?.name, item?.title) ?? "Used auto part",
-    sku: firstString(item?.sku, item?.partNumber) ?? "—",
-    category: firstString(item?.category?.name, item?.categoryName) ?? "—",
-    priceMinor: firstNumber(item?.priceMinor, item?.price?.amount, item?.salePriceMinor),
+    sku: firstString(item?.sku, item?.partNumber) ?? "--",
+    category: firstString(item?.category?.name, item?.categoryName) ?? "--",
+    priceMinor: priceMinor ?? (priceMajor !== null ? Math.round(priceMajor * 100) : null),
     stockQuantity: stock,
     status:
       firstString(item?.status, item?.inventoryStatus, item?.availabilityStatus) ?? "Draft",
@@ -177,205 +222,145 @@ function buildStatusBreakdown(orders) {
   }));
 }
 
-async function loadList(endpoint, query) {
-  const result = await apiGet(endpoint, {
-    query,
+function normalizeStatusBreakdown(items, orders) {
+  if (items.length === 0) {
+    return buildStatusBreakdown(orders);
+  }
+
+  return items.map((item) => ({
+    label: firstString(item?.label, item?.status, item?.key, item?.name) ?? "Pending",
+    count: firstNumber(item?.count, item?.total, item?.value) ?? 0,
+    percentage: firstNumber(item?.percentage) ?? 0,
+  }));
+}
+
+function normalizePaidAmountMinor(payload, orders) {
+  const directMinor = firstNumber(
+    extractValue(payload, [["paidAmountMinor"]]),
+    extractValue(payload, [["revenueMinor"]]),
+    extractValue(payload, [["totals", "paidAmountMinor"]]),
+    extractValue(payload, [["totals", "revenueMinor"]]),
+  );
+
+  if (directMinor !== null) {
+    return directMinor;
+  }
+
+  const directAmount = firstNumber(
+    extractValue(payload, [["paidAmount"]]),
+    extractValue(payload, [["revenue"]]),
+    extractValue(payload, [["totals", "paidAmount"]]),
+    extractValue(payload, [["totals", "revenue"]]),
+  );
+
+  if (directAmount !== null) {
+    return Math.round(directAmount * 100);
+  }
+
+  return orders.reduce((sum, order) => {
+    if ((order.paymentStatus || "").toLowerCase().includes("paid")) {
+      return sum + (order.amountMinor ?? 0);
+    }
+
+    return sum;
+  }, 0);
+}
+
+async function loadSummary() {
+  const result = await apiGet(endpoints.admin.dashboardSummary, {
     credentials: "include",
   });
+
   return getEnvelopeData(result);
 }
 
-export async function getAdminNotificationPreview() {
-  const payload = await loadList(endpoints.admin.notifications, {
-    page: 1,
-    limit: 6,
-  });
-  const items = normalizeItems(payload).map(normalizeNotification);
-
-  return {
-    items,
-    unreadCount: items.filter((item) => !item.read).length,
-  };
-}
-
 export async function getAdminDashboardData() {
-  const [dashboardResult, notificationsResult] = await Promise.allSettled([
-    loadList(endpoints.admin.dashboard),
-    loadList(endpoints.admin.notifications, { page: 1, limit: 5 }),
-  ]);
+  const payload = await loadSummary();
 
-  const dashboardPayload =
-    dashboardResult.status === "fulfilled" ? dashboardResult.value : {};
-  const notificationsFromDashboard = extractCollection(dashboardPayload, [
-    ["notifications"],
+  const notifications = extractCollection(payload, [
     ["recentNotifications"],
-    ["summary", "notifications"],
-  ]);
-  const notifications =
-    notificationsFromDashboard.length > 0
-      ? notificationsFromDashboard.map(normalizeNotification)
-      : notificationsResult.status === "fulfilled"
-        ? normalizeItems(notificationsResult.value).map(normalizeNotification)
-        : [];
-  const orders = extractCollection(dashboardPayload, [
+    ["notifications"],
+  ]).map(normalizeNotification);
+  const orders = extractCollection(payload, [
     ["recentOrders"],
     ["orders"],
-    ["latestOrders"],
-    ["summary", "recentOrders"],
   ]).map(normalizeOrder);
-  const products = extractCollection(dashboardPayload, [
+  const products = extractCollection(payload, [
     ["recentProducts"],
     ["products"],
-    ["latestProducts"],
-    ["summary", "recentProducts"],
   ]).map(normalizeProduct);
-  const lowStockProducts = extractCollection(dashboardPayload, [
+  const lowStockProducts = extractCollection(payload, [
     ["lowStockProducts"],
-    ["lowStock"],
-    ["summary", "lowStockProducts"],
-    ["inventory", "lowStockProducts"],
+    ["lowStockItems"],
   ])
     .map(normalizeProduct)
     .filter((product) => product.lowStock);
-  const pendingShipments = extractCollection(dashboardPayload, [
-    ["pendingShipments"],
-    ["shipments", "pending"],
-    ["summary", "pendingShipments"],
+  const pendingShipments = extractCollection(payload, [
+    ["pendingShipmentItems"],
+    ["pendingShipmentsList"],
   ]).map((item, index) => normalizeSimpleRecord(item, index, "Shipment"));
-  const pendingReturns = extractCollection(dashboardPayload, [
-    ["pendingReturns"],
-    ["returns", "pending"],
-    ["summary", "pendingReturns"],
+  const pendingReturns = extractCollection(payload, [
+    ["pendingReturnItems"],
+    ["pendingReturnsList"],
   ]).map((item, index) => normalizeSimpleRecord(item, index, "Return"));
-  const pendingEnquiries = extractCollection(dashboardPayload, [
-    ["pendingEnquiries"],
-    ["enquiries", "pending"],
-    ["summary", "pendingEnquiries"],
+  const pendingEnquiries = extractCollection(payload, [
+    ["pendingEnquiryItems"],
+    ["pendingEnquiriesList"],
   ]).map((item, index) => normalizeSimpleRecord(item, index, "Enquiry"));
 
-  const paidAmountMinor =
-    extractMetric(dashboardPayload, [
-      ["summary", "paidAmountMinor"],
-      ["summary", "revenueMinor"],
-      ["overview", "revenueMinor"],
-      ["totals", "paidAmountMinor"],
-      ["totals", "revenueMinor"],
-      ["stats", "paidAmountMinor"],
-      ["paidAmountMinor"],
-      ["revenueMinor"],
-    ]) ??
-    orders.reduce((sum, order) => {
-      if ((order.paymentStatus || "").toLowerCase().includes("paid")) {
-        return sum + (order.amountMinor ?? 0);
-      }
-
-      return sum;
-    }, 0);
-
-  const totalOrders = extractCount(
-    dashboardPayload,
-    [
-      ["summary", "totalOrders"],
-      ["overview", "totalOrders"],
-      ["totals", "orders"],
-      ["stats", "orders"],
-      ["totalOrders"],
-    ],
-    orders.length,
-  );
-  const codOrders = extractCount(
-    dashboardPayload,
-    [
-      ["summary", "codOrders"],
-      ["overview", "codOrders"],
-      ["totals", "codOrders"],
-      ["stats", "codOrders"],
-      ["codOrders"],
-    ],
+  const totalOrders = normalizeCount(extractValue(payload, [["totalOrders"]]), orders.length);
+  const codOrders = normalizeCount(
+    extractValue(payload, [["codOrders"]]),
     orders.filter((order) => (order.paymentMethod || "").toLowerCase().includes("cod")).length,
   );
-  const totalProducts = extractCount(
-    dashboardPayload,
-    [
-      ["summary", "totalProducts"],
-      ["overview", "totalProducts"],
-      ["totals", "products"],
-      ["stats", "products"],
-      ["totalProducts"],
-    ],
+  const totalProducts = normalizeCount(
+    extractValue(payload, [["totalProducts"]]),
     products.length,
   );
-  const pendingShipmentsCount = extractCount(
-    dashboardPayload,
-    [
-      ["summary", "pendingShipments"],
-      ["overview", "pendingShipments"],
-      ["totals", "pendingShipments"],
-      ["stats", "pendingShipments"],
-      ["pendingShipmentsCount"],
-    ],
+  const pendingShipmentsCount = normalizeCount(
+    extractValue(payload, [["pendingShipments"]]),
     pendingShipments.length,
   );
-  const pendingReturnsCount = extractCount(
-    dashboardPayload,
-    [
-      ["summary", "pendingReturns"],
-      ["overview", "pendingReturns"],
-      ["totals", "pendingReturns"],
-      ["stats", "pendingReturns"],
-      ["pendingReturnsCount"],
-    ],
+  const pendingReturnsCount = normalizeCount(
+    extractValue(payload, [["pendingReturns"]]),
     pendingReturns.length,
   );
-  const pendingEnquiriesCount = extractCount(
-    dashboardPayload,
-    [
-      ["summary", "pendingEnquiries"],
-      ["overview", "pendingEnquiries"],
-      ["totals", "pendingEnquiries"],
-      ["stats", "pendingEnquiries"],
-      ["pendingEnquiriesCount"],
-    ],
+  const pendingEnquiriesCount = normalizeCount(
+    extractValue(payload, [["pendingEnquiries"]]),
     pendingEnquiries.length,
   );
-  const lowStockCount = extractCount(
-    dashboardPayload,
-    [
-      ["summary", "lowStockProducts"],
-      ["overview", "lowStockProducts"],
-      ["totals", "lowStockProducts"],
-      ["stats", "lowStockProducts"],
-      ["lowStockCount"],
-    ],
+  const lowStockCount = normalizeCount(
+    extractValue(payload, [["lowStock"]]),
     lowStockProducts.length,
   );
-  const orderStatusBreakdownSource = extractCollection(dashboardPayload, [
-    ["orderStatusBreakdown"],
-    ["summary", "orderStatusBreakdown"],
-    ["statusBreakdown"],
-  ]);
-  const orderStatusBreakdown =
-    orderStatusBreakdownSource.length > 0
-      ? orderStatusBreakdownSource.map((item) => ({
-          label: firstString(item?.label, item?.status, item?.key, item?.name) ?? "Pending",
-          count: firstNumber(item?.count, item?.total, item?.value) ?? 0,
-          percentage: firstNumber(item?.percentage) ?? 0,
-        }))
-      : buildStatusBreakdown(orders);
+  const unreadNotifications = normalizeCount(
+    extractValue(payload, [["unreadNotifications"]]),
+    notifications.filter((item) => !item.read).length,
+  );
+  const orderStatusBreakdown = normalizeStatusBreakdown(
+    extractCollection(payload, [["orderStatusBreakdown"], ["statusBreakdown"]]),
+    orders,
+  );
 
   return {
     metrics: [
       buildMetric("totalOrders", "Total Orders", totalOrders),
       buildMetric("codOrders", "COD Orders", codOrders),
       buildMetric("totalProducts", "Total Products", totalProducts),
-      buildMetric("paidAmount", "Paid Amount", paidAmountMinor, "currency"),
+      buildMetric("paidAmount", "Paid Amount", normalizePaidAmountMinor(payload, orders), "currency"),
       buildMetric("pendingShipments", "Pending Shipments", pendingShipmentsCount),
       buildMetric("pendingReturns", "Pending Returns", pendingReturnsCount),
       buildMetric("pendingEnquiries", "Pending Enquiries", pendingEnquiriesCount),
       buildMetric("lowStock", "Low Stock", lowStockCount),
     ],
     notifications,
-    unreadNotifications: notifications.filter((item) => !item.read).length,
+    unreadNotifications,
+    summaryCounts: {
+      pendingShipments: pendingShipmentsCount,
+      pendingReturns: pendingReturnsCount,
+      pendingEnquiries: pendingEnquiriesCount,
+      lowStock: lowStockCount,
+    },
     recentOrders: orders,
     pendingShipments: pendingShipments.slice(0, 5),
     pendingReturns: pendingReturns.slice(0, 5),
@@ -384,4 +369,18 @@ export async function getAdminDashboardData() {
     recentProducts: products.slice(0, 5),
     orderStatusBreakdown,
   };
+}
+
+export async function markAdminNotificationRead(notificationId) {
+  await apiPatch(endpoints.admin.notificationMarkRead(notificationId), undefined, {
+    credentials: "include",
+  });
+  emitRefreshEvent();
+}
+
+export async function markAllAdminNotificationsRead() {
+  await apiPatch(endpoints.admin.notificationsReadAll, undefined, {
+    credentials: "include",
+  });
+  emitRefreshEvent();
 }
