@@ -101,16 +101,20 @@ function normalizeOrderStatus(value) {
 function normalizePaymentStatus(value) {
   const normalized = (firstString(value) ?? "pending").toLowerCase();
 
-  if (normalized.includes("paid")) {
-    return "paid";
+  if (normalized.includes("unpaid")) {
+    return "unpaid";
+  }
+
+  if (normalized.includes("refund")) {
+    return "refunded";
   }
 
   if (normalized.includes("reject")) {
     return "rejected";
   }
 
-  if (normalized.includes("unpaid")) {
-    return "unpaid";
+  if (normalized.includes("paid")) {
+    return "paid";
   }
 
   return normalized.replace(/\s+/g, "_");

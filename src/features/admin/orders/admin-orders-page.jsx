@@ -19,6 +19,10 @@ import { routes } from "@/constants/routes";
 import { resolveAdminLoadMessage } from "@/features/admin/admin-api-ui";
 import { getAdminAccessState } from "@/features/admin/admin-access";
 import { cancelAdminOrder, getAdminOrders } from "@/features/admin/orders/admin-orders-api";
+import {
+  notifyAdminOrdersRefresh,
+  subscribeAdminOrdersRefresh,
+} from "@/features/admin/orders/admin-orders-refresh";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +46,14 @@ function formatDate(value) {
 
 function getStatusVariant(status) {
   const normalized = String(status).toLowerCase();
+
+  if (normalized.includes("unpaid") || normalized.includes("reject")) {
+    return "error";
+  }
+
+  if (normalized.includes("refund")) {
+    return "neutral";
+  }
 
   if (normalized.includes("deliver") || normalized.includes("paid") || normalized.includes("approve")) {
     return "success";
@@ -327,6 +339,16 @@ export function AdminOrdersPage() {
     };
   }, [access.canAccessDashboard, auth.isLoading, filters, refreshKey]);
 
+  useEffect(() => {
+    if (!access.canAccessDashboard) {
+      return undefined;
+    }
+
+    return subscribeAdminOrdersRefresh(() => {
+      setRefreshKey((value) => value + 1);
+    });
+  }, [access.canAccessDashboard]);
+
   function replaceFilters(updates) {
     const query = updateSearchParams(searchParams.toString(), updates);
     const nextHref = query ? `${pathname}?${query}` : pathname;
@@ -393,10 +415,13 @@ export function AdminOrdersPage() {
       });
       toast.success(t("orders"), t("statusUpdatedSuccessfully"));
       setDialogState({ open: false, order: null, reason: "", submitting: false });
-      setRefreshKey((value) => value + 1);
+      notifyAdminOrdersRefresh({
+        orderNumber: dialogState.order.orderNumber,
+        action: "cancel",
+      });
     } catch (error) {
       setDialogState((current) => ({ ...current, submitting: false }));
-      toast.apiError(error, t("orders"));
+      toast.error(t("orders"), resolveAdminLoadMessage(error, "Unable to update this order."));
     }
   }
 

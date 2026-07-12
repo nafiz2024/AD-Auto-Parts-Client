@@ -37,6 +37,7 @@ import {
   updateAdminOrderStatus,
   updateAdminOrderPaymentStatus,
 } from "@/features/admin/orders/admin-orders-api";
+import { notifyAdminOrdersRefresh } from "@/features/admin/orders/admin-orders-refresh";
 import { getFieldErrors } from "@/lib/api/error-messages";
 import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 import { useAuth } from "@/hooks/use-auth";
@@ -71,6 +72,14 @@ function formatDate(value) {
 
 function getStatusVariant(status) {
   const normalized = String(status).toLowerCase();
+
+  if (normalized.includes("unpaid") || normalized.includes("reject")) {
+    return "error";
+  }
+
+  if (normalized.includes("refund")) {
+    return "neutral";
+  }
 
   if (
     normalized.includes("deliver") ||
@@ -249,6 +258,15 @@ export function AdminOrderDetailPage({ orderNumber }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
+  function refreshAdminOrderData(action) {
+    notifyAdminOrdersRefresh({
+      orderNumber,
+      action,
+    });
+    router.refresh();
+    setRefreshKey((value) => value + 1);
+  }
+
   useEffect(() => {
     if (auth.isLoading) {
       return undefined;
@@ -377,7 +395,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
       });
       toast.success(t("orders"), t("statusUpdatedSuccessfully"));
       setStatusForm((current) => ({ ...current, note: "", submitting: false }));
-      setRefreshKey((value) => value + 1);
+      refreshAdminOrderData("status");
     } catch (error) {
       setStatusForm((current) => ({ ...current, submitting: false }));
       toast.error(t("orders"), getAdminActionErrorMessage(error));
@@ -415,7 +433,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
         reason: "",
         submitting: false,
       });
-      setRefreshKey((value) => value + 1);
+      refreshAdminOrderData(dialogState.mode === "cancelled" ? "cancel" : "status");
     } catch (error) {
       setDialogState((current) => ({ ...current, submitting: false }));
       toast.error(t("orders"), getAdminActionErrorMessage(error));
@@ -433,10 +451,10 @@ export function AdminOrderDetailPage({ orderNumber }) {
       await saveAdminOrderNote(orderNumber, noteForm.value.trim());
       toast.success(t("adminNotes"), t("noteSavedSuccessfully"));
       setNoteForm((current) => ({ ...current, submitting: false }));
-      setRefreshKey((value) => value + 1);
+      refreshAdminOrderData("note");
     } catch (error) {
       setNoteForm((current) => ({ ...current, submitting: false }));
-      toast.apiError(error, t("adminNotes"));
+      toast.error(t("adminNotes"), getAdminActionErrorMessage(error));
     }
   }
 
@@ -480,7 +498,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
         submitting: false,
         fieldErrors: {},
       });
-      setRefreshKey((value) => value + 1);
+      refreshAdminOrderData("shipment");
     } catch (error) {
       setShipmentForm((current) => ({
         ...current,
@@ -505,9 +523,9 @@ export function AdminOrderDetailPage({ orderNumber }) {
     try {
       await createAdminInvoiceForOrder(orderNumber);
       toast.success(t("orders"), t("invoiceCreatedSuccessfully"));
-      setRefreshKey((value) => value + 1);
+      refreshAdminOrderData("invoice");
     } catch (error) {
-      toast.apiError(error, t("orders"));
+      toast.error(t("orders"), getAdminActionErrorMessage(error));
     }
   }
 
@@ -550,7 +568,7 @@ export function AdminOrderDetailPage({ orderNumber }) {
         note: "Cash collected by admin",
       });
       toast.success(t("orders"), "Payment marked as paid");
-      setRefreshKey((value) => value + 1);
+      refreshAdminOrderData("payment-status");
     } catch (error) {
       setState((current) => ({
         ...current,
