@@ -235,32 +235,28 @@ function normalizeStatusBreakdown(items, orders) {
   }));
 }
 
-function normalizePaidAmountMinor(payload) {
-  const directMinor = firstNumber(extractValue(payload, [["paidAmountMinor"]]));
-
-  if (directMinor !== null) {
-    return directMinor;
-  }
-
-  return Number(extractValue(payload, [["paidAmount"]]) || 0);
-}
-
 async function loadSummary() {
-  const result = await apiGet(endpoints.admin.dashboardSummary, {
+  const response = await apiGet(endpoints.admin.dashboardSummary, {
     credentials: "include",
   });
 
-  const summary = result?.raw?.data ?? result?.data ?? result?.raw ?? {};
+  const payload = response?.data?.data || response?.data || {};
+  const paidAmountRaw = payload.paidAmount;
 
   if (process.env.NODE_ENV !== "production") {
-    console.log("[admin dashboard] summary data:", summary);
+    console.log("[admin dashboard] api response:", response);
+    console.log("[admin dashboard] payload:", payload);
+    console.log("[admin dashboard] paidAmountRaw:", paidAmountRaw);
   }
 
-  return summary;
+  return {
+    payload,
+    paidAmountRaw: Number(paidAmountRaw || 0),
+  };
 }
 
 export async function getAdminDashboardData() {
-  const payload = await loadSummary();
+  const { payload, paidAmountRaw } = await loadSummary();
 
   const notifications = extractCollection(payload, [
     ["recentNotifications"],
@@ -332,7 +328,7 @@ export async function getAdminDashboardData() {
       buildMetric("totalOrders", "Total Orders", totalOrders),
       buildMetric("codOrders", "COD Orders", codOrders),
       buildMetric("totalProducts", "Total Products", totalProducts),
-      buildMetric("paidAmount", "Paid Amount", normalizePaidAmountMinor(payload), "currency"),
+      buildMetric("paidAmount", "Paid Amount", paidAmountRaw, "currency"),
       buildMetric("pendingShipments", "Pending Shipments", pendingShipmentsCount),
       buildMetric("pendingReturns", "Pending Returns", pendingReturnsCount),
       buildMetric("pendingEnquiries", "Pending Enquiries", pendingEnquiriesCount),
