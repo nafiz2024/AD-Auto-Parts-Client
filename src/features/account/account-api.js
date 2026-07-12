@@ -369,6 +369,41 @@ function normalizeOrder(payload) {
       trackingNumber,
     ) ?? null;
   const deliveryFeeResolved = isShopPickup ? 0 : deliveryFeeMinor;
+  const vehicleInfoPayload =
+    orderPayload?.vehicleInfo ??
+    orderPayload?.vehicle ??
+    orderPayload?.vehicleCompatibility ??
+    orderPayload?.compatibility ??
+    null;
+  const vehicleInfo = {
+    carBrand: firstString(
+      vehicleInfoPayload?.carBrand,
+      vehicleInfoPayload?.make,
+      vehicleInfoPayload?.brand,
+      vehicleInfoPayload?.vehicleBrand,
+    ),
+    carModel: firstString(
+      vehicleInfoPayload?.carModel,
+      vehicleInfoPayload?.model,
+      vehicleInfoPayload?.vehicleModel,
+    ),
+    year: firstString(
+      vehicleInfoPayload?.year,
+      vehicleInfoPayload?.yearRange,
+      vehicleInfoPayload?.manufacturingYear,
+    ),
+    engine: firstString(
+      vehicleInfoPayload?.engine,
+      vehicleInfoPayload?.engineType,
+      vehicleInfoPayload?.engineName,
+    ),
+    vinOrChassis: firstString(
+      vehicleInfoPayload?.vinOrChassis,
+      vehicleInfoPayload?.vin,
+      vehicleInfoPayload?.chassisNumber,
+      vehicleInfoPayload?.chassis,
+    ),
+  };
 
   return {
     ...base,
@@ -421,6 +456,7 @@ function normalizeOrder(payload) {
     courierName:
       firstString(orderPayload?.courierName, orderPayload?.shipment?.courierName) ?? null,
     notes: firstString(orderPayload?.notes, orderPayload?.customerNote),
+    vehicleInfo,
     statusTimeline: Array.isArray(orderPayload?.statusTimeline)
       ? orderPayload.statusTimeline
       : Array.isArray(orderPayload?.timeline)

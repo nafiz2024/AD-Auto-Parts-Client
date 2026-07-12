@@ -80,6 +80,10 @@ function DetailValue({ amountMinor, value, pendingLabel = "Pending" }) {
   );
 }
 
+function DetailGridValue({ value, fallback = "Not provided" }) {
+  return <p className="font-medium text-foreground">{toDisplayText(value) ?? fallback}</p>;
+}
+
 function getInvoiceDisplay(order) {
   if (toDisplayText(order?.invoiceNumber)) {
     return toDisplayText(order.invoiceNumber);
@@ -370,65 +374,93 @@ export function AccountOrderDetailPage({ orderNumber }) {
           )}
         </Card>
 
-        <Card className="space-y-4">
-          <h2 className="text-xl font-semibold text-foreground">{t("recentActivity")}</h2>
-          <div className="rounded-3xl border border-border p-4">
-            <p className="text-sm text-muted-foreground">{t("itemTotal")}</p>
-            <DetailValue amountMinor={order.itemTotalMinor} pendingLabel={t("pending")} />
-          </div>
-          <div className="rounded-3xl border border-border p-4">
-            <p className="text-sm text-muted-foreground">{t("deliveryFee")}</p>
-            <DetailValue amountMinor={order.deliveryFeeMinor} pendingLabel={t("pending")} />
-          </div>
-          <div className="rounded-3xl border border-border p-4">
-            <p className="text-sm text-muted-foreground">{shipmentOrPickupLabel}</p>
-            <DetailValue
-              value={shipmentOrPickupValue}
-              pendingLabel={order.isShopPickup ? "Pending Pickup" : t("pending")}
-            />
-          </div>
-          {order.isShopPickup ? (
-            <div className="rounded-3xl border border-border p-4">
-              <p className="text-sm text-muted-foreground">Pickup from shop</p>
-              <p className="font-medium text-foreground">Shop pickup order</p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Pickup reference: {referenceDisplay}
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="rounded-3xl border border-border p-4">
-                <p className="text-sm text-muted-foreground">{t("shippingAddress")}</p>
-                <DetailValue value={order.shippingAddress} pendingLabel={t("pending")} />
+        <div className="space-y-6">
+          <Card className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">Vehicle Compatibility</h2>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <p className="text-sm text-muted-foreground">{t("carBrand")}</p>
+                <DetailGridValue value={order.vehicleInfo?.carBrand} />
               </div>
-              <div className="rounded-3xl border border-border p-4">
-                <p className="text-sm text-muted-foreground">{t("billingAddress")}</p>
-                <DetailValue value={order.billingAddress} pendingLabel={t("pending")} />
+              <div>
+                <p className="text-sm text-muted-foreground">{t("carModel")}</p>
+                <DetailGridValue value={order.vehicleInfo?.carModel} />
               </div>
-            </>
-          )}
-          {invoiceNumber ? (
-            <div className="rounded-3xl border border-border p-4">
-              <p className="text-sm text-muted-foreground">{t("invoice")}</p>
-              <p className="font-medium text-foreground">{invoiceNumber}</p>
-              <div className="mt-4 flex flex-wrap gap-3">
-                <Link href={routes.customer.accountInvoiceDetail(invoiceNumber)}>
-                  <Button variant="outline">{t("viewInvoice")}</Button>
-                </Link>
-                {order.invoice?.pdfPath ? (
-                  <Button onClick={handleDownloadInvoice} disabled={downloadingInvoice}>
-                    {downloadingInvoice ? t("downloadingPdf") : t("downloadPdf")}
-                  </Button>
-                ) : null}
+              <div>
+                <p className="text-sm text-muted-foreground">{t("year")}</p>
+                <DetailGridValue value={order.vehicleInfo?.year} />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">{t("engine")}</p>
+                <DetailGridValue value={order.vehicleInfo?.engine} />
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-sm text-muted-foreground">VIN / Chassis Number</p>
+                <DetailGridValue value={order.vehicleInfo?.vinOrChassis} />
               </div>
             </div>
-          ) : null}
-          <div className="flex flex-wrap gap-3">
-            <Link href={routes.customer.accountInvoices}>
-              <Button variant="outline">{t("goToInvoices")}</Button>
-            </Link>
-          </div>
-        </Card>
+          </Card>
+
+          <Card className="space-y-4">
+            <h2 className="text-xl font-semibold text-foreground">{t("recentActivity")}</h2>
+            <div className="rounded-3xl border border-border p-4">
+              <p className="text-sm text-muted-foreground">{t("itemTotal")}</p>
+              <DetailValue amountMinor={order.itemTotalMinor} pendingLabel={t("pending")} />
+            </div>
+            <div className="rounded-3xl border border-border p-4">
+              <p className="text-sm text-muted-foreground">{t("deliveryFee")}</p>
+              <DetailValue amountMinor={order.deliveryFeeMinor} pendingLabel={t("pending")} />
+            </div>
+            <div className="rounded-3xl border border-border p-4">
+              <p className="text-sm text-muted-foreground">{shipmentOrPickupLabel}</p>
+              <DetailValue
+                value={shipmentOrPickupValue}
+                pendingLabel={order.isShopPickup ? "Pending Pickup" : t("pending")}
+              />
+            </div>
+            {order.isShopPickup ? (
+              <div className="rounded-3xl border border-border p-4">
+                <p className="text-sm text-muted-foreground">Pickup from shop</p>
+                <p className="font-medium text-foreground">Shop pickup order</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Pickup reference: {referenceDisplay}
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="rounded-3xl border border-border p-4">
+                  <p className="text-sm text-muted-foreground">{t("shippingAddress")}</p>
+                  <DetailValue value={order.shippingAddress} pendingLabel={t("pending")} />
+                </div>
+                <div className="rounded-3xl border border-border p-4">
+                  <p className="text-sm text-muted-foreground">{t("billingAddress")}</p>
+                  <DetailValue value={order.billingAddress} pendingLabel={t("pending")} />
+                </div>
+              </>
+            )}
+            {invoiceNumber ? (
+              <div className="rounded-3xl border border-border p-4">
+                <p className="text-sm text-muted-foreground">{t("invoice")}</p>
+                <p className="font-medium text-foreground">{invoiceNumber}</p>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link href={routes.customer.accountInvoiceDetail(invoiceNumber)}>
+                    <Button variant="outline">{t("viewInvoice")}</Button>
+                  </Link>
+                  {order.invoice?.pdfPath ? (
+                    <Button onClick={handleDownloadInvoice} disabled={downloadingInvoice}>
+                      {downloadingInvoice ? t("downloadingPdf") : t("downloadPdf")}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+            <div className="flex flex-wrap gap-3">
+              <Link href={routes.customer.accountInvoices}>
+                <Button variant="outline">{t("goToInvoices")}</Button>
+              </Link>
+            </div>
+          </Card>
+        </div>
       </div>
     </Container>
   );

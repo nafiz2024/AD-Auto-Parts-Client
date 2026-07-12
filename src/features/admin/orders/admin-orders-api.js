@@ -471,6 +471,57 @@ function normalizeCourierOption(item, index = 0) {
   };
 }
 
+function normalizeVehicleInfo(item) {
+  const vehicleInfo =
+    item?.vehicleInfo ??
+    item?.vehicle ??
+    item?.vehicleCompatibility ??
+    item?.compatibility ??
+    null;
+
+  return {
+    make: firstString(
+      vehicleInfo?.carBrand,
+      vehicleInfo?.make,
+      vehicleInfo?.brand,
+      vehicleInfo?.vehicleBrand,
+      item?.vehicle?.make,
+      item?.compatibility?.make,
+      item?.vehicleCompatibility?.make,
+    ),
+    model: firstString(
+      vehicleInfo?.carModel,
+      vehicleInfo?.model,
+      vehicleInfo?.vehicleModel,
+      item?.vehicle?.model,
+      item?.compatibility?.model,
+      item?.vehicleCompatibility?.model,
+    ),
+    year: firstString(
+      vehicleInfo?.year,
+      vehicleInfo?.yearRange,
+      vehicleInfo?.manufacturingYear,
+      item?.vehicle?.year,
+      item?.compatibility?.year,
+      item?.vehicleCompatibility?.year,
+    ),
+    engine: firstString(
+      vehicleInfo?.engine,
+      vehicleInfo?.engineType,
+      vehicleInfo?.engineName,
+      item?.vehicle?.engine,
+      item?.compatibility?.engine,
+      item?.vehicleCompatibility?.engine,
+    ),
+    vinOrChassis: firstString(
+      vehicleInfo?.vinOrChassis,
+      vehicleInfo?.vin,
+      vehicleInfo?.chassisNumber,
+      vehicleInfo?.chassis,
+    ),
+  };
+}
+
 export async function getAdminOrders(filters = {}) {
   const query = {
     page: filters.page ?? 1,
@@ -576,28 +627,7 @@ export async function getAdminOrderDetail(orderNumber) {
       normalizeAddress(item?.deliveryAddress) ??
       null,
     billingAddress: normalizeAddress(item?.billingAddress) ?? null,
-    vehicle: {
-      make: firstString(
-        item?.vehicle?.make,
-        item?.compatibility?.make,
-        item?.vehicleCompatibility?.make,
-      ),
-      model: firstString(
-        item?.vehicle?.model,
-        item?.compatibility?.model,
-        item?.vehicleCompatibility?.model,
-      ),
-      year: firstString(
-        item?.vehicle?.year,
-        item?.compatibility?.year,
-        item?.vehicleCompatibility?.year,
-      ),
-      engine: firstString(
-        item?.vehicle?.engine,
-        item?.compatibility?.engine,
-        item?.vehicleCompatibility?.engine,
-      ),
-    },
+    vehicle: normalizeVehicleInfo(item),
     payment: {
       method: normalizePaymentMethod(summary.paymentMethod),
       methodLabel: summary.paymentMethod,

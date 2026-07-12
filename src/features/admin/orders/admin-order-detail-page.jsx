@@ -813,6 +813,10 @@ export function AdminOrderDetailPage({ orderNumber }) {
                 <dt className="text-muted-foreground">{t("engine")}</dt>
                 <dd className="font-medium text-foreground">{detail.vehicle.engine || "--"}</dd>
               </div>
+              <div className="grid gap-1 sm:col-span-2">
+                <dt className="text-muted-foreground">VIN / Chassis Number</dt>
+                <dd className="font-medium text-foreground">{detail.vehicle.vinOrChassis || "Not provided"}</dd>
+              </div>
             </dl>
           </DetailGroup>
 

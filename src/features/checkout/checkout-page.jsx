@@ -50,6 +50,41 @@ function createInitialForm(zoneId = "") {
     fulfillmentMethod: FULFILLMENT_METHODS.homeDelivery,
     orderNote: "",
     termsAccepted: false,
+    carBrand: "",
+    carModel: "",
+    year: "",
+    engine: "",
+    vinOrChassis: "",
+  };
+}
+
+function firstText(...values) {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return "";
+}
+
+function buildInitialVehicleFields(product) {
+  if (!product) {
+    return {
+      carBrand: "",
+      carModel: "",
+      year: "",
+      engine: "",
+      vinOrChassis: "",
+    };
+  }
+
+  return {
+    carBrand: firstText(product.carBrand, product.compatibility?.vehicleBrand),
+    carModel: firstText(product.carModel, product.compatibility?.model),
+    year: firstText(product.year, product.compatibility?.yearRange, product.vehicleSummary),
+    engine: firstText(product.engine, product.compatibility?.engine),
+    vinOrChassis: firstText(product.vinOrChassis, product.vin, product.chassisNumber),
   };
 }
 
@@ -250,6 +285,10 @@ export function CheckoutPage({
           product,
           error: null,
         });
+        setForm((current) => ({
+          ...current,
+          ...buildInitialVehicleFields(product),
+        }));
       })
       .catch((error) => {
         if (!mounted) {
@@ -345,6 +384,13 @@ export function CheckoutPage({
         },
       ],
       paymentMethod: PAYMENT_METHODS.cashOnDelivery,
+      vehicleInfo: {
+        carBrand: form.carBrand.trim(),
+        carModel: form.carModel.trim(),
+        year: form.year.trim(),
+        engine: form.engine.trim(),
+        vinOrChassis: form.vinOrChassis.trim(),
+      },
     };
 
     if (form.fulfillmentMethod === FULFILLMENT_METHODS.homeDelivery) {
@@ -713,6 +759,64 @@ export function CheckoutPage({
                   </p>
                 </div>
               )}
+            </Card>
+
+            <Card className="space-y-5 rounded-[2rem]">
+              <div className="space-y-2">
+                <h2 className="text-2xl font-semibold text-foreground">Vehicle Compatibility</h2>
+                <p className="text-sm text-muted-foreground">
+                  Optional details to help us confirm this part fits your vehicle.
+                </p>
+              </div>
+
+              <div className="grid gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="carBrand">{t("carBrand")}</Label>
+                  <Input
+                    id="carBrand"
+                    value={form.carBrand}
+                    onChange={(event) => updateFormField("carBrand", event.target.value)}
+                    placeholder={t("carBrand")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="carModel">{t("carModel")}</Label>
+                  <Input
+                    id="carModel"
+                    value={form.carModel}
+                    onChange={(event) => updateFormField("carModel", event.target.value)}
+                    placeholder={t("carModel")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vehicleYear">{t("year")}</Label>
+                  <Input
+                    id="vehicleYear"
+                    value={form.year}
+                    onChange={(event) => updateFormField("year", event.target.value)}
+                    placeholder={t("year")}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="vehicleEngine">{t("engine")}</Label>
+                  <Input
+                    id="vehicleEngine"
+                    value={form.engine}
+                    onChange={(event) => updateFormField("engine", event.target.value)}
+                    placeholder={t("engine")}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vinOrChassis">VIN / Chassis Number</Label>
+                <Input
+                  id="vinOrChassis"
+                  value={form.vinOrChassis}
+                  onChange={(event) => updateFormField("vinOrChassis", event.target.value)}
+                  placeholder={t("optional")}
+                />
+              </div>
             </Card>
 
             <Card className="space-y-5 rounded-[2rem]">
