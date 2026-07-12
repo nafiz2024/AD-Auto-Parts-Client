@@ -242,13 +242,7 @@ function normalizePaidAmountMinor(payload) {
     return directMinor;
   }
 
-  const directAmount = firstNumber(extractValue(payload, [["paidAmount"]]));
-
-  if (directAmount !== null) {
-    return Math.round(directAmount * 100);
-  }
-
-  return 0;
+  return Number(extractValue(payload, [["paidAmount"]]) || 0);
 }
 
 async function loadSummary() {
@@ -256,7 +250,13 @@ async function loadSummary() {
     credentials: "include",
   });
 
-  return getEnvelopeData(result);
+  const summary = result?.raw?.data ?? result?.data ?? result?.raw ?? {};
+
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[admin dashboard] summary data:", summary);
+  }
+
+  return summary;
 }
 
 export async function getAdminDashboardData() {
