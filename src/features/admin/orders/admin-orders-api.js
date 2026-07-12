@@ -148,6 +148,24 @@ function normalizeMajorAmountToMinor(...values) {
 }
 
 function resolveBackendMessage(data) {
+  function stringifyMessage(value) {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      return trimmed && trimmed !== "[object Object]" ? trimmed : null;
+    }
+
+    if (!value || typeof value !== "object") {
+      return null;
+    }
+
+    return (
+      stringifyMessage(value.message) ||
+      stringifyMessage(value.error) ||
+      stringifyMessage(value.msg) ||
+      null
+    );
+  }
+
   if (!data) {
     return null;
   }
@@ -167,9 +185,31 @@ function resolveBackendMessage(data) {
     return directMessage;
   }
 
-  const firstError = asArray(data.errors)[0];
-  const firstErrorMessage = firstString(firstError?.message, firstError?.error, firstError);
-  return firstErrorMessage && firstErrorMessage !== "[object Object]" ? firstErrorMessage : null;
+  const formattedErrors = asArray(data.errors)
+    .map((entry, index) => {
+      const field = firstString(
+        Array.isArray(entry?.path) ? entry.path.join(".") : null,
+        stringifyMessage(entry?.field),
+        stringifyMessage(entry?.path),
+        stringifyMessage(entry?.key),
+      );
+      const message =
+        stringifyMessage(entry) ||
+        (entry && typeof entry === "object" ? JSON.stringify(entry) : null);
+
+      if (!message) {
+        return null;
+      }
+
+      return `${field ?? index}: ${message}`;
+    })
+    .filter(Boolean);
+
+  if (formattedErrors.length > 0) {
+    return formattedErrors.join(" ");
+  }
+
+  return null;
 }
 
 function resolveOrderState(item) {
@@ -767,15 +807,35 @@ export async function createAdminShipmentFromOrder(orderIdentifier, payload) {
     estimatedDeliveryDate: firstString(payload?.estimatedDeliveryDate) ?? null,
     note: firstString(payload?.note) ?? "",
   };
+  const courierId = firstString(payload?.courierId);
+
+  if (courierId) {
+    normalizedPayload.courierId = courierId;
+  }
+
   const path = orderShipmentPath(orderIdentifier);
   const url = resolveApiRequestUrl(path);
 
   try {
+    if (IS_DEVELOPMENT) {
+      console.log("[admin shipment] payload:", normalizedPayload);
+    }
+
     const result = await apiPost(path, normalizedPayload, ADMIN_ORDER_REQUEST_OPTIONS);
     const data = getEnvelopeData(result);
+    if (IS_DEVELOPMENT) {
+      console.log("[admin shipment] response:", result?.status ?? null, data);
+    }
     logAdminOrderAction(url, normalizedPayload, result?.status, data);
     return data;
   } catch (error) {
+    if (IS_DEVELOPMENT) {
+      console.log(
+        "[admin shipment] response:",
+        error?.status ?? null,
+        error?.details ?? error?.message ?? null,
+      );
+    }
     logAdminOrderAction(
       url,
       normalizedPayload,

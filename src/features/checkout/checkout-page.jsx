@@ -137,16 +137,41 @@ function getValidationSummary(fieldErrors) {
 }
 
 function getBackendValidationMessage(error) {
+  function stringifyMessage(value) {
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      return trimmed && trimmed !== "[object Object]" ? trimmed : null;
+    }
+
+    if (!value || typeof value !== "object") {
+      return null;
+    }
+
+    return (
+      stringifyMessage(value.message) ||
+      stringifyMessage(value.error) ||
+      stringifyMessage(value.msg) ||
+      null
+    );
+  }
+
   const fieldErrors = error?.fieldErrors ?? {};
   const fieldMessages = Object.entries(fieldErrors).flatMap(([field, messages]) =>
     (Array.isArray(messages) ? messages : [messages])
-      .filter(Boolean)
       .map((message) => {
-        if (message && typeof message === "object") {
-          return `${message.field ?? field}: ${message.message ?? JSON.stringify(message)}`;
+        const resolvedField =
+          stringifyMessage(message?.field) ||
+          stringifyMessage(message?.path) ||
+          field;
+        const resolvedMessage =
+          stringifyMessage(message) ||
+          (message && typeof message === "object" ? JSON.stringify(message) : null);
+
+        if (!resolvedMessage) {
+          return null;
         }
 
-        return `${field}: ${message}`;
+        return `${resolvedField}: ${resolvedMessage}`;
       }),
   );
 
@@ -158,10 +183,15 @@ function getBackendValidationMessage(error) {
   const backendErrorMessages = backendErrors
     .map((entry) => {
       const field =
-        (Array.isArray(entry?.path) ? entry.path.join(".") : entry?.field) ??
+        (Array.isArray(entry?.path) ? entry.path.join(".") : stringifyMessage(entry?.path)) ??
+        stringifyMessage(entry?.field) ??
         entry?.key ??
         null;
-      return [field, entry?.message].filter(Boolean).join(": ");
+      const message =
+        stringifyMessage(entry?.message) ||
+        stringifyMessage(entry?.error) ||
+        stringifyMessage(entry?.msg);
+      return [field, message].filter(Boolean).join(": ");
     })
     .filter(Boolean);
 
@@ -175,10 +205,15 @@ function getBackendValidationMessage(error) {
   const detailMessages = detailsErrors
     .map((entry) => {
       const field =
-        (Array.isArray(entry?.path) ? entry.path.join(".") : entry?.field) ??
+        (Array.isArray(entry?.path) ? entry.path.join(".") : stringifyMessage(entry?.path)) ??
+        stringifyMessage(entry?.field) ??
         entry?.key ??
         null;
-      return [field, entry?.message].filter(Boolean).join(": ");
+      const message =
+        stringifyMessage(entry?.message) ||
+        stringifyMessage(entry?.error) ||
+        stringifyMessage(entry?.msg);
+      return [field, message].filter(Boolean).join(": ");
     })
     .filter(Boolean);
 

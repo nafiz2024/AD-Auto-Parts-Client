@@ -123,33 +123,39 @@ function DetailGroup({ title, icon: Icon, children }) {
 }
 
 const TEMPORARY_COURIER_OPTIONS = [
-  { id: "shop", name: "Shop" },
-  { id: "ad-auto-parts-delivery", name: "AD Auto Parts Delivery" },
-  { id: "smsa", name: "SMSA" },
-  { id: "aramex", name: "Aramex" },
-  { id: "dhl", name: "DHL" },
-  { id: "other", name: "Other" },
+  { label: "Shop", value: "Shop", backendCourierId: "" },
+  { label: "AD Auto Parts Delivery", value: "AD Auto Parts Delivery", backendCourierId: "" },
+  { label: "SMSA", value: "SMSA", backendCourierId: "" },
+  { label: "Aramex", value: "Aramex", backendCourierId: "" },
+  { label: "DHL", value: "DHL", backendCourierId: "" },
+  { label: "Other", value: "Other", backendCourierId: "" },
 ];
 
 function mergeCourierOptions(couriers = []) {
   const seen = new Set();
 
   return [...TEMPORARY_COURIER_OPTIONS, ...couriers].reduce((items, courier) => {
-    const id = String(courier?.id ?? courier?.name ?? "").trim();
-    const name = String(courier?.name ?? courier?.id ?? "").trim();
+    const label = String(courier?.label ?? courier?.name ?? courier?.value ?? courier?.id ?? "").trim();
+    const value = String(courier?.value ?? courier?.name ?? courier?.label ?? courier?.id ?? "").trim();
+    const backendCourierId = String(courier?.backendCourierId ?? courier?.id ?? "").trim();
 
-    if (!id || !name) {
+    if (!label || !value) {
       return items;
     }
 
-    const key = name.toLowerCase();
+    const key = value.toLowerCase();
 
     if (seen.has(key)) {
       return items;
     }
 
     seen.add(key);
-    items.push({ id, name });
+    items.push({
+      label,
+      value,
+      backendCourierId:
+        TEMPORARY_COURIER_OPTIONS.some((option) => option.value === value) ? "" : backendCourierId,
+    });
     return items;
   }, []);
 }
@@ -309,8 +315,8 @@ export function AdminOrderDetailPage({ orderNumber }) {
           setShipmentForm({
             courier:
               detail.shipments[0]?.courier ||
-              couriers[0]?.name ||
-              TEMPORARY_COURIER_OPTIONS[0].name,
+              couriers[0]?.value ||
+              TEMPORARY_COURIER_OPTIONS[0].value,
             trackingNumber: "",
             estimatedDeliveryDate: "",
             note: "",
@@ -462,14 +468,13 @@ export function AdminOrderDetailPage({ orderNumber }) {
     event.preventDefault();
     const normalizedCourier = String(shipmentForm.courier || "").trim();
     const normalizedTrackingNumber = shipmentForm.trackingNumber.trim();
+    const selectedCourierOption = state.couriers.find(
+      (courier) => courier.value === normalizedCourier,
+    );
     const nextFieldErrors = {};
 
     if (!normalizedCourier) {
       nextFieldErrors.courier = t("selectCourier");
-    }
-
-    if (normalizedCourier.toLowerCase() !== "shop" && !normalizedTrackingNumber) {
-      nextFieldErrors.trackingNumber = "Tracking number is required for this courier.";
     }
 
     if (Object.keys(nextFieldErrors).length > 0) {
@@ -485,13 +490,14 @@ export function AdminOrderDetailPage({ orderNumber }) {
     try {
       await createAdminShipmentFromOrder(orderIdentifier, {
         courier: normalizedCourier,
+        courierId: selectedCourierOption?.backendCourierId || undefined,
         trackingNumber: normalizedTrackingNumber || "",
         estimatedDeliveryDate: shipmentForm.estimatedDeliveryDate || null,
         note: shipmentForm.note || "",
       });
       toast.success(t("shipments"), t("shipmentCreatedSuccessfully"));
       setShipmentForm({
-        courier: state.couriers[0]?.name || TEMPORARY_COURIER_OPTIONS[0].name,
+        courier: state.couriers[0]?.value || TEMPORARY_COURIER_OPTIONS[0].value,
         trackingNumber: "",
         estimatedDeliveryDate: "",
         note: "",
@@ -929,8 +935,8 @@ export function AdminOrderDetailPage({ orderNumber }) {
                 >
                   <option value="">{t("selectCourier")}</option>
                   {state.couriers.map((courier) => (
-                    <option key={courier.id} value={courier.name}>
-                      {courier.name}
+                    <option key={courier.value} value={courier.value}>
+                      {courier.label}
                     </option>
                   ))}
                 </Select>
