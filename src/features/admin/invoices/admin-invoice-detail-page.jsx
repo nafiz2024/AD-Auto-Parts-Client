@@ -16,10 +16,12 @@ import {
   getAdminInvoiceDetail,
   runInvoiceAction,
 } from "@/features/admin/invoices/admin-invoices-api";
+import { subscribeAdminOrdersRefresh } from "@/features/admin/orders/admin-orders-refresh";
 import { InvoicePreview } from "@/features/invoices/invoice-ui";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
+import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 
 function LoadingState() {
   return (
@@ -46,6 +48,31 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
     mutating: false,
   });
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const unsubscribe = subscribeAdminOrdersRefresh(() => {
+      setRefreshKey((value) => value + 1);
+    });
+
+    function handleWindowFocus() {
+      setRefreshKey((value) => value + 1);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        setRefreshKey((value) => value + 1);
+      }
+    }
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
 
   useEffect(() => {
     if (auth.isLoading) {
@@ -112,7 +139,7 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
     try {
       await downloadAdminInvoicePdf(state.invoice);
     } catch (error) {
-      toast.error(t("failedToDownloadInvoice"), "Could not download invoice right now.");
+      toast.apiError(error, t("failedToDownloadInvoice"));
     } finally {
       setState((current) => ({ ...current, downloading: false }));
     }
@@ -151,7 +178,9 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
   if (state.error) {
     return (
       <Alert variant="warning" title={t("failedToLoad")}>
-        {state.error.message}
+        {resolveApiUiMessage(state.error, t("failedToLoadDescription"), {
+          routeScope: "Admin invoice detail",
+        })}
       </Alert>
     );
   }

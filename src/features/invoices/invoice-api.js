@@ -15,6 +15,15 @@ const ACCOUNT_REQUEST_OPTIONS = {
   credentials: "include",
 };
 
+const ACCOUNT_NO_STORE_REQUEST_OPTIONS = {
+  ...ACCOUNT_REQUEST_OPTIONS,
+  cache: "no-store",
+};
+
+const ADMIN_NO_STORE_REQUEST_OPTIONS = {
+  cache: "no-store",
+};
+
 function asArray(value) {
   if (Array.isArray(value)) {
     return value;
@@ -63,6 +72,15 @@ function firstBoolean(...values) {
   return null;
 }
 
+function sanitizeMessage(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed && trimmed !== "[object Object]" ? trimmed : null;
+}
+
 function normalizeItems(payload) {
   if (Array.isArray(payload?.items)) {
     return payload.items;
@@ -89,6 +107,87 @@ function getEnvelopeData(result) {
 
 function normalizeMinorAmount(...values) {
   return firstNumber(...values);
+}
+
+function toDisplayLabel(value) {
+  const normalized = sanitizeMessage(value);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return normalized
+    .split(/[_-\s]+/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function normalizeStatusToken(value) {
+  const normalized = sanitizeMessage(value)?.toLowerCase();
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (normalized.includes("cancel")) {
+    return "cancelled";
+  }
+
+  if (normalized.includes("void")) {
+    return "void";
+  }
+
+  if (normalized.includes("unpaid")) {
+    return "unpaid";
+  }
+
+  if (normalized.includes("paid")) {
+    return "paid";
+  }
+
+  if (normalized.includes("issue")) {
+    return "issued";
+  }
+
+  if (normalized.includes("pend")) {
+    return "pending";
+  }
+
+  return normalized.replace(/\s+/g, "_");
+}
+
+function normalizeInvoiceStatus(...values) {
+  for (const value of values) {
+    const normalized = normalizeStatusToken(value);
+
+    if (normalized && ["issued", "cancelled", "void", "paid"].includes(normalized)) {
+      return normalized;
+    }
+  }
+
+  return null;
+}
+
+function normalizePaymentStatus(...values) {
+  for (const value of values) {
+    const normalized = normalizeStatusToken(value);
+
+    if (normalized && ["paid", "pending", "unpaid"].includes(normalized)) {
+      return normalized;
+    }
+  }
+
+  return null;
+}
+
+function normalizeFulfillmentMethod(...values) {
+  return normalizeStatusToken(firstString(...values)) ?? "";
+}
+
+function isShopPickupMethod(...values) {
+  const normalized = normalizeFulfillmentMethod(...values);
+  return normalized === "shop_pickup" || normalized === "shop_receive";
 }
 
 function normalizeAddress(value) {
@@ -188,9 +287,17 @@ function normalizeInvoiceItem(item, index = 0) {
         item?.title,
         item?.product?.name,
         item?.description,
+        item?.itemName,
       ) ?? "Used auto part",
     description:
-      firstString(item?.description, item?.summary, item?.product?.description) ?? "",
+      sanitizeMessage(
+        firstString(
+          item?.description,
+          item?.summary,
+          item?.product?.description,
+          item?.details,
+        ),
+      ) ?? "",
     sku: firstString(item?.sku, item?.partNumber, item?.product?.sku),
     quantity: firstNumber(item?.quantity, item?.qty, item?.count),
     unitPriceMinor: normalizeMinorAmount(
@@ -218,55 +325,116 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
   const customer = invoice?.customer ?? item?.customer ?? {};
   const order = invoice?.order ?? item?.order ?? {};
   const orderCustomer = order?.customer ?? {};
+  const orderDelivery = order?.delivery ?? {};
+  const shipment = invoice?.shipment ?? order?.shipment ?? {};
   const deliveryAddress =
     normalizeAddress(invoice?.deliveryAddress) ??
     normalizeAddress(invoice?.shippingAddress) ??
+    normalizeAddress(invoice?.address) ??
     normalizeAddress(order?.deliveryAddress) ??
-    normalizeAddress(order?.shippingAddress);
+    normalizeAddress(order?.shippingAddress) ??
+    normalizeAddress(orderDelivery?.address) ??
+    normalizeAddress(shipment?.address);
+  const isShopPickup = isShopPickupMethod(
+    invoice?.fulfillmentMethod,
+    invoice?.deliveryMethod,
+    order?.fulfillmentMethod,
+    order?.deliveryMethod,
+    shipment?.fulfillmentMethod,
+    shipment?.deliveryMethod,
+    item?.fulfillmentMethod,
+  );
   const backendInvoiceNumber = firstString(
     invoice?.invoiceNumber,
     invoice?.number,
     item?.invoiceNumber,
     item?.number,
   );
-  const invoiceStatus =
+  const invoiceStatus = normalizeInvoiceStatus(
+    invoice?.invoiceStatus,
+    item?.invoiceStatus,
+    invoice?.state,
+    item?.state,
+    invoice?.status,
+    item?.status,
+  );
+  const paymentStatus = normalizePaymentStatus(
+    invoice?.paymentStatus,
+    payment?.status,
+    payment?.paymentStatus,
+    item?.paymentStatus,
+    item?.payment?.status,
+    order?.paymentStatus,
+    order?.payment?.status,
+  );
+  const pdfPath = resolveSafeApiPath(
     firstString(
-      invoice?.invoiceStatus,
-      invoice?.status,
-      item?.invoiceStatus,
-      item?.status,
-      invoice?.state,
-    ) ?? "Pending";
-  const paymentStatus =
-    firstString(
-      invoice?.paymentStatus,
-      payment?.status,
-      item?.paymentStatus,
-      item?.status,
-    ) ?? "Pending";
-  const pdfPath =
-    resolveSafeApiPath(
-      firstString(
-        invoice?.pdfPath,
-        invoice?.pdfUrl,
-        invoice?.downloadPath,
-        invoice?.downloadUrl,
-        item?.pdfPath,
-        item?.pdfUrl,
-        item?.downloadPath,
-        item?.downloadUrl,
-        invoice?.links?.pdf,
-        item?.links?.pdf,
-      ),
-    );
-
+      invoice?.pdfPath,
+      invoice?.pdfUrl,
+      invoice?.downloadPath,
+      invoice?.downloadUrl,
+      item?.pdfPath,
+      item?.pdfUrl,
+      item?.downloadPath,
+      item?.downloadUrl,
+      invoice?.links?.pdf,
+      item?.links?.pdf,
+    ),
+  );
   const items = asArray(
-    invoice?.items ??
+    invoice?.lineItems ??
+      invoice?.items ??
       invoice?.lines ??
       invoice?.products ??
+      item?.lineItems ??
+      item?.items ??
+      item?.lines ??
       order?.items ??
+      order?.lineItems ??
       order?.lines,
   ).map(normalizeInvoiceItem);
+  const customerName =
+    firstString(
+      customer?.name,
+      customer?.fullName,
+      customer?.customerName,
+      orderCustomer?.name,
+      orderCustomer?.fullName,
+      item?.customerName,
+      order?.customerName,
+      order?.shippingAddress?.fullName,
+      order?.deliveryAddress?.recipientName,
+    ) ?? "Customer";
+  const customerPhone = firstString(
+    customer?.phone,
+    customer?.mobile,
+    orderCustomer?.phone,
+    orderCustomer?.mobile,
+    item?.customerPhone,
+    order?.customerPhone,
+    order?.shippingAddress?.phone,
+    order?.deliveryAddress?.phone,
+  );
+  const customerEmail = firstString(
+    customer?.email,
+    orderCustomer?.email,
+    item?.customerEmail,
+    order?.customerEmail,
+    order?.shippingAddress?.email,
+    order?.deliveryAddress?.email,
+  );
+  const paymentMethodLabel = toDisplayLabel(
+    firstString(invoice?.paymentMethod, payment?.method, item?.paymentMethod),
+  );
+  const termsNote = sanitizeMessage(
+    firstString(
+      invoice?.termsNote,
+      invoice?.warrantyNote,
+      invoice?.termsAndConditions,
+      item?.termsNote,
+      item?.warrantyNote,
+    ),
+  );
 
   return {
     id:
@@ -277,7 +445,9 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
     orderNumber:
       firstString(invoice?.orderNumber, order?.orderNumber, item?.orderNumber, order?.number),
     invoiceStatus,
+    invoiceStatusLabel: toDisplayLabel(invoiceStatus),
     paymentStatus,
+    paymentStatusLabel: toDisplayLabel(paymentStatus),
     issuedAt:
       firstString(
         invoice?.issuedAt,
@@ -293,16 +463,17 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
     dueAt: firstString(invoice?.dueAt, invoice?.dueDate, item?.dueAt, item?.dueDate),
     customer: {
       id: firstString(customer?.id, customer?._id, orderCustomer?.id, orderCustomer?._id),
-      name:
-        firstString(customer?.name, customer?.fullName, item?.customerName, orderCustomer?.name) ??
-        "Customer",
-      phone: firstString(customer?.phone, orderCustomer?.phone, item?.customerPhone),
-      email: firstString(customer?.email, orderCustomer?.email, item?.customerEmail),
+      name: customerName,
+      phone: customerPhone,
+      email: customerEmail,
     },
     deliveryAddress,
+    deliveryAddressLabel: isShopPickup
+      ? "Shop Pickup -- no delivery address required."
+      : deliveryAddress,
+    isShopPickup,
     items,
-    paymentMethod:
-      firstString(invoice?.paymentMethod, payment?.method, item?.paymentMethod) ?? "—",
+    paymentMethod: paymentMethodLabel ?? "--",
     subtotalMinor: normalizeMinorAmount(
       invoice?.subtotalMinor,
       invoice?.subTotalMinor,
@@ -338,14 +509,7 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
       item?.grandTotalMinor,
       item?.total,
     ),
-    termsNote:
-      firstString(
-        invoice?.termsNote,
-        invoice?.warrantyNote,
-        invoice?.termsAndConditions,
-        item?.termsNote,
-        item?.warrantyNote,
-      ) ?? null,
+    termsNote: termsNote ?? null,
     pdfPath,
     availableActions: {
       canDownloadPdf: scope === "customer" ? Boolean(pdfPath) : Boolean(pdfPath),
@@ -417,7 +581,7 @@ export async function downloadAdminInvoicePdf(invoice) {
 }
 
 export async function getCustomerInvoices() {
-  const result = await apiGet(endpoints.account.invoices, ACCOUNT_REQUEST_OPTIONS);
+  const result = await apiGet(endpoints.account.invoices, ACCOUNT_NO_STORE_REQUEST_OPTIONS);
   return normalizeItems(getEnvelopeData(result)).map((item, index) =>
     normalizeInvoiceRecord(item, index, "customer"),
   );
@@ -431,7 +595,7 @@ export async function getCustomerInvoiceDetail(invoiceNumber) {
 }
 
 export async function getAdminInvoices() {
-  const result = await apiGet(endpoints.admin.invoices);
+  const result = await apiGet(endpoints.admin.invoices, ADMIN_NO_STORE_REQUEST_OPTIONS);
   return normalizeItems(getEnvelopeData(result)).map((item, index) =>
     normalizeInvoiceRecord(item, index, "admin"),
   );

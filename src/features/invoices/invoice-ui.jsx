@@ -11,9 +11,18 @@ import { PriceDisplay } from "@/components/ui/price-display";
 import { FileTextIcon } from "@/components/ui/icons";
 import { APP_NAME } from "@/config/env";
 
+function getDisplayText(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed && trimmed !== "[object Object]" ? trimmed : null;
+}
+
 export function formatInvoiceDate(value, locale, withTime = false) {
   if (!value) {
-    return "—";
+    return "--";
   }
 
   const date = new Date(value);
@@ -35,57 +44,52 @@ export function formatInvoiceDate(value, locale, withTime = false) {
 function getStatusVariant(value = "") {
   const normalized = String(value).toLowerCase();
 
-  if (
-    normalized.includes("paid") ||
-    normalized.includes("issued") ||
-    normalized.includes("success") ||
-    normalized.includes("completed")
-  ) {
-    return "success";
-  }
-
-  if (
-    normalized.includes("void") ||
-    normalized.includes("cancel") ||
-    normalized.includes("fail") ||
-    normalized.includes("reject")
-  ) {
+  if (normalized.includes("cancel") || normalized.includes("void")) {
     return "error";
   }
 
-  if (
-    normalized.includes("pending") ||
-    normalized.includes("review") ||
-    normalized.includes("draft")
-  ) {
+  if (normalized.includes("unpaid") || normalized.includes("pending")) {
     return "warning";
   }
 
-  if (
-    normalized.includes("process") ||
-    normalized.includes("open") ||
-    normalized.includes("confirm")
-  ) {
+  if (normalized.includes("issued")) {
+    return "info";
+  }
+
+  if (normalized.includes("paid") || normalized.includes("success") || normalized.includes("completed")) {
+    return "success";
+  }
+
+  if (normalized.includes("process") || normalized.includes("open") || normalized.includes("confirm")) {
     return "info";
   }
 
   return "neutral";
 }
 
-export function InvoiceStatusBadges({ invoiceStatus, paymentStatus }) {
+function StatusBadge({ value, fallback = "--" }) {
+  const displayValue = getDisplayText(value) ?? fallback;
+  const variant = getDisplayText(value) ? getStatusVariant(value) : "neutral";
+
+  return <Badge variant={variant}>{displayValue}</Badge>;
+}
+
+function StatusField({ label, value, fallback = "--", align = "start" }) {
+  const justifyClass = align === "end" ? "lg:items-end" : "items-start";
+
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {invoiceStatus ? <Badge variant={getStatusVariant(invoiceStatus)}>{invoiceStatus}</Badge> : null}
-      {paymentStatus && paymentStatus !== invoiceStatus ? (
-        <Badge variant={getStatusVariant(paymentStatus)}>{paymentStatus}</Badge>
-      ) : null}
+    <div className={`flex flex-col gap-2 ${justifyClass}`}>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <div className={align === "end" ? "lg:flex lg:justify-end" : ""}>
+        <StatusBadge value={value} fallback={fallback} />
+      </div>
     </div>
   );
 }
 
 export function InvoiceAmount({ amountMinor, locale, className = "" }) {
   if (amountMinor === null || amountMinor === undefined) {
-    return <span className={`text-muted-foreground ${className}`}>—</span>;
+    return <span className={`text-muted-foreground ${className}`}>--</span>;
   }
 
   return <PriceDisplay amountMinor={amountMinor} locale={locale} className={className} />;
@@ -110,19 +114,22 @@ export function InvoiceListCard({
   downloadPending = false,
   extraActions = null,
 }) {
+  const paymentStatus = getDisplayText(invoice.paymentStatusLabel ?? invoice.paymentStatus);
+  const invoiceStatus = getDisplayText(invoice.invoiceStatusLabel ?? invoice.invoiceStatus);
+
   return (
     <div className="rounded-3xl border border-border p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="space-y-1">
           <p className="text-lg font-semibold text-foreground">{invoice.invoiceNumber}</p>
           <p className="text-sm text-muted-foreground">
-            {t("orderNumber")}: {invoice.orderNumber || "—"}
+            {t("orderNumber")}: {invoice.orderNumber || "--"}
           </p>
         </div>
-        <InvoiceStatusBadges
-          invoiceStatus={invoice.invoiceStatus}
-          paymentStatus={invoice.paymentStatus}
-        />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <StatusField label={t("invoiceStatus")} value={invoiceStatus} align="end" />
+          <StatusField label={t("paymentStatus")} value={paymentStatus} align="end" />
+        </div>
       </div>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -134,11 +141,11 @@ export function InvoiceListCard({
         </div>
         <div>
           <p className="text-sm text-muted-foreground">{t("paymentStatus")}</p>
-          <p className="font-medium text-foreground">{invoice.paymentStatus || "—"}</p>
+          <p className="font-medium text-foreground">{paymentStatus || "--"}</p>
         </div>
         <div>
           <p className="text-sm text-muted-foreground">{t("invoiceStatus")}</p>
-          <p className="font-medium text-foreground">{invoice.invoiceStatus || "—"}</p>
+          <p className="font-medium text-foreground">{invoiceStatus || "--"}</p>
         </div>
         <div>
           <p className="text-sm text-muted-foreground">{t("total")}</p>
@@ -173,7 +180,14 @@ export function InvoicePreview({
   title,
   description,
 }) {
-  const lines = invoice?.items ?? [];
+  const lines = Array.isArray(invoice?.items) ? invoice.items : [];
+  const invoiceStatus = getDisplayText(invoice.invoiceStatusLabel ?? invoice.invoiceStatus);
+  const paymentStatus = getDisplayText(invoice.paymentStatusLabel ?? invoice.paymentStatus);
+  const customerName = getDisplayText(invoice?.customer?.name) ?? "--";
+  const customerPhone = getDisplayText(invoice?.customer?.phone) ?? "--";
+  const customerEmail = getDisplayText(invoice?.customer?.email) ?? "--";
+  const deliveryAddress = getDisplayText(invoice.deliveryAddressLabel ?? invoice.deliveryAddress) ?? "--";
+  const paymentMethod = getDisplayText(invoice.paymentMethod) ?? "--";
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
@@ -194,7 +208,7 @@ export function InvoicePreview({
                 </div>
                 <div>
                   <p className="text-muted-foreground">{t("orderNumber")}</p>
-                  <p className="font-semibold text-foreground">{invoice.orderNumber || "—"}</p>
+                  <p className="font-semibold text-foreground">{invoice.orderNumber || "--"}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">{t("invoiceDate")}</p>
@@ -211,16 +225,9 @@ export function InvoicePreview({
               </div>
             </div>
 
-            <div className="space-y-3 lg:max-w-xs">
-              <div className="text-start lg:text-end">
-                <p className="text-sm text-muted-foreground">{t("invoiceStatus")}</p>
-                <div className="mt-2 flex flex-wrap gap-2 lg:justify-end">
-                  <InvoiceStatusBadges
-                    invoiceStatus={invoice.invoiceStatus}
-                    paymentStatus={invoice.paymentStatus}
-                  />
-                </div>
-              </div>
+            <div className="space-y-4 lg:min-w-[220px]">
+              <StatusField label={t("invoiceStatus")} value={invoiceStatus} align="end" />
+              <StatusField label={t("paymentStatus")} value={paymentStatus} align="end" />
               {secondaryAction ? <div className="lg:flex lg:justify-end">{secondaryAction}</div> : null}
               {tertiaryAction ? <div className="lg:flex lg:justify-end">{tertiaryAction}</div> : null}
             </div>
@@ -233,22 +240,22 @@ export function InvoicePreview({
             <dl className="grid gap-2 text-sm">
               <div>
                 <dt className="text-muted-foreground">{t("name")}</dt>
-                <dd className="font-medium text-foreground">{invoice.customer.name}</dd>
+                <dd className="font-medium text-foreground">{customerName}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t("phone")}</dt>
-                <dd className="font-medium text-foreground">{invoice.customer.phone || "—"}</dd>
+                <dd className="font-medium text-foreground">{customerPhone}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">{t("email")}</dt>
-                <dd className="font-medium text-foreground">{invoice.customer.email || "—"}</dd>
+                <dd className="font-medium text-foreground">{customerEmail}</dd>
               </div>
             </dl>
           </div>
 
           <div className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">{t("deliveryAddress")}</h2>
-            <p className="text-sm leading-7 text-foreground">{invoice.deliveryAddress || "—"}</p>
+            <p className="text-sm leading-7 text-foreground">{deliveryAddress}</p>
           </div>
         </div>
 
@@ -278,11 +285,11 @@ export function InvoicePreview({
                           ) : null}
                         </div>
                       </td>
-                      <td className="py-4 pe-4 text-muted-foreground">{item.sku || "—"}</td>
+                      <td className="py-4 pe-4 text-muted-foreground">{item.sku || "--"}</td>
                       <td className="py-4 pe-4">
                         <InvoiceAmount amountMinor={item.unitPriceMinor} locale={locale} />
                       </td>
-                      <td className="py-4 pe-4 text-foreground">{item.quantity ?? "—"}</td>
+                      <td className="py-4 pe-4 text-foreground">{item.quantity ?? "--"}</td>
                       <td className="py-4">
                         <InvoiceAmount amountMinor={item.totalMinor} locale={locale} />
                       </td>
@@ -301,11 +308,13 @@ export function InvoicePreview({
               <div className="mt-4 grid gap-3 text-sm">
                 <div>
                   <p className="text-muted-foreground">{t("paymentMethod")}</p>
-                  <p className="font-medium text-foreground">{invoice.paymentMethod || "—"}</p>
+                  <p className="font-medium text-foreground">{paymentMethod}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">{t("paymentStatus")}</p>
-                  <p className="font-medium text-foreground">{invoice.paymentStatus || "—"}</p>
+                  <div className="pt-1">
+                    <StatusBadge value={paymentStatus} />
+                  </div>
                 </div>
               </div>
             </div>
