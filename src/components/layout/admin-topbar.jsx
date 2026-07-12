@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -21,11 +22,14 @@ import {
   getAdminSubtitle,
 } from "@/features/admin/admin-access";
 import {
-  getAdminDashboardData,
-  markAdminNotificationRead,
-  markAllAdminNotificationsRead,
   subscribeToAdminDashboardRefresh,
 } from "@/features/admin/dashboard-api";
+import {
+  getAdminNotifications,
+  getAdminUnreadNotificationCount,
+  markAdminNotificationRead,
+  markAllAdminNotificationsRead,
+} from "@/features/admin/notifications/admin-notifications-api";
 import { useAuth } from "@/hooks/use-auth";
 import { useLanguage } from "@/hooks/use-language";
 
@@ -51,6 +55,7 @@ function formatDateTime(value, locale) {
 
 export function AdminTopbar({ onMenuClick }) {
   const auth = useAuth();
+  const router = useRouter();
   const { t, locale } = useLanguage();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
@@ -66,9 +71,12 @@ export function AdminTopbar({ onMenuClick }) {
     setError(null);
 
     try {
-      const dashboard = await getAdminDashboardData();
-      setUnreadCount(dashboard.unreadNotifications ?? 0);
-      setNotifications(dashboard.notifications ?? []);
+      const [nextNotifications, nextUnreadCount] = await Promise.all([
+        getAdminNotifications(),
+        getAdminUnreadNotificationCount(),
+      ]);
+      setUnreadCount(nextUnreadCount);
+      setNotifications(nextNotifications.slice(0, 5));
     } catch (nextError) {
       setError(nextError);
       setUnreadCount(0);
@@ -128,15 +136,19 @@ export function AdminTopbar({ onMenuClick }) {
   }, [isOpen]);
 
   async function handleNotificationClick(notification) {
-    if (!notification || notification.read) {
+    if (!notification) {
       return;
     }
 
-    setActiveNotificationId(notification.id);
-    setError(null);
-
     try {
-      await markAdminNotificationRead(notification.id);
+      if (!notification.read) {
+        setActiveNotificationId(notification.id);
+        setError(null);
+        await markAdminNotificationRead(notification.id);
+      }
+
+      setIsOpen(false);
+      router.push(routes.admin.adminNotifications);
       await loadNotificationSummary();
     } catch (nextError) {
       setError(nextError);
@@ -220,14 +232,21 @@ export function AdminTopbar({ onMenuClick }) {
                   <p className="font-semibold text-foreground">{t("recentNotifications")}</p>
                   <p className="text-sm text-muted-foreground">{unreadCount} unread</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleMarkAllRead}
-                  disabled={isMarkingAll || unreadCount === 0}
-                >
-                  {isMarkingAll ? t("loading") : "Mark all as read"}
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Link href={routes.admin.adminNotifications} onClick={() => setIsOpen(false)}>
+                    <Button variant="ghost" size="sm">
+                      {t("viewAll")}
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleMarkAllRead}
+                    disabled={isMarkingAll || unreadCount === 0}
+                  >
+                    {isMarkingAll ? t("loading") : "Mark all as read"}
+                  </Button>
+                </div>
               </div>
 
               {error ? (

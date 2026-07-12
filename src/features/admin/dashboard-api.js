@@ -169,6 +169,7 @@ function normalizeNotification(item, index = 0) {
     id: firstString(item?.id, item?._id, `notification-${index}`) ?? `notification-${index}`,
     title: firstString(item?.title, item?.subject, item?.type) ?? "Notification",
     message: firstString(item?.message, item?.body, item?.content) ?? "",
+    type: firstString(item?.type, item?.category, item?.channel) ?? "general",
     createdAt: firstString(item?.createdAt, item?.sentAt, item?.updatedAt),
     read: firstBoolean(item?.read, item?.isRead) ?? false,
   };
@@ -234,36 +235,20 @@ function normalizeStatusBreakdown(items, orders) {
   }));
 }
 
-function normalizePaidAmountMinor(payload, orders) {
-  const directMinor = firstNumber(
-    extractValue(payload, [["paidAmountMinor"]]),
-    extractValue(payload, [["revenueMinor"]]),
-    extractValue(payload, [["totals", "paidAmountMinor"]]),
-    extractValue(payload, [["totals", "revenueMinor"]]),
-  );
+function normalizePaidAmountMinor(payload) {
+  const directMinor = firstNumber(extractValue(payload, [["paidAmountMinor"]]));
 
   if (directMinor !== null) {
     return directMinor;
   }
 
-  const directAmount = firstNumber(
-    extractValue(payload, [["paidAmount"]]),
-    extractValue(payload, [["revenue"]]),
-    extractValue(payload, [["totals", "paidAmount"]]),
-    extractValue(payload, [["totals", "revenue"]]),
-  );
+  const directAmount = firstNumber(extractValue(payload, [["paidAmount"]]));
 
   if (directAmount !== null) {
     return Math.round(directAmount * 100);
   }
 
-  return orders.reduce((sum, order) => {
-    if ((order.paymentStatus || "").toLowerCase().includes("paid")) {
-      return sum + (order.amountMinor ?? 0);
-    }
-
-    return sum;
-  }, 0);
+  return 0;
 }
 
 async function loadSummary() {
@@ -347,7 +332,7 @@ export async function getAdminDashboardData() {
       buildMetric("totalOrders", "Total Orders", totalOrders),
       buildMetric("codOrders", "COD Orders", codOrders),
       buildMetric("totalProducts", "Total Products", totalProducts),
-      buildMetric("paidAmount", "Paid Amount", normalizePaidAmountMinor(payload, orders), "currency"),
+      buildMetric("paidAmount", "Paid Amount", normalizePaidAmountMinor(payload), "currency"),
       buildMetric("pendingShipments", "Pending Shipments", pendingShipmentsCount),
       buildMetric("pendingReturns", "Pending Returns", pendingReturnsCount),
       buildMetric("pendingEnquiries", "Pending Enquiries", pendingEnquiriesCount),

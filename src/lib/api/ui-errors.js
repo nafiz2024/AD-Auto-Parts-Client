@@ -9,6 +9,40 @@ function sanitizeMessage(value) {
   return trimmed && trimmed !== "[object Object]" ? trimmed : null;
 }
 
+function findReadableMessage(value) {
+  const directMessage = sanitizeMessage(value);
+
+  if (directMessage) {
+    return directMessage;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const nestedMessage = findReadableMessage(entry);
+
+      if (nestedMessage) {
+        return nestedMessage;
+      }
+    }
+
+    return null;
+  }
+
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  for (const nestedValue of Object.values(value)) {
+    const nestedMessage = findReadableMessage(nestedValue);
+
+    if (nestedMessage) {
+      return nestedMessage;
+    }
+  }
+
+  return null;
+}
+
 export function resolveApiUiMessage(error, fallbackMessage, { routeScope = "api" } = {}) {
   if (error?.status === 404) {
     return process.env.NODE_ENV !== "production"
@@ -17,9 +51,11 @@ export function resolveApiUiMessage(error, fallbackMessage, { routeScope = "api"
   }
 
   const backendMessage =
-    sanitizeMessage(error?.message) ??
-    sanitizeMessage(error?.details?.message) ??
-    sanitizeMessage(error?.details?.error);
+    findReadableMessage(error?.message) ??
+    findReadableMessage(error?.details?.message) ??
+    findReadableMessage(error?.details?.error) ??
+    findReadableMessage(error?.details?.errors) ??
+    findReadableMessage(error?.fieldErrors);
 
   if (process.env.NODE_ENV !== "production" && backendMessage) {
     return backendMessage;

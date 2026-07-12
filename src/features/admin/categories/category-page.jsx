@@ -32,7 +32,6 @@ import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 
 const SORT_OPTIONS = [
-  { value: "newest", labelKey: "newest" },
   { value: "oldest", labelKey: "oldest" },
   { value: "name_asc", labelKey: "nameAscending" },
 ];
@@ -59,7 +58,7 @@ function buildFilters(searchParamsValue) {
     page: Math.max(Number.parseInt(searchParams.get("page") || "1", 10) || 1, 1),
     q: searchParams.get("q") || "",
     status: searchParams.get("status") || "",
-    sort: searchParams.get("sort") || "newest",
+    sort: searchParams.get("sort") || "",
   };
 }
 
@@ -628,6 +627,7 @@ export function AdminCategoryPage() {
               value={filters.sort}
               onChange={(event) => replaceFilters({ sort: event.target.value, page: 1 })}
             >
+              <option value="">{t("newest")}</option>
               {SORT_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
                   {t(option.labelKey)}

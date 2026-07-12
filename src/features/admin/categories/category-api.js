@@ -78,16 +78,20 @@ function buildQuery(filters = {}) {
     limit: filters.limit ?? DEFAULT_PAGE_SIZE,
   };
 
-  if (filters.q) {
-    query.search = filters.q;
+  const search = typeof filters.q === "string" ? filters.q.trim() : "";
+  const status = typeof filters.status === "string" ? filters.status.trim() : "";
+  const sort = typeof filters.sort === "string" ? filters.sort.trim() : "";
+
+  if (search) {
+    query.search = search;
   }
 
-  if (filters.status) {
-    query.isActive = filters.status === "active";
+  if (status && status !== "all") {
+    query.status = status;
   }
 
-  if (filters.sort) {
-    query.sort = filters.sort;
+  if (sort && sort !== "all") {
+    query.sort = sort;
   }
 
   return query;
@@ -194,7 +198,10 @@ function categoryDetailPath(categoryId) {
 
 export async function getAdminCategories(filters) {
   const query = buildQuery(filters);
-  const response = await apiGet(endpoints.admin.categories, { query });
+  const response = await apiGet(endpoints.admin.categories, {
+    query,
+    credentials: "include",
+  });
   const items = normalizeItems(response.data).map(normalizeCategory);
   const pagination = normalizePagination(
     response.meta ?? response.raw?.meta,
@@ -210,7 +217,9 @@ export async function getAdminCategories(filters) {
 }
 
 export async function getAdminCategoryOptions() {
-  const response = await apiGet(endpoints.admin.categories);
+  const response = await apiGet(endpoints.admin.categories, {
+    credentials: "include",
+  });
 
   return normalizeItems(response.data).map((item) => ({
     id: item?.id ?? item?._id ?? item?.slug ?? item?.name ?? "category",
@@ -219,7 +228,9 @@ export async function getAdminCategoryOptions() {
 }
 
 export async function createAdminCategory(values) {
-  const response = await apiPost(endpoints.admin.categories, buildCategoryPayload(values));
+  const response = await apiPost(endpoints.admin.categories, buildCategoryPayload(values), {
+    credentials: "include",
+  });
   return normalizeCategory(response.data ?? response.raw ?? values);
 }
 
@@ -227,20 +238,31 @@ export async function updateAdminCategory(categoryId, values) {
   const response = await apiPatch(
     categoryDetailPath(categoryId),
     buildCategoryPayload(values),
+    {
+      credentials: "include",
+    },
   );
   return normalizeCategory(response.data ?? response.raw ?? values);
 }
 
 export async function toggleAdminCategoryStatus(category, nextActive) {
-  const response = await apiPatch(categoryDetailPath(category.id), cleanObject({
-    isActive: nextActive,
-    active: nextActive,
-    status: nextActive ? "active" : "inactive",
-  }));
+  const response = await apiPatch(
+    categoryDetailPath(category.id),
+    cleanObject({
+      isActive: nextActive,
+      active: nextActive,
+      status: nextActive ? "active" : "inactive",
+    }),
+    {
+      credentials: "include",
+    },
+  );
 
   return normalizeCategory(response.data ?? response.raw ?? { ...category, active: nextActive });
 }
 
 export async function deleteAdminCategory(categoryId) {
-  return apiDelete(categoryDetailPath(categoryId));
+  return apiDelete(categoryDetailPath(categoryId), {
+    credentials: "include",
+  });
 }

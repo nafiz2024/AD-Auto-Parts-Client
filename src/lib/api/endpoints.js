@@ -32,6 +32,7 @@ export const adminApi = {
   enquiries: "/admin/enquiries",
   settings: "/admin/settings",
   notifications: "/admin/notifications",
+  notificationsUnreadCount: "/admin/notifications/unread-count",
   notificationMarkRead: (notificationId) => `/admin/notifications/${notificationId}/read`,
   notificationsReadAll: "/admin/notifications/read-all",
 };
@@ -156,6 +157,7 @@ export const endpoints = {
     analytics: resource("admin/analytics"),
     settings: adminApi.settings,
     notifications: adminApi.notifications,
+    notificationsUnreadCount: adminApi.notificationsUnreadCount,
     notificationMarkRead: adminApi.notificationMarkRead,
     notificationsReadAll: adminApi.notificationsReadAll,
     auditLogs: resource("admin/audit-logs"),

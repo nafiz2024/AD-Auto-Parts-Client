@@ -89,6 +89,9 @@ function normalizeCustomerSummary(item, index = 0) {
     firstNumber(item?.enquiryCount, item?.enquiriesCount, item?.totals?.enquiries, item?.stats?.enquiries) ??
     0;
 
+  const totalSpent = firstNumber(item?.totalSpent, item?.total_spent);
+  const totalSpentMinor = firstNumber(item?.totalSpentMinor, item?.total_spent_minor);
+
   return {
     id: firstString(item?.id, item?._id, item?.customerId, `customer-${index}`) ?? `customer-${index}`,
     customerNumber:
@@ -105,13 +108,14 @@ function normalizeCustomerSummary(item, index = 0) {
     totalOrders:
       firstNumber(item?.totalOrders, item?.ordersCount, item?.totals?.orders, item?.stats?.orders) ?? 0,
     totalSpentMinor:
+      totalSpentMinor ??
+      (totalSpent !== null ? Math.round(totalSpent * 100) : null) ??
       normalizeMinorAmount(
-        item?.totalSpentMinor,
         item?.totals?.spentMinor,
         item?.stats?.spentMinor,
         item?.totalSpent?.amountMinor,
-        item?.totalSpent,
-      ) ?? 0,
+      ) ??
+      0,
     averageOrderMinor:
       normalizeMinorAmount(
         item?.averageOrderMinor,
@@ -266,7 +270,10 @@ export async function getAdminCustomers(filters = {}) {
     createdTo: filters.dateTo || undefined,
   };
 
-  const result = await apiGet(endpoints.admin.customers, { query });
+  const result = await apiGet(endpoints.admin.customers, {
+    query,
+    credentials: "include",
+  });
   const payload = getEnvelopeData(result);
   const items = normalizeItems(payload).map(normalizeCustomerSummary);
   const meta = normalizeCustomerMeta(payload, items);
@@ -280,7 +287,9 @@ export async function getAdminCustomers(filters = {}) {
 }
 
 export async function getAdminCustomerDetail(customerId) {
-  const result = await apiGet(customerDetailPath(customerId));
+  const result = await apiGet(customerDetailPath(customerId), {
+    credentials: "include",
+  });
   const payload = getEnvelopeData(result);
   const item = payload?.customer ?? payload?.data ?? payload;
 
@@ -288,6 +297,8 @@ export async function getAdminCustomerDetail(customerId) {
 }
 
 export async function updateAdminCustomerStatus(customerId, payload) {
-  const result = await apiPatch(customerDetailPath(customerId), payload);
+  const result = await apiPatch(customerDetailPath(customerId), payload, {
+    credentials: "include",
+  });
   return getEnvelopeData(result);
 }
