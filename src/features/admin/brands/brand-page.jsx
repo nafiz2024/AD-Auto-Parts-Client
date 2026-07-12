@@ -366,27 +366,36 @@ function ModelSection({
 
 function BrandTable({ items, type, t, onEdit, onToggleStatus, onDelete }) {
   return (
-    <div className="hidden overflow-x-auto lg:block">
-      <table className="min-w-full text-sm">
+    <div className="hidden w-full overflow-x-auto lg:block">
+      <table className="min-w-[1080px] w-full table-fixed text-sm">
+        <colgroup>
+          <col className="w-[9%]" />
+          <col className="w-[20%]" />
+          <col className="w-[16%]" />
+          <col className="w-[20%]" />
+          <col className="w-[10%]" />
+          <col className="w-[9%]" />
+          <col className="w-[16%]" />
+        </colgroup>
         <thead>
           <tr className="border-b border-border text-start text-muted-foreground">
-            <th className="pb-3">{t("logo")}</th>
-            <th className="pb-3">{t("brandName")}</th>
-            <th className="pb-3">{t("slug")}</th>
-            <th className="pb-3">
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("logo")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("brandName")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("slug")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">
               {type === "vehicle" ? t("originCountry") : t("description")}
             </th>
-            <th className="pb-3">
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">
               {type === "vehicle" ? t("modelCount") : t("status")}
             </th>
-            <th className="pb-3">{t("status")}</th>
-            <th className="pb-3">{t("actions")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("status")}</th>
+            <th className="pb-3 text-right text-xs font-semibold uppercase tracking-[0.16em]">{t("actions")}</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr key={item.id} className="border-b border-border/80 align-top last:border-b-0">
-              <td className="py-4">
+            <tr key={item.id} className="border-b border-border/80 align-middle last:border-b-0">
+              <td className="py-3 pe-4 align-middle">
                 <div className="flex size-14 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
                   {item.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -396,28 +405,40 @@ function BrandTable({ items, type, t, onEdit, onToggleStatus, onDelete }) {
                   )}
                 </div>
               </td>
-              <td className="py-4 font-semibold text-foreground">{item.name}</td>
-              <td className="py-4 text-muted-foreground">{item.slug || "--"}</td>
-              <td className="py-4 text-muted-foreground">
-                {type === "vehicle" ? item.originCountry || "--" : item.description || "--"}
+              <td className="py-3 pe-4 align-middle font-semibold text-foreground">
+                <span className="block truncate">{item.name}</span>
               </td>
-              <td className="py-4 text-muted-foreground">
-                {type === "vehicle" ? item.modelCount ?? "--" : <Badge variant={item.active ? "success" : "error"}>{item.active ? t("active") : t("inactive")}</Badge>}
+              <td className="py-3 pe-4 align-middle text-muted-foreground">
+                <span className="block truncate">{item.slug || "--"}</span>
               </td>
-              <td className="py-4">
+              <td className="py-3 pe-4 align-middle text-muted-foreground">
+                <span className="block truncate">
+                  {type === "vehicle" ? item.originCountry || "--" : item.description || "--"}
+                </span>
+              </td>
+              <td className="py-3 pe-4 align-middle text-muted-foreground">
+                {type === "vehicle" ? (
+                  item.modelCount ?? "--"
+                ) : (
+                  <Badge variant={item.active ? "success" : "error"}>
+                    {item.active ? t("active") : t("inactive")}
+                  </Badge>
+                )}
+              </td>
+              <td className="py-3 pe-4 align-middle">
                 <Badge variant={item.active ? "success" : "error"}>
                   {item.active ? t("active") : t("inactive")}
                 </Badge>
               </td>
-              <td className="py-4">
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => onEdit(item)}>
+              <td className="py-3 align-middle">
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onEdit(item)}>
                     {t("editBrand")}
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => onToggleStatus(item)}>
+                  <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onToggleStatus(item)}>
                     {item.active ? t("deactivate") : t("activate")}
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => onDelete(item)}>
+                  <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onDelete(item)}>
                     {t("deleteBrand")}
                   </Button>
                 </div>
@@ -813,9 +834,9 @@ export function AdminBrandPage() {
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="w-full max-w-none space-y-6">
         <div className="space-y-6">
-          <Card className="space-y-5 rounded-[2rem]">
+          <Card className="w-full max-w-none space-y-5 rounded-[2rem]">
             <div className="flex flex-wrap gap-2 border-b border-border pb-4">
               <Button
                 variant={filters.tab === "vehicle" ? "primary" : "outline"}
@@ -831,11 +852,12 @@ export function AdminBrandPage() {
               </Button>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_12rem_12rem]">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_12rem_12rem]">
               <Input
                 value={filters.q}
                 onChange={(event) => replaceFilters({ q: event.target.value, page: 1 })}
                 placeholder={t("searchBrands")}
+                className="sm:col-span-2 xl:col-span-1"
               />
               <Select
                 value={filters.status}
@@ -876,6 +898,7 @@ export function AdminBrandPage() {
               />
             ) : (
               <>
+                <div className="w-full overflow-hidden">
                 <BrandTable
                   items={state.items}
                   type={filters.tab}
@@ -884,6 +907,7 @@ export function AdminBrandPage() {
                   onToggleStatus={openStatusDialog}
                   onDelete={openDeleteDialog}
                 />
+                </div>
                 <BrandCards
                   items={state.items}
                   t={t}

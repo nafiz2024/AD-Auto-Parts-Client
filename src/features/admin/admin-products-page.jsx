@@ -154,26 +154,37 @@ function buildFilters(searchParams) {
 
 function ProductTable({ products, t, onAction }) {
   return (
-    <div className="hidden overflow-x-auto lg:block">
-      <table className="min-w-full text-sm">
+    <div className="hidden w-full overflow-x-auto lg:block">
+      <table className="min-w-[1180px] w-full table-fixed text-sm">
+        <colgroup>
+          <col className="w-[28%]" />
+          <col className="w-[11%]" />
+          <col className="w-[12%]" />
+          <col className="w-[10%]" />
+          <col className="w-[10%]" />
+          <col className="w-[9%]" />
+          <col className="w-[8%]" />
+          <col className="w-[12%]" />
+          <col className="w-[18%]" />
+        </colgroup>
         <thead>
           <tr className="border-b border-border text-start text-muted-foreground">
-            <th className="pb-3">{t("product")}</th>
-            <th className="pb-3">{t("sku")}</th>
-            <th className="pb-3">{t("category")}</th>
-            <th className="pb-3">{t("condition")}</th>
-            <th className="pb-3">{t("stockQuantity")}</th>
-            <th className="pb-3">{t("price")}</th>
-            <th className="pb-3">{t("status")}</th>
-            <th className="pb-3">{t("createdDate")}</th>
-            <th className="pb-3">{t("actions")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("product")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("sku")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("category")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("condition")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("stockQuantity")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("price")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("status")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("createdDate")}</th>
+            <th className="pb-3 text-right text-xs font-semibold uppercase tracking-[0.16em]">{t("actions")}</th>
           </tr>
         </thead>
         <tbody>
           {products.map((product) => (
-            <tr key={product.id} className="border-b border-border/80 align-top last:border-b-0">
-              <td className="py-4">
-                <div className="flex items-start gap-3">
+            <tr key={product.id} className="border-b border-border/80 align-middle last:border-b-0">
+              <td className="py-3 pe-4 align-middle">
+                <div className="flex items-center gap-3">
                   <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
                     {product.primaryImage ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -182,56 +193,64 @@ function ProductTable({ products, t, onAction }) {
                       <BoxIcon className="text-muted-foreground" />
                     )}
                   </div>
-                  <div className="space-y-1">
-                    <p className="font-semibold text-foreground">{product.name}</p>
-                    <p className="text-xs text-muted-foreground">{product.vehicleSummary || "--"}</p>
+                  <div className="min-w-0 space-y-1">
+                    <p className="truncate font-semibold text-foreground">{product.name}</p>
+                    <p className="truncate text-xs text-muted-foreground">{product.vehicleSummary || "--"}</p>
                     {product.partNumber ? (
-                      <p className="text-xs text-muted-foreground">{t("partNumber")}: {product.partNumber}</p>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {t("partNumber")}: {product.partNumber}
+                      </p>
                     ) : null}
                   </div>
                 </div>
               </td>
-              <td className="py-4 text-muted-foreground">{product.sku}</td>
-              <td className="py-4 text-muted-foreground">{product.categoryName}</td>
-              <td className="py-4">
+              <td className="py-3 pe-4 align-middle text-sm text-muted-foreground">
+                <span className="block truncate">{product.sku}</span>
+              </td>
+              <td className="py-3 pe-4 align-middle text-sm text-muted-foreground">
+                <span className="block truncate">{product.categoryName}</span>
+              </td>
+              <td className="py-3 pe-4 align-middle">
                 <Badge variant="info">{product.conditionLabel}</Badge>
               </td>
-              <td className="py-4">
-                <div className="space-y-1">
+              <td className="py-3 pe-4 align-middle">
+                <div className="space-y-1.5">
                   <p className="font-medium text-foreground">{product.stockQuantity ?? "--"}</p>
                   <Badge variant={getStockBadgeVariant(product.stockStatus)}>{product.stockLabel}</Badge>
                 </div>
               </td>
-              <td className="py-4">
+              <td className="py-3 pe-4 align-middle">
                 <PriceDisplay amountMinor={product.priceMinor} />
               </td>
-              <td className="py-4">
+              <td className="py-3 pe-4 align-middle">
                 <Badge variant={getStatusBadgeVariant(product.publicationStatus)}>
                   {product.publicationStatus}
                 </Badge>
               </td>
-              <td className="py-4 text-muted-foreground">{formatDate(product.createdAt)}</td>
-              <td className="py-4">
-                <div className="flex flex-wrap gap-2">
+              <td className="py-3 pe-4 align-middle text-sm text-muted-foreground">{formatDate(product.createdAt)}</td>
+              <td className="py-3 align-middle">
+                <div className="flex flex-wrap justify-end gap-2">
                   <Link href={routes.admin.adminProductDetail(product.id)}>
-                    <Button size="sm" variant="outline">{t("editProduct")}</Button>
+                    <Button size="sm" variant="outline" className="whitespace-nowrap">
+                      {t("editProduct")}
+                    </Button>
                   </Link>
                   {product.publicationStatus === "published" ? (
-                    <Button size="sm" variant="outline" onClick={() => onAction("unpublish", product)}>
+                    <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onAction("unpublish", product)}>
                       {t("unpublishProduct")}
                     </Button>
                   ) : (
-                    <Button size="sm" variant="outline" onClick={() => onAction("publish", product)}>
+                    <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onAction("publish", product)}>
                       {t("publish")}
                     </Button>
                   )}
                   {product.publicationStatus !== "archived" ? (
-                    <Button size="sm" variant="outline" onClick={() => onAction("archive", product)}>
+                    <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onAction("archive", product)}>
                       {t("archive")}
                     </Button>
                   ) : null}
                   {product.publicationStatus !== "sold" ? (
-                    <Button size="sm" variant="outline" onClick={() => onAction("mark-sold", product)}>
+                    <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onAction("mark-sold", product)}>
                       {t("markAsSold")}
                     </Button>
                   ) : null}
@@ -251,7 +270,7 @@ function ProductCards({ products, t, onAction }) {
       {products.map((product) => (
         <Card key={product.id} className="space-y-4 rounded-[2rem]">
           <div className="flex items-start gap-4">
-            <div className="flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
+            <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
               {product.primaryImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={product.primaryImage} alt={product.name} className="size-full object-cover" />
@@ -260,8 +279,8 @@ function ProductCards({ products, t, onAction }) {
               )}
             </div>
             <div className="min-w-0 flex-1 space-y-2">
-              <p className="font-semibold text-foreground">{product.name}</p>
-              <p className="text-sm text-muted-foreground">{product.vehicleSummary || "--"}</p>
+              <p className="line-clamp-2 font-semibold text-foreground">{product.name}</p>
+              <p className="line-clamp-2 text-sm text-muted-foreground">{product.vehicleSummary || "--"}</p>
               <div className="flex flex-wrap gap-2">
                 <Badge variant="info">{product.conditionLabel}</Badge>
                 <Badge variant={getStockBadgeVariant(product.stockStatus)}>{product.stockLabel}</Badge>
@@ -291,24 +310,24 @@ function ProductCards({ products, t, onAction }) {
           </div>
           <div className="flex flex-wrap gap-2">
             <Link href={routes.admin.adminProductDetail(product.id)}>
-              <Button size="sm" variant="outline">{t("editProduct")}</Button>
+              <Button size="sm" variant="outline" className="whitespace-nowrap">{t("editProduct")}</Button>
             </Link>
             {product.publicationStatus === "published" ? (
-              <Button size="sm" variant="outline" onClick={() => onAction("unpublish", product)}>
+              <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onAction("unpublish", product)}>
                 {t("unpublishProduct")}
               </Button>
             ) : (
-              <Button size="sm" variant="outline" onClick={() => onAction("publish", product)}>
+              <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onAction("publish", product)}>
                 {t("publish")}
               </Button>
             )}
             {product.publicationStatus !== "archived" ? (
-              <Button size="sm" variant="outline" onClick={() => onAction("archive", product)}>
+              <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onAction("archive", product)}>
                 {t("archive")}
               </Button>
             ) : null}
             {product.publicationStatus !== "sold" ? (
-              <Button size="sm" variant="outline" onClick={() => onAction("mark-sold", product)}>
+              <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onAction("mark-sold", product)}>
                 {t("markAsSold")}
               </Button>
             ) : null}
@@ -465,13 +484,13 @@ export function AdminProductsPage() {
         }
       />
 
-      <Card className="space-y-5 rounded-[2rem]">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+      <Card className="w-full max-w-none space-y-5 rounded-[2rem]">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
           <Input
             value={searchDraft}
             onChange={(event) => setSearchDraftState({ baseQuery: filters.q, value: event.target.value })}
             placeholder={t("searchProducts")}
-            className="xl:col-span-2"
+            className="sm:col-span-2 xl:col-span-2"
           />
           <Select
             value={filters.categoryId}
@@ -544,7 +563,9 @@ export function AdminProductsPage() {
           />
         ) : (
           <>
+            <div className="w-full overflow-hidden">
             <ProductTable products={state.products} t={t} onAction={handleActionClick} />
+            </div>
             <ProductCards products={state.products} t={t} onAction={handleActionClick} />
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
               <p className="text-sm text-muted-foreground">
