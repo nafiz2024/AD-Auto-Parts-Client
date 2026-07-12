@@ -13,17 +13,21 @@ import {
 } from "@/features/admin/order-workflow/admin-workflow-utils";
 
 const DEFAULT_PAGE_SIZE = 10;
-const DEFAULT_ENQUIRY_STATUSES = ["new", "contacted", "resolved", "closed"];
+const DEFAULT_ENQUIRY_STATUSES = ["new", "in_progress", "resolved", "closed"];
 
-function enquiryDetailPath(enquiryId) {
-  return `${endpoints.admin.enquiries}/${enquiryId}`;
+function enquiryDetailPath(enquiryIdentifier) {
+  return `${endpoints.admin.enquiries}/${enquiryIdentifier}`;
+}
+
+function enquiryStatusPath(enquiryIdentifier) {
+  return `${endpoints.admin.enquiries}/${enquiryIdentifier}/status`;
 }
 
 function normalizeEnquiryStatus(value) {
   const normalized = (firstString(value) ?? "new").toLowerCase();
 
-  if (normalized.includes("contact")) {
-    return "contacted";
+  if (normalized.includes("progress") || normalized.includes("contact")) {
+    return "in_progress";
   }
 
   if (normalized.includes("resolve")) {
@@ -35,6 +39,23 @@ function normalizeEnquiryStatus(value) {
   }
 
   return "new";
+}
+
+function extractErrorMessage(payload) {
+  return (
+    firstString(
+      payload?.message,
+      payload?.error,
+      payload?.errors?.[0]?.message,
+      payload?.data?.message,
+      payload?.data?.error,
+      payload?.data?.errors?.[0]?.message,
+    ) ?? null
+  );
+}
+
+export function getAdminEnquiryIdentifier(enquiry) {
+  return firstString(enquiry?.id, enquiry?._id, enquiry?.enquiryNumber) ?? "";
 }
 
 function normalizeVehicleInfo(item) {
@@ -49,9 +70,11 @@ function normalizeVehicleInfo(item) {
 
 function normalizeEnquirySummary(item, index = 0) {
   const status = normalizeEnquiryStatus(item?.status ?? item?.enquiryStatus ?? item?.state);
+  const identifier = getAdminEnquiryIdentifier(item) || `enquiry-${index}`;
 
   return {
     id: firstString(item?.id, item?._id, item?.enquiryNumber, `enquiry-${index}`) ?? `enquiry-${index}`,
+    identifier,
     enquiryNumber:
       firstString(item?.enquiryNumber, item?.referenceNumber, item?.ticketNumber, item?.id) ??
       `ENQ-${index + 1}`,
@@ -125,6 +148,8 @@ function normalizeEnquiryDetail(item) {
 
   return {
     ...summary,
+    adminNotes:
+      firstString(item?.adminNotes, item?.internalNote, item?.internalNotes, item?.notes) ?? "",
     latestUpdateAt:
       firstString(item?.latestUpdateAt, item?.updatedAt, item?.lastUpdatedAt, item?.createdAt) ?? "",
     internalNotesSupported:
@@ -245,7 +270,10 @@ export async function getAdminEnquiries(filters = {}) {
     createdTo: filters.dateTo || undefined,
   };
 
-  const result = await apiGet(endpoints.admin.enquiries, { query });
+  const result = await apiGet(endpoints.admin.enquiries, {
+    query,
+    credentials: "include",
+  });
   const payload = getEnvelopeData(result);
   const items = normalizeItems(payload).map(normalizeEnquirySummary);
   const meta = normalizeEnquiryMeta(payload, items);
@@ -259,19 +287,45 @@ export async function getAdminEnquiries(filters = {}) {
 }
 
 export async function getAdminEnquiryDetail(enquiryId) {
-  const result = await apiGet(enquiryDetailPath(enquiryId));
-  const payload = getEnvelopeData(result);
-  const item = payload?.enquiry ?? payload?.data ?? payload;
+  try {
+    const result = await apiGet(enquiryDetailPath(enquiryId), {
+      credentials: "include",
+    });
+    const payload = getEnvelopeData(result);
+    const item = payload?.enquiry ?? payload?.data ?? payload;
 
-  return normalizeEnquiryDetail(item);
+    return normalizeEnquiryDetail(item);
+  } catch (error) {
+    const message = extractErrorMessage(error?.details) ?? error?.message;
+
+    if (message && message !== "[object Object]") {
+      error.message = message;
+    }
+
+    throw error;
+  }
 }
 
-export async function updateAdminEnquiry(enquiryId, payload) {
-  const result = await apiPatch(enquiryDetailPath(enquiryId), payload);
-  return getEnvelopeData(result);
+export async function updateAdminEnquiryStatus(enquiryId, payload) {
+  try {
+    const result = await apiPatch(enquiryStatusPath(enquiryId), payload, {
+      credentials: "include",
+    });
+    return getEnvelopeData(result);
+  } catch (error) {
+    const message = extractErrorMessage(error?.details) ?? error?.message;
+
+    if (message && message !== "[object Object]") {
+      error.message = message;
+    }
+
+    throw error;
+  }
 }
 
 export async function createAdminManualEnquiry(payload) {
-  const result = await apiPost(endpoints.admin.enquiries, payload);
+  const result = await apiPost(endpoints.admin.enquiries, payload, {
+    credentials: "include",
+  });
   return getEnvelopeData(result);
 }

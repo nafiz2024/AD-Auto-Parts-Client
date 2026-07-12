@@ -22,6 +22,7 @@ import { getAdminAccessState } from "@/features/admin/admin-access";
 import {
   createAdminManualEnquiry,
   getAdminEnquiries,
+  getAdminEnquiryIdentifier,
 } from "@/features/admin/enquiries/admin-enquiries-api";
 import { EnquiryDetailPanel } from "@/features/admin/enquiries/enquiry-detail-panel";
 import { useAuth } from "@/hooks/use-auth";
@@ -83,7 +84,7 @@ function getStatusVariant(status) {
     return "success";
   }
 
-  if (normalized.includes("contact")) {
+  if (normalized.includes("progress") || normalized.includes("contact")) {
     return "warning";
   }
 
@@ -92,6 +93,28 @@ function getStatusVariant(status) {
   }
 
   return "info";
+}
+
+function getStatusLabel(status, t) {
+  const normalized = String(status).toLowerCase();
+
+  if (normalized === "new") {
+    return "New";
+  }
+
+  if (normalized === "in_progress" || normalized.includes("contact")) {
+    return "In Progress";
+  }
+
+  if (normalized === "resolved") {
+    return "Resolved";
+  }
+
+  if (normalized === "closed") {
+    return "Closed";
+  }
+
+  return t(status) || status;
 }
 
 function buildContactLinks(enquiry) {
@@ -152,11 +175,11 @@ function EnquiriesTable({ items, locale, t, onView }) {
                 <td className="py-4 text-muted-foreground">{enquiry.enquiryType}</td>
                 <td className="py-4 text-muted-foreground">{formatDateTime(enquiry.createdAt, locale)}</td>
                 <td className="py-4">
-                  <Badge variant={getStatusVariant(enquiry.status)}>{t(enquiry.status)}</Badge>
+                  <Badge variant={getStatusVariant(enquiry.status)}>{getStatusLabel(enquiry.status, t)}</Badge>
                 </td>
                 <td className="py-4">
                   <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => onView(enquiry.id)}>
+                    <Button size="sm" variant="outline" onClick={() => onView(enquiry)}>
                       {t("viewDetails")}
                     </Button>
                     {contactLinks.phone ? (
@@ -193,7 +216,7 @@ function EnquiryCards({ items, locale, t, onView }) {
                 <p className="text-lg font-semibold text-foreground">{enquiry.name}</p>
                 <p className="text-sm text-muted-foreground">{enquiry.requiredPart}</p>
               </div>
-              <Badge variant={getStatusVariant(enquiry.status)}>{t(enquiry.status)}</Badge>
+              <Badge variant={getStatusVariant(enquiry.status)}>{getStatusLabel(enquiry.status, t)}</Badge>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
@@ -214,7 +237,7 @@ function EnquiryCards({ items, locale, t, onView }) {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              <Button size="sm" onClick={() => onView(enquiry.id)}>{t("viewDetails")}</Button>
+              <Button size="sm" onClick={() => onView(enquiry)}>{t("viewDetails")}</Button>
               {contactLinks.phone ? (
                 <a href={contactLinks.phone}>
                   <Button size="sm" variant="outline">{t("call")}</Button>
@@ -294,7 +317,7 @@ function ManualEnquiryDialog({ open, form, fieldErrors, isSubmitting, t, onClose
                   onChange={(event) => onChange("status", event.target.value)}
                 >
                   <option value="new">{t("new")}</option>
-                  <option value="contacted">{t("contacted")}</option>
+                  <option value="in_progress">In Progress</option>
                   <option value="resolved">{t("resolved")}</option>
                   <option value="closed">{t("closed")}</option>
                 </Select>
@@ -457,9 +480,16 @@ export function AdminEnquiriesPage() {
     }
   }
 
-  function openEnquiry(enquiryId) {
+  function openEnquiry(enquiry) {
+    const identifier = getAdminEnquiryIdentifier(enquiry);
+
+    if (!identifier) {
+      toast.error(t("failedToLoad"), "Could not load enquiry details.");
+      return;
+    }
+
     replaceFilters({
-      selected: enquiryId,
+      selected: identifier,
     });
   }
 
@@ -593,7 +623,7 @@ export function AdminEnquiriesPage() {
                     active ? "bg-brand-red text-white" : "bg-muted/50 text-foreground hover:bg-muted"
                   }`}
                 >
-                  {t(tab.key) || tab.label} ({tab.count})
+                  {getStatusLabel(tab.key, t) || tab.label} ({tab.count})
                 </button>
               );
             })}
@@ -612,7 +642,7 @@ export function AdminEnquiriesPage() {
             >
               <option value="">{t("allStatuses")}</option>
               <option value="new">{t("new")}</option>
-              <option value="contacted">{t("contacted")}</option>
+              <option value="in_progress">In Progress</option>
               <option value="resolved">{t("resolved")}</option>
               <option value="closed">{t("closed")}</option>
             </Select>

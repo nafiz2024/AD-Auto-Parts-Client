@@ -7,15 +7,12 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { XIcon } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import {
   getAdminEnquiryDetail,
-  updateAdminEnquiry,
+  updateAdminEnquiryStatus,
 } from "@/features/admin/enquiries/admin-enquiries-api";
 import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +44,7 @@ function getStatusVariant(status) {
     return "success";
   }
 
-  if (normalized.includes("contact")) {
+  if (normalized.includes("progress") || normalized.includes("contact")) {
     return "warning";
   }
 
@@ -56,6 +53,40 @@ function getStatusVariant(status) {
   }
 
   return "info";
+}
+
+function getStatusLabel(status) {
+  const normalized = String(status).toLowerCase();
+
+  if (normalized === "new") {
+    return "New";
+  }
+
+  if (normalized === "in_progress" || normalized.includes("contact")) {
+    return "In Progress";
+  }
+
+  if (normalized === "resolved") {
+    return "Resolved";
+  }
+
+  if (normalized === "closed") {
+    return "Closed";
+  }
+
+  return status || "--";
+}
+
+function getDetailErrorMessage(error) {
+  const message =
+    error?.details?.message ||
+    error?.details?.error ||
+    error?.details?.errors?.[0]?.message ||
+    error?.message;
+
+  return typeof message === "string" && message.trim() && message !== "[object Object]"
+    ? message.trim()
+    : "";
 }
 
 function buildOrdersHref(enquiry) {
@@ -74,39 +105,9 @@ function buildOrdersHref(enquiry) {
   return routes.admin.adminOrders;
 }
 
-function buildUpdatePayload(form, detail) {
-  const payload = {};
-
-  if (form.status && form.status !== detail.status) {
-    payload.status = form.status;
-  }
-
-  if (form.replyMessage.trim()) {
-    payload.replyMessage = form.replyMessage.trim();
-  }
-
-  if (detail.internalNotesSupported && form.internalNote.trim()) {
-    payload.internalNote = form.internalNote.trim();
-  }
-
-  if (detail.followUpDateSupported && form.followUpDate) {
-    payload.followUpDate = form.followUpDate;
-  }
-
-  if (form.assignedAdminId && form.assignedAdminId !== detail.assignedAdminId) {
-    payload.assignedAdminId = form.assignedAdminId;
-  }
-
-  return payload;
-}
-
-function createInitialForm(detail) {
+function createInitialForm() {
   return {
-    status: detail?.status || "",
-    replyMessage: "",
-    internalNote: "",
-    followUpDate: "",
-    assignedAdminId: "",
+    statusNote: "",
   };
 }
 
@@ -150,7 +151,7 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
             error: null,
             enquiry,
           });
-          setForm(createInitialForm(enquiry));
+          setForm(createInitialForm());
           setFieldErrors({});
         }
       } catch (error) {
@@ -201,7 +202,6 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
         error: null,
         enquiry,
       });
-      setForm(createInitialForm(enquiry));
       setFieldErrors({});
     } catch (error) {
       setState((current) => ({
@@ -214,20 +214,16 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
 
   function updateField(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
-    setFieldErrors((current) => ({ ...current, [field]: undefined }));
+    setFieldErrors((current) => ({ ...current, [field]: undefined, note: undefined }));
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault();
-
+  async function handleStatusUpdate(nextStatus) {
     if (!state.enquiry) {
       return;
     }
 
-    const payload = buildUpdatePayload(form, state.enquiry);
-
-    if (Object.keys(payload).length === 0) {
-      toast.info(t("updateStatus"), t("noChangesToSave"));
+    if (state.enquiry.status === nextStatus) {
+      toast.info(t("updateStatus"), `Enquiry is already marked as ${getStatusLabel(nextStatus).toLowerCase()}.`);
       return;
     }
 
@@ -235,13 +231,14 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
     setFieldErrors({});
 
     try {
-      await updateAdminEnquiry(state.enquiry.id, payload);
-      toast.success(
-        payload.replyMessage ? t("replySentSuccessfully") : t("enquiryUpdatedSuccessfully"),
-        t("enquiryStatusChangedDescription"),
-      );
-      setIsSubmitting(false);
+      await updateAdminEnquiryStatus(state.enquiry.identifier || state.enquiry.id, {
+        status: nextStatus,
+        note: form.statusNote.trim() || "",
+      });
+      toast.success(t("enquiries"), `Enquiry marked as ${getStatusLabel(nextStatus).toLowerCase()}.`);
       await Promise.all([refreshDetail(), onRefreshList?.()]);
+      setForm(createInitialForm());
+      setIsSubmitting(false);
     } catch (error) {
       setIsSubmitting(false);
       setFieldErrors(error?.fieldErrors ?? {});
@@ -272,9 +269,9 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
               {enquiry ? (
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <h2 className="text-2xl font-semibold text-foreground">
-                    {enquiry.requiredPart}
+                    {enquiry.enquiryNumber || enquiry.requiredPart}
                   </h2>
-                  <Badge variant={getStatusVariant(enquiry.status)}>{t(enquiry.status)}</Badge>
+                  <Badge variant={getStatusVariant(enquiry.status)}>{getStatusLabel(enquiry.status)}</Badge>
                 </div>
               ) : null}
             </div>
@@ -312,7 +309,8 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
           {!state.loading && state.error ? (
             <Alert variant="error" title={t("failedToLoad")}>
               <div className="space-y-4">
-                <p>{t("adminEnquiriesLoadError")}</p>
+                <p>Could not load enquiry details.</p>
+                {getDetailErrorMessage(state.error) ? <p className="text-sm">{getDetailErrorMessage(state.error)}</p> : null}
                 <Button variant="outline" onClick={refreshDetail}>
                   {t("retry")}
                 </Button>
@@ -325,14 +323,22 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
               <Card className="rounded-[1.5rem] p-5">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("customerName")}</p>
-                    <p className="mt-1 font-semibold text-foreground">{enquiry.name}</p>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("enquiryNumber")}</p>
+                    <p className="mt-1 font-semibold text-foreground">{enquiry.enquiryNumber || "--"}</p>
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("status")}</p>
                     <div className="mt-2">
-                      <Badge variant={getStatusVariant(enquiry.status)}>{t(enquiry.status)}</Badge>
+                      <Badge variant={getStatusVariant(enquiry.status)}>{getStatusLabel(enquiry.status)}</Badge>
                     </div>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("customerName")}</p>
+                    <p className="mt-1 font-semibold text-foreground">{enquiry.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("enquiryType")}</p>
+                    <p className="mt-1 text-foreground">{enquiry.enquiryType || "--"}</p>
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("phone")}</p>
@@ -341,14 +347,6 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
                   <div>
                     <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("email")}</p>
                     <p className="mt-1 text-foreground">{enquiry.email || "--"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("enquiryNumber")}</p>
-                    <p className="mt-1 text-foreground">{enquiry.enquiryNumber || "--"}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("enquiryType")}</p>
-                    <p className="mt-1 text-foreground">{enquiry.enquiryType || "--"}</p>
                   </div>
                 </div>
               </Card>
@@ -369,7 +367,7 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
                   </div>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("createdDate")}</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("date")}</p>
                       <p className="mt-1 text-foreground">{formatDateTime(enquiry.createdAt, locale)}</p>
                     </div>
                     <div>
@@ -377,10 +375,10 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
                       <p className="mt-1 text-foreground">{formatDateTime(enquiry.latestUpdateAt, locale)}</p>
                     </div>
                   </div>
-                  {enquiry.assignedTo ? (
+                  {enquiry.adminNotes ? (
                     <div>
-                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{t("assignedTo")}</p>
-                      <p className="mt-1 text-foreground">{enquiry.assignedTo}</p>
+                      <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">Admin Notes</p>
+                      <p className="mt-1 whitespace-pre-wrap leading-6 text-foreground">{enquiry.adminNotes}</p>
                     </div>
                   ) : null}
                   {enquiry.referenceImageUrl ? (
@@ -403,7 +401,7 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
 
               <Card className="rounded-[1.5rem] p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-lg font-semibold text-foreground">{t("replyAndStatus")}</h3>
+                  <h3 className="text-lg font-semibold text-foreground">{t("updateStatus")}</h3>
                   <div className="flex flex-wrap gap-2">
                     {enquiry.phone ? (
                       <a href={`tel:${enquiry.phone}`}>
@@ -425,125 +423,42 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
                   </div>
                 </div>
 
-                <form className="mt-4 space-y-4" onSubmit={handleSubmit}>
+                <div className="mt-4 space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="enquiry-status">{t("updateStatus")}</Label>
-                    <Select
-                      id="enquiry-status"
-                      value={form.status}
-                      onChange={(event) => updateField("status", event.target.value)}
-                      disabled={!enquiry.availableActions.canUpdateStatus}
-                    >
-                      {enquiry.availableStatuses.map((status) => (
-                        <option key={status.id} value={status.value}>
-                          {t(status.value) || status.label}
-                        </option>
-                      ))}
-                    </Select>
-                    {fieldErrors.status ? <p className="text-sm text-error">{fieldErrors.status}</p> : null}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="reply-message">{t("reply")}</Label>
+                    <label htmlFor="status-note" className="text-sm font-medium text-foreground">
+                      Status Note
+                    </label>
                     <Textarea
-                      id="reply-message"
-                      className="min-h-32"
-                      value={form.replyMessage}
-                      onChange={(event) => updateField("replyMessage", event.target.value)}
-                      placeholder={t("replyMessagePlaceholder")}
-                      disabled={!enquiry.availableActions.canReply || isSubmitting}
+                      id="status-note"
+                      className="min-h-28"
+                      value={form.statusNote}
+                      onChange={(event) => updateField("statusNote", event.target.value)}
+                      placeholder="Add an optional admin note for this status update"
+                      disabled={isSubmitting}
                     />
-                    <p className="text-xs text-muted-foreground">{t("replyVisibilityNote")}</p>
-                    {fieldErrors.replyMessage ? (
-                      <p className="text-sm text-error">{fieldErrors.replyMessage}</p>
-                    ) : null}
+                    {fieldErrors.note ? <p className="text-sm text-error">{fieldErrors.note}</p> : null}
                   </div>
-
-                  {enquiry.internalNotesSupported ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="internal-note">{t("internalNote")}</Label>
-                      <Textarea
-                        id="internal-note"
-                        value={form.internalNote}
-                        onChange={(event) => updateField("internalNote", event.target.value)}
-                        placeholder={t("internalNotePlaceholder")}
-                        disabled={isSubmitting}
-                      />
-                      <p className="text-xs text-muted-foreground">{t("internalNoteVisibility")}</p>
-                      {fieldErrors.internalNote ? (
-                        <p className="text-sm text-error">{fieldErrors.internalNote}</p>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {enquiry.followUpDateSupported ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="follow-up-date">{t("followUpDate")}</Label>
-                      <Input
-                        id="follow-up-date"
-                        type="date"
-                        value={form.followUpDate}
-                        onChange={(event) => updateField("followUpDate", event.target.value)}
-                        disabled={isSubmitting}
-                      />
-                      {fieldErrors.followUpDate ? (
-                        <p className="text-sm text-error">{fieldErrors.followUpDate}</p>
-                      ) : null}
-                    </div>
-                  ) : null}
-
-                  {enquiry.availableActions.canAssign && enquiry.assignedAdminOptions.length > 0 ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="assigned-admin">{t("assignToAdmin")}</Label>
-                      <Select
-                        id="assigned-admin"
-                        value={form.assignedAdminId}
-                        onChange={(event) => updateField("assignedAdminId", event.target.value)}
-                        disabled={isSubmitting}
-                      >
-                        <option value="">{t("unassigned")}</option>
-                        {enquiry.assignedAdminOptions.map((admin) => (
-                          <option key={admin.id} value={admin.id}>
-                            {admin.name}
-                          </option>
-                        ))}
-                      </Select>
-                    </div>
-                  ) : null}
 
                   <div className="flex flex-wrap gap-3">
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting ? t("saving") : t("sendReply")}
+                    <Button
+                      type="button"
+                      disabled={isSubmitting || !enquiry.availableActions.canUpdateStatus || enquiry.status === "in_progress"}
+                      onClick={() => handleStatusUpdate("in_progress")}
+                    >
+                      {isSubmitting ? t("saving") : "Mark In Progress"}
                     </Button>
-                    <Button type="button" variant="outline" onClick={refreshDetail} disabled={state.refreshing}>
-                      {state.refreshing ? t("loading") : t("refresh")}
+                    <Button
+                      type="button"
+                      disabled={isSubmitting || !enquiry.availableActions.canUpdateStatus || enquiry.status === "resolved"}
+                      onClick={() => handleStatusUpdate("resolved")}
+                    >
+                      {isSubmitting ? t("saving") : "Mark as Resolved"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={onClose}>
+                      {t("close")}
                     </Button>
                   </div>
-                </form>
-              </Card>
-
-              <Card className="rounded-[1.5rem] p-5">
-                <h3 className="text-lg font-semibold text-foreground">{t("replyHistory")}</h3>
-                {enquiry.replies.length > 0 ? (
-                  <div className="mt-4 space-y-3">
-                    {enquiry.replies.map((reply) => (
-                      <div key={reply.id} className="rounded-[1.25rem] border border-border/80 px-4 py-3">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <p className="font-medium text-foreground">{reply.author || t("admin")}</p>
-                          <Badge variant={reply.publicVisible ? "info" : "neutral"}>
-                            {reply.publicVisible ? t("customerVisible") : t("adminOnly")}
-                          </Badge>
-                        </div>
-                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground">{reply.message}</p>
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          {formatDateTime(reply.createdAt, locale)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-muted-foreground">{t("noRepliesYet")}</p>
-                )}
+                </div>
               </Card>
             </>
           ) : null}
