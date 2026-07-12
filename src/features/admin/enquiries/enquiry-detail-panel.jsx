@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { XIcon } from "@/components/ui/icons";
 import { routes } from "@/constants/routes";
 import {
+  getAdminEnquiryIdentifier,
   getAdminEnquiryDetail,
   updateAdminEnquiryStatus,
 } from "@/features/admin/enquiries/admin-enquiries-api";
@@ -109,6 +110,20 @@ function createInitialForm() {
   return {
     statusNote: "",
   };
+}
+
+function resolveEnquiryIdentifier(selectedEnquiry, fallbackIdentifier = "") {
+  return (
+    selectedEnquiry?.id ||
+    selectedEnquiry?._id ||
+    selectedEnquiry?.enquiryNumber ||
+    fallbackIdentifier ||
+    ""
+  );
+}
+
+function sanitizePhoneNumber(phone) {
+  return String(phone || "").replace(/\D/g, "");
 }
 
 export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) {
@@ -222,21 +237,46 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
       return;
     }
 
+    const enquiryIdentifier = resolveEnquiryIdentifier(state.enquiry, enquiryId);
+
+    if (!enquiryIdentifier) {
+      toast.error(t("enquiries"), "Cannot update enquiry because enquiry id is missing.");
+      return;
+    }
+
     if (state.enquiry.status === nextStatus) {
       toast.info(t("updateStatus"), `Enquiry is already marked as ${getStatusLabel(nextStatus).toLowerCase()}.`);
       return;
+    }
+
+    const payload = {
+      status: nextStatus,
+      note: form.statusNote.trim() || "",
+    };
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[admin enquiry status] identifier:", enquiryIdentifier);
+      console.log("[admin enquiry status] payload:", payload);
     }
 
     setIsSubmitting(true);
     setFieldErrors({});
 
     try {
-      await updateAdminEnquiryStatus(state.enquiry.identifier || state.enquiry.id, {
-        status: nextStatus,
-        note: form.statusNote.trim() || "",
-      });
+      await updateAdminEnquiryStatus(enquiryIdentifier, payload);
+      setState((current) => ({
+        ...current,
+        enquiry: current.enquiry
+          ? {
+              ...current.enquiry,
+              status: nextStatus,
+              statusLabel: getStatusLabel(nextStatus),
+              latestUpdateAt: new Date().toISOString(),
+            }
+          : current.enquiry,
+      }));
       toast.success(t("enquiries"), `Enquiry marked as ${getStatusLabel(nextStatus).toLowerCase()}.`);
-      await Promise.all([refreshDetail(), onRefreshList?.()]);
+      await Promise.all([Promise.resolve(onRefreshList?.()), refreshDetail()]);
       setForm(createInitialForm());
       setIsSubmitting(false);
     } catch (error) {
@@ -252,6 +292,8 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
 
   const enquiry = state.enquiry;
   const orderSearchHref = buildOrdersHref(enquiry);
+  const phoneHref = enquiry?.phone ? `tel:${enquiry.phone}` : null;
+  const whatsappHref = enquiry?.phone ? `https://wa.me/${sanitizePhoneNumber(enquiry.phone)}` : null;
 
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-brand-navy/30 backdrop-blur-sm">
@@ -404,13 +446,13 @@ export function EnquiryDetailPanel({ enquiryId, open, onClose, onRefreshList }) 
                   <h3 className="text-lg font-semibold text-foreground">{t("updateStatus")}</h3>
                   <div className="flex flex-wrap gap-2">
                     {enquiry.phone ? (
-                      <a href={`tel:${enquiry.phone}`}>
+                      <a href={phoneHref}>
                         <Button size="sm" variant="outline">{t("callCustomer")}</Button>
                       </a>
                     ) : null}
                     {enquiry.phone ? (
                       <a
-                        href={`https://wa.me/${enquiry.phone.replace(/\D/g, "")}`}
+                        href={whatsappHref}
                         target="_blank"
                         rel="noopener noreferrer"
                       >

@@ -54,6 +54,37 @@ function extractErrorMessage(payload) {
   );
 }
 
+function extractFieldErrorMessage(fieldErrors) {
+  if (!fieldErrors || typeof fieldErrors !== "object") {
+    return null;
+  }
+
+  for (const [field, value] of Object.entries(fieldErrors)) {
+    if (Array.isArray(value) && value.length > 0) {
+      return `${field}: ${String(value[0])}`;
+    }
+
+    if (typeof value === "string" && value.trim()) {
+      return `${field}: ${value.trim()}`;
+    }
+  }
+
+  return null;
+}
+
+function applyReadableErrorMessage(error) {
+  const message =
+    extractErrorMessage(error?.details) ??
+    extractFieldErrorMessage(error?.fieldErrors) ??
+    error?.message;
+
+  if (message && message !== "[object Object]") {
+    error.message = message;
+  }
+
+  return error;
+}
+
 export function getAdminEnquiryIdentifier(enquiry) {
   return firstString(enquiry?.id, enquiry?._id, enquiry?.enquiryNumber) ?? "";
 }
@@ -74,6 +105,7 @@ function normalizeEnquirySummary(item, index = 0) {
 
   return {
     id: firstString(item?.id, item?._id, item?.enquiryNumber, `enquiry-${index}`) ?? `enquiry-${index}`,
+    _id: firstString(item?._id) ?? "",
     identifier,
     enquiryNumber:
       firstString(item?.enquiryNumber, item?.referenceNumber, item?.ticketNumber, item?.id) ??
@@ -296,30 +328,18 @@ export async function getAdminEnquiryDetail(enquiryId) {
 
     return normalizeEnquiryDetail(item);
   } catch (error) {
-    const message = extractErrorMessage(error?.details) ?? error?.message;
-
-    if (message && message !== "[object Object]") {
-      error.message = message;
-    }
-
-    throw error;
+    throw applyReadableErrorMessage(error);
   }
 }
 
-export async function updateAdminEnquiryStatus(enquiryId, payload) {
+export async function updateAdminEnquiryStatus(enquiryIdentifier, payload) {
   try {
-    const result = await apiPatch(enquiryStatusPath(enquiryId), payload, {
+    const result = await apiPatch(enquiryStatusPath(enquiryIdentifier), payload, {
       credentials: "include",
     });
     return getEnvelopeData(result);
   } catch (error) {
-    const message = extractErrorMessage(error?.details) ?? error?.message;
-
-    if (message && message !== "[object Object]") {
-      error.message = message;
-    }
-
-    throw error;
+    throw applyReadableErrorMessage(error);
   }
 }
 
