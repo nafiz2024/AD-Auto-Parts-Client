@@ -176,7 +176,14 @@ function normalizeNotification(item, index = 0) {
 }
 
 function normalizeProduct(item, index = 0) {
-  const stock = firstNumber(item?.stockQuantity, item?.stock, item?.qty, item?.quantity) ?? 0;
+  const stock =
+    firstNumber(
+      item?.stockQuantity,
+      item?.quantity,
+      item?.stock,
+      item?.inventory?.quantity,
+      item?.qty,
+    ) ?? 0;
   const priceMinor = firstNumber(
     item?.priceMinor,
     item?.price?.amountMinor,
@@ -193,7 +200,7 @@ function normalizeProduct(item, index = 0) {
     stockQuantity: stock,
     status:
       firstString(item?.status, item?.inventoryStatus, item?.availabilityStatus) ?? "Draft",
-    lowStock: stock > 0 && stock <= 5,
+    lowStock: stock < 3,
   };
 }
 
@@ -274,8 +281,15 @@ export async function getAdminDashboardData() {
     ["lowStockProducts"],
     ["lowStockItems"],
   ])
+    .map(normalizeProduct);
+  const fallbackLowStockProducts = extractCollection(payload, [
+    ["recentProducts"],
+    ["products"],
+  ])
     .map(normalizeProduct)
     .filter((product) => product.lowStock);
+  const resolvedLowStockProducts =
+    lowStockProducts.length > 0 ? lowStockProducts : fallbackLowStockProducts;
   const pendingShipments = extractCollection(payload, [
     ["pendingShipmentItems"],
     ["pendingShipmentsList"],
@@ -312,7 +326,7 @@ export async function getAdminDashboardData() {
   );
   const lowStockCount = normalizeCount(
     extractValue(payload, [["lowStock"]]),
-    lowStockProducts.length,
+    resolvedLowStockProducts.length,
   );
   const unreadNotifications = normalizeCount(
     extractValue(payload, [["unreadNotifications"]]),
@@ -346,7 +360,7 @@ export async function getAdminDashboardData() {
     pendingShipments: pendingShipments.slice(0, 5),
     pendingReturns: pendingReturns.slice(0, 5),
     pendingEnquiries: pendingEnquiries.slice(0, 5),
-    lowStockProducts: lowStockProducts.slice(0, 5),
+    lowStockProducts: resolvedLowStockProducts.slice(0, 5),
     recentProducts: products.slice(0, 5),
     orderStatusBreakdown,
   };

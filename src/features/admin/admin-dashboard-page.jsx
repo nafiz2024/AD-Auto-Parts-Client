@@ -383,7 +383,18 @@ function AdminDashboardContent({ data }) {
                       {product.sku} | {product.category}
                     </p>
                   </div>
-                  <Badge variant="warning">{product.stockQuantity}</Badge>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {product.priceMinor !== null ? (
+                      <PriceDisplay amountMinor={product.priceMinor} />
+                    ) : null}
+                    <Badge variant={getTone(product.status)}>{product.status}</Badge>
+                    <Badge variant="warning">{product.stockQuantity}</Badge>
+                    <Link href={routes.admin.adminProductDetail(product.id)}>
+                      <Button variant="outline" size="sm">
+                        {t("editProduct")}
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
