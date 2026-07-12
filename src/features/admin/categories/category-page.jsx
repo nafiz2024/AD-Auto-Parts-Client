@@ -112,7 +112,7 @@ function CategoryDrawer({
   }
 
   return (
-    <Card className="h-fit space-y-5 rounded-[2rem] lg:sticky lg:top-6">
+    <Card className="w-full max-w-none space-y-5 rounded-[2rem]">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <h2 className="text-2xl font-semibold text-foreground">
@@ -227,24 +227,34 @@ function CategoryDrawer({
 
 function CategoryTable({ items, t, onEdit, onToggleStatus, onDelete }) {
   return (
-    <div className="hidden overflow-x-auto lg:block">
-      <table className="min-w-full text-sm">
+    <div className="hidden w-full overflow-x-auto lg:block">
+      <table className="min-w-[1120px] w-full table-fixed text-sm">
+        <colgroup>
+          <col className="w-[9%]" />
+          <col className="w-[18%]" />
+          <col className="w-[14%]" />
+          <col className="w-[16%]" />
+          <col className="w-[10%]" />
+          <col className="w-[9%]" />
+          <col className="w-[10%]" />
+          <col className="w-[14%]" />
+        </colgroup>
         <thead>
           <tr className="border-b border-border text-start text-muted-foreground">
-            <th className="pb-3">{t("image")}</th>
-            <th className="pb-3">{t("categoryName")}</th>
-            <th className="pb-3">{t("slug")}</th>
-            <th className="pb-3">{t("parentCategory")}</th>
-            <th className="pb-3">{t("productCount")}</th>
-            <th className="pb-3">{t("status")}</th>
-            <th className="pb-3">{t("displayOrder")}</th>
-            <th className="pb-3">{t("actions")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("image")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("categoryName")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("slug")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("parentCategory")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("productCount")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("status")}</th>
+            <th className="pb-3 pe-4 text-xs font-semibold uppercase tracking-[0.16em]">{t("displayOrder")}</th>
+            <th className="pb-3 text-right text-xs font-semibold uppercase tracking-[0.16em]">{t("actions")}</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr key={item.id} className="border-b border-border/80 align-top last:border-b-0">
-              <td className="py-4">
+            <tr key={item.id} className="border-b border-border/80 align-middle last:border-b-0">
+              <td className="py-3 pe-4 align-middle">
                 <div className="flex size-14 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted">
                   {item.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -254,29 +264,36 @@ function CategoryTable({ items, t, onEdit, onToggleStatus, onDelete }) {
                   )}
                 </div>
               </td>
-              <td className="py-4 font-semibold text-foreground">{item.name}</td>
-              <td className="py-4 text-muted-foreground">{item.slug || "--"}</td>
-              <td className="py-4 text-muted-foreground">{item.parentCategoryName || "--"}</td>
-              <td className="py-4 text-muted-foreground">{item.productCount ?? "--"}</td>
-              <td className="py-4">
+              <td className="py-3 pe-4 align-middle font-semibold text-foreground">
+                <span className="block truncate">{item.name}</span>
+              </td>
+              <td className="py-3 pe-4 align-middle text-muted-foreground">
+                <span className="block truncate">{item.slug || "--"}</span>
+              </td>
+              <td className="py-3 pe-4 align-middle text-muted-foreground">
+                <span className="block truncate">{item.parentCategoryName || "--"}</span>
+              </td>
+              <td className="py-3 pe-4 align-middle text-muted-foreground">{item.productCount ?? "--"}</td>
+              <td className="py-3 pe-4 align-middle">
                 <Badge variant={item.active ? "success" : "error"}>
                   {item.active ? t("active") : t("inactive")}
                 </Badge>
               </td>
-              <td className="py-4 text-muted-foreground">{item.displayOrder ?? "--"}</td>
-              <td className="py-4">
-                <div className="flex flex-wrap gap-2">
-                  <Button size="sm" variant="outline" onClick={() => onEdit(item)}>
+              <td className="py-3 pe-4 align-middle text-muted-foreground">{item.displayOrder ?? "--"}</td>
+              <td className="py-3 align-middle">
+                <div className="flex flex-wrap justify-end gap-2">
+                  <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onEdit(item)}>
                     {t("editCategory")}
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
+                    className="whitespace-nowrap"
                     onClick={() => onToggleStatus(item)}
                   >
                     {item.active ? t("deactivate") : t("activate")}
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => onDelete(item)}>
+                  <Button size="sm" variant="outline" className="whitespace-nowrap" onClick={() => onDelete(item)}>
                     {t("deleteCategory")}
                   </Button>
                 </div>
@@ -607,13 +624,14 @@ export function AdminCategoryPage() {
         }
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <Card className="space-y-5 rounded-[2rem]">
-          <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_12rem_12rem]">
+      <div className="w-full max-w-none space-y-6">
+        <Card className="w-full max-w-none space-y-5 rounded-[2rem]">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_12rem_12rem]">
             <Input
               value={filters.q}
               onChange={(event) => replaceFilters({ q: event.target.value, page: 1 })}
               placeholder={t("searchCategories")}
+              className="sm:col-span-2 xl:col-span-1"
             />
             <Select
               value={filters.status}
@@ -655,6 +673,7 @@ export function AdminCategoryPage() {
             />
           ) : (
             <>
+              <div className="w-full overflow-hidden">
               <CategoryTable
                 items={state.items}
                 t={t}
@@ -662,6 +681,7 @@ export function AdminCategoryPage() {
                 onToggleStatus={openStatusDialog}
                 onDelete={openDeleteDialog}
               />
+              </div>
               <CategoryCards
                 items={state.items}
                 t={t}
