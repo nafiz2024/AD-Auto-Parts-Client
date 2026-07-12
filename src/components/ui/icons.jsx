@@ -337,3 +337,23 @@ export function RefreshCcwIcon(props) {
     </Svg>
   );
 }
+
+export function EyeIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </Svg>
+  );
+}
+
+export function EyeOffIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="m3 3 18 18" />
+      <path d="M10.58 10.58A2 2 0 0 0 12 14a2 2 0 0 0 1.42-.58" />
+      <path d="M9.88 5.09A10.94 10.94 0 0 1 12 5c4.48 0 8.27 2.94 9.54 7a10.97 10.97 0 0 1-3.03 4.57" />
+      <path d="M6.61 6.61A10.96 10.96 0 0 0 2.46 12C3.73 16.06 7.52 19 12 19c1.52 0 2.97-.34 4.27-.95" />
+    </Svg>
+  );
+}
