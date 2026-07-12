@@ -25,8 +25,8 @@ import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 
 function LoadingState() {
   return (
-    <div className="invoice-print-shell">
-      <Card className="invoice-print-card space-y-4">
+    <div>
+      <Card className="space-y-4">
         <div className="h-8 w-64 animate-pulse rounded-full bg-muted" />
         <div className="h-[520px] animate-pulse rounded-[2rem] bg-muted" />
       </Card>
@@ -198,7 +198,7 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
 
   return (
     <>
-      <div className="invoice-print-shell">
+      <div className="py-2">
         <InvoicePreview
           invoice={state.invoice}
           locale={locale}
@@ -206,7 +206,7 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
           title={state.invoice.invoiceNumber}
           description={t("adminInvoicePreviewDescription")}
           action={
-            <div className="invoice-print-hide flex flex-wrap gap-3">
+            <div className="print-hidden no-print flex flex-wrap gap-3">
               <Button onClick={handleDownload} disabled={state.downloading}>
                 {state.downloading ? "Downloading..." : "Download Invoice"}
               </Button>
@@ -224,7 +224,7 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
             </div>
           }
           secondaryAction={
-            <div className="invoice-print-hide flex flex-wrap gap-3 lg:justify-end">
+            <div className="print-hidden no-print flex flex-wrap gap-3 lg:justify-end">
               <Button variant="outline" onClick={handlePrint}>
                 Print / Save PDF
               </Button>
@@ -237,7 +237,7 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
           }
           tertiaryAction={
             state.invoice.availableActions.void ? (
-              <div className="invoice-print-hide">
+              <div className="print-hidden no-print">
                 <Button variant="outline" onClick={() => setState((current) => ({ ...current, dialogOpen: true }))}>
                   {t("voidInvoice")}
                 </Button>
@@ -249,38 +249,62 @@ export function AdminInvoiceDetailPage({ invoiceNumber }) {
 
       <style jsx global>{`
         @media print {
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+
+          html,
           body {
-            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
           }
 
           body * {
-            visibility: hidden;
+            visibility: hidden !important;
           }
 
-          .invoice-print-shell,
-          .invoice-print-shell * {
-            visibility: visible;
+          #invoice-print-root,
+          #invoice-print-root * {
+            visibility: visible !important;
           }
 
-          .invoice-print-shell {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            max-width: none !important;
+          #invoice-print-root {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+            background: #ffffff !important;
           }
 
-          .invoice-print-card {
+          .invoice-card {
+            width: 100% !important;
+            max-width: 100% !important;
             box-shadow: none !important;
-            border: 0 !important;
             border-radius: 0 !important;
-            background: white !important;
+            border: none !important;
+            padding: 12mm !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
 
-          .invoice-print-hide {
+          .print-hidden,
+          .no-print {
             display: none !important;
+          }
+
+          .print-compact {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+          }
+
+          .avoid-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
           }
         }
       `}</style>

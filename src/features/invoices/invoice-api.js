@@ -395,14 +395,6 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
   const orderCustomer = order?.customer ?? {};
   const orderDelivery = order?.delivery ?? {};
   const shipment = invoice?.shipment ?? order?.shipment ?? {};
-  const deliveryAddress =
-    normalizeAddress(invoice?.deliveryAddress) ??
-    normalizeAddress(invoice?.shippingAddress) ??
-    normalizeAddress(invoice?.address) ??
-    normalizeAddress(order?.deliveryAddress) ??
-    normalizeAddress(order?.shippingAddress) ??
-    normalizeAddress(orderDelivery?.address) ??
-    normalizeAddress(shipment?.address);
   const isShopPickup = isShopPickupMethod(
     invoice?.fulfillmentMethod,
     invoice?.deliveryMethod,
@@ -412,6 +404,14 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
     shipment?.deliveryMethod,
     item?.fulfillmentMethod,
   );
+  const deliveryAddress =
+    normalizeAddress(invoice?.deliveryAddress) ??
+    normalizeAddress(order?.deliveryAddress) ??
+    normalizeAddress(invoice?.shippingAddress) ??
+    normalizeAddress(order?.shippingAddress) ??
+    normalizeAddress(invoice?.address) ??
+    normalizeAddress(orderDelivery?.address) ??
+    normalizeAddress(shipment?.address);
   const backendInvoiceNumber = firstString(
     invoice?.invoiceNumber,
     invoice?.number,
@@ -464,44 +464,58 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
   const items = asArray(
     invoice?.lineItems ??
       invoice?.items ??
+      invoice?.order?.items ??
+      invoice?.order?.orderItems ??
       invoice?.lines ??
       invoice?.products ??
       item?.lineItems ??
       item?.items ??
       item?.lines ??
       order?.items ??
+      order?.orderItems ??
       order?.lineItems ??
       order?.lines,
   ).map(normalizeInvoiceItem);
   const customerName =
     firstString(
       customer?.name,
+      item?.customer?.name,
+      invoice?.customerName,
       customer?.fullName,
       customer?.customerName,
       orderCustomer?.name,
+      order?.customer?.name,
       orderCustomer?.fullName,
       item?.customerName,
       order?.customerName,
+      order?.deliveryAddress?.recipientName,
+      order?.shippingAddress?.recipientName,
       order?.shippingAddress?.fullName,
       order?.deliveryAddress?.recipientName,
     ) ?? "Customer";
   const customerPhone = firstString(
     customer?.phone,
-    customer?.mobile,
-    orderCustomer?.phone,
-    orderCustomer?.mobile,
-    item?.customerPhone,
-    order?.customerPhone,
-    order?.shippingAddress?.phone,
-    order?.deliveryAddress?.phone,
-  );
+    item?.customer?.phone,
+    invoice?.customerPhone,
+      customer?.mobile,
+      orderCustomer?.phone,
+      order?.customer?.phone,
+      orderCustomer?.mobile,
+      item?.customerPhone,
+      order?.customerPhone,
+      order?.deliveryAddress?.phone,
+      order?.shippingAddress?.phone,
+    );
   const customerEmail = firstString(
     customer?.email,
+    item?.customer?.email,
+    invoice?.customerEmail,
     orderCustomer?.email,
+    order?.customer?.email,
     item?.customerEmail,
     order?.customerEmail,
-    order?.shippingAddress?.email,
     order?.deliveryAddress?.email,
+    order?.shippingAddress?.email,
   );
   const paymentMethodLabel = toDisplayLabel(
     firstString(invoice?.paymentMethod, payment?.method, item?.paymentMethod),
@@ -544,13 +558,13 @@ function normalizeInvoiceRecord(item, index = 0, scope = "customer") {
     customer: {
       id: firstString(customer?.id, customer?._id, orderCustomer?.id, orderCustomer?._id),
       name: customerName,
-      phone: customerPhone,
-      email: customerEmail,
+      phone: customerPhone ?? "--",
+      email: customerEmail ?? "--",
     },
     deliveryAddress,
     deliveryAddressLabel: isShopPickup
       ? "Shop Pickup -- no delivery address required."
-      : deliveryAddress,
+      : deliveryAddress ?? "--",
     isShopPickup,
     items,
     paymentMethod: paymentMethodLabel ?? "--",
