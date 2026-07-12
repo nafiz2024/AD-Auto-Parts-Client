@@ -20,6 +20,28 @@ import { InvoicePreview } from "@/features/invoices/invoice-ui";
 import { buildCustomerLoginHref } from "@/lib/auth/customer-auth";
 import { resolveApiUiMessage } from "@/lib/api/ui-errors";
 
+function sanitizeMessage(value) {
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  return trimmed && trimmed !== "[object Object]" ? trimmed : null;
+}
+
+function getDownloadErrorDescription(error) {
+  const message =
+    sanitizeMessage(error?.message) ??
+    sanitizeMessage(error?.details?.message) ??
+    sanitizeMessage(error?.details?.error);
+
+  if (error?.status === 404) {
+    return `${message ?? "Invoice PDF download is not available right now."} Use Print / Save PDF instead.`;
+  }
+
+  return message ?? "Could not download invoice right now.";
+}
+
 function LoadingState() {
   return (
     <Container className="invoice-print-shell py-8" size="lg">
@@ -129,9 +151,9 @@ export function CustomerInvoiceDetailPage({ invoiceNumber }) {
     setState((current) => ({ ...current, downloading: true }));
 
     try {
-      await downloadCustomerInvoicePdf(state.invoice);
+      await downloadCustomerInvoicePdf(state.invoice?.invoiceNumber ?? invoiceNumber);
     } catch (error) {
-      toast.error(t("failedToDownloadInvoice"), "Could not download invoice right now.");
+      toast.error(t("failedToDownloadInvoice"), getDownloadErrorDescription(error));
     } finally {
       setState((current) => ({ ...current, downloading: false }));
     }

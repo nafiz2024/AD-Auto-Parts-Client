@@ -6,10 +6,12 @@ import {
   apiPost,
   apiRequest,
   createObjectUrl,
+  resolveApiRequestUrl,
   revokeObjectUrl,
 } from "@/lib/api/client";
 import { endpoints } from "@/lib/api/endpoints";
 import { API_BASE_URL } from "@/config/env";
+import { createApiError } from "@/lib/api/errors";
 
 const ACCOUNT_REQUEST_OPTIONS = {
   credentials: "include",
@@ -23,6 +25,7 @@ const ACCOUNT_NO_STORE_REQUEST_OPTIONS = {
 const ADMIN_NO_STORE_REQUEST_OPTIONS = {
   cache: "no-store",
 };
+const IS_DEVELOPMENT = process.env.NODE_ENV !== "production";
 
 function asArray(value) {
   if (Array.isArray(value)) {
@@ -79,6 +82,40 @@ function sanitizeMessage(value) {
 
   const trimmed = value.trim();
   return trimmed && trimmed !== "[object Object]" ? trimmed : null;
+}
+
+function findReadableMessage(value) {
+  const directMessage = sanitizeMessage(value);
+
+  if (directMessage) {
+    return directMessage;
+  }
+
+  if (Array.isArray(value)) {
+    for (const entry of value) {
+      const nestedMessage = findReadableMessage(entry);
+
+      if (nestedMessage) {
+        return nestedMessage;
+      }
+    }
+
+    return null;
+  }
+
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  for (const nestedValue of Object.values(value)) {
+    const nestedMessage = findReadableMessage(nestedValue);
+
+    if (nestedMessage) {
+      return nestedMessage;
+    }
+  }
+
+  return null;
 }
 
 function normalizeItems(payload) {
@@ -553,15 +590,80 @@ export async function downloadInvoicePdf({
 export async function downloadCustomerInvoicePdf(invoice) {
   const invoiceNumber =
     typeof invoice === "string" ? invoice : invoice?.invoiceNumber;
-  const pdfPath =
-    typeof invoice === "string"
-      ? endpoints.customer.invoicePdf(invoice)
-      : invoice?.pdfPath ?? endpoints.customer.invoicePdf(invoiceNumber);
+  const path = endpoints.account.invoiceDownload(invoiceNumber);
+  const url = resolveApiRequestUrl(path, { baseUrl: API_BASE_URL });
 
-  return downloadInvoicePdf({
-    path: pdfPath,
-    invoiceNumber,
-    fallbackFileName: `invoice-${invoiceNumber}.pdf`,
+  if (IS_DEVELOPMENT) {
+    console.log("[invoice download] url:", url);
+  }
+
+  const response = await fetch(url, {
+    method: "GET",
+    credentials: "include",
+    cache: "no-store",
+    headers: {
+      Accept: "application/pdf, application/json",
+    },
+  });
+  const contentType = response.headers.get("content-type");
+
+  if (IS_DEVELOPMENT) {
+    console.log("[invoice download] status:", response.status);
+    console.log("[invoice download] content-type:", contentType);
+  }
+
+  if (response.ok && contentType?.toLowerCase().includes("application/pdf")) {
+    const blob = await response.blob();
+    const objectUrl = createObjectUrl(blob);
+    const fileName = `invoice-${invoiceNumber}.pdf`;
+
+    try {
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } finally {
+      revokeObjectUrl(objectUrl);
+    }
+
+    return fileName;
+  }
+
+  let errorBody = null;
+
+  if (contentType?.toLowerCase().includes("application/json")) {
+    try {
+      errorBody = await response.json();
+    } catch {
+      errorBody = null;
+    }
+  } else {
+    try {
+      const text = await response.text();
+      errorBody = text || null;
+    } catch {
+      errorBody = null;
+    }
+  }
+
+  const backendMessage =
+    findReadableMessage(errorBody?.message) ??
+    findReadableMessage(errorBody?.error) ??
+    findReadableMessage(errorBody?.errors) ??
+    findReadableMessage(errorBody) ??
+    (response.status === 404
+      ? "Invoice PDF download is not available right now."
+      : "Could not download invoice right now.");
+
+  throw createApiError({
+    status: response.status,
+    code:
+      (errorBody && typeof errorBody === "object" && errorBody.code) ||
+      (response.status === 404 ? "INVOICE_PDF_NOT_FOUND" : "INVOICE_PDF_DOWNLOAD_FAILED"),
+    message: backendMessage,
+    details: errorBody,
   });
 }
 
