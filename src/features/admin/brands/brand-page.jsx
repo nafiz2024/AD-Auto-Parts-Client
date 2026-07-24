@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { PlusCircleIcon, ShieldIcon } from "@/components/ui/icons";
+import { PlusCircleIcon, ShieldIcon, XIcon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/ui/page-header";
@@ -38,10 +38,13 @@ import { useLanguage } from "@/hooks/use-language";
 import { useToast } from "@/hooks/use-toast";
 
 const SORT_OPTIONS = [
-  { value: "newest", labelKey: "newest" },
+  { value: "", labelKey: "newest" },
   { value: "oldest", labelKey: "oldest" },
   { value: "name_asc", labelKey: "nameAscending" },
 ];
+
+const SUPPORTED_STATUSES = new Set(["active", "inactive"]);
+const SUPPORTED_SORTS = new Set(["", "newest", "oldest", "name_asc"]);
 
 function updateSearchParams(current, updates) {
   const params = new URLSearchParams(current);
@@ -61,13 +64,15 @@ function updateSearchParams(current, updates) {
 function buildFilters(searchParamsValue) {
   const searchParams = new URLSearchParams(searchParamsValue);
   const tab = searchParams.get("tab");
+  const status = searchParams.get("status") || "";
+  const sort = searchParams.get("sort") || "";
 
   return {
     tab: tab === "parts" ? "parts" : "vehicle",
     page: Math.max(Number.parseInt(searchParams.get("page") || "1", 10) || 1, 1),
     q: searchParams.get("q") || "",
-    status: searchParams.get("status") || "",
-    sort: searchParams.get("sort") || "newest",
+    status: SUPPORTED_STATUSES.has(status) ? status : "",
+    sort: SUPPORTED_SORTS.has(sort) ? (sort === "newest" ? "" : sort) : "",
   };
 }
 
@@ -86,6 +91,7 @@ function createDefaultBrandValues(tab) {
     id: "",
     name: "",
     slug: "",
+    originCountry: "",
     description: "",
     active: true,
     type: tab,
@@ -115,6 +121,14 @@ function FormField({ label, error, children, note }) {
   );
 }
 
+function createSlugValue(value) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function BrandDrawer({
   open,
   mode,
@@ -126,91 +140,143 @@ function BrandDrawer({
   onChange,
   onSubmit,
 }) {
+  useEffect(() => {
+    if (!open) {
+      return undefined;
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        onClose?.();
+      }
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open, onClose]);
+
   if (!open) {
     return null;
   }
 
   return (
-    <Card className="h-fit space-y-5 rounded-[2rem] lg:sticky lg:top-6">
-      <div className="flex items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold text-foreground">
-            {mode === "edit" ? t("editBrand") : t("addNewBrand")}
-          </h2>
-          <p className="text-sm leading-6 text-muted-foreground">
-            {t("adminBrandDrawerDescription")}
-          </p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={onClose}>
-          {t("cancel")}
-        </Button>
-      </div>
-
-      <form className="space-y-4" onSubmit={onSubmit}>
-        <FormField label={t("brandName")} error={getFieldError(fieldErrors, "name")}>
-          <Input
-            value={formValues.name}
-            onChange={(event) => onChange("name", event.target.value)}
-            placeholder={t("brandNamePlaceholder")}
-          />
-        </FormField>
-
-        <FormField
-          label={t("slug")}
-          error={getFieldError(fieldErrors, "slug")}
-          note={t("brandSlugNote")}
-        >
-          <Input
-            value={formValues.slug}
-            onChange={(event) => onChange("slug", event.target.value)}
-            placeholder={t("slugPlaceholder")}
-          />
-        </FormField>
-
-        <FormField label={t("brandType")} error={getFieldError(fieldErrors, "type")}>
-          <Select
-            value={formValues.type}
-            onChange={(event) => onChange("type", event.target.value)}
-          >
-            <option value="vehicle">{t("vehicleBrands")}</option>
-            <option value="parts">{t("partsBrands")}</option>
-          </Select>
-        </FormField>
-
-        <FormField label={t("description")} error={getFieldError(fieldErrors, "description")}>
-          <Textarea
-            value={formValues.description}
-            onChange={(event) => onChange("description", event.target.value)}
-            placeholder={t("brandDescriptionPlaceholder")}
-          />
-        </FormField>
-
-        <FormField label={t("logo")} note={t("brandLogoDeferredNote")}>
-          <div className="rounded-3xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-            {t("logoUploadDeferred")}
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-brand-navy/45 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <Card
+        className="flex h-full w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] p-0"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border px-6 py-5 sm:px-8">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold text-foreground">
+              {mode === "edit" ? t("editBrand") : t("addNewBrand")}
+            </h2>
+            <p className="text-sm leading-6 text-muted-foreground">
+              {t("adminBrandDrawerDescription")}
+            </p>
           </div>
-        </FormField>
-
-        <FormField label={t("status")} error={getFieldError(fieldErrors, "active")}>
-          <Select
-            value={formValues.active ? "active" : "inactive"}
-            onChange={(event) => onChange("active", event.target.value === "active")}
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            aria-label="Close brand form"
           >
-            <option value="active">{t("active")}</option>
-            <option value="inactive">{t("inactive")}</option>
-          </Select>
-        </FormField>
-
-        <div className="flex flex-wrap gap-3 border-t border-border pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            {t("cancel")}
-          </Button>
-          <Button type="submit" disabled={submitting}>
-            {submitting ? t("saving") : t("saveBrand")}
-          </Button>
+            <XIcon />
+          </button>
         </div>
-      </form>
-    </Card>
+
+        <form className="flex-1 overflow-y-auto px-6 py-5 sm:px-8" onSubmit={onSubmit}>
+          <div className="space-y-4">
+            <FormField label={t("brandName")} error={getFieldError(fieldErrors, "name")}>
+              <Input
+                value={formValues.name}
+                onChange={(event) => onChange("name", event.target.value)}
+                placeholder={t("brandNamePlaceholder")}
+                required
+              />
+            </FormField>
+
+            <FormField
+              label={t("slug")}
+              error={getFieldError(fieldErrors, "slug")}
+              note={t("brandSlugNote")}
+            >
+              <Input
+                value={formValues.slug}
+                onChange={(event) => onChange("slug", event.target.value)}
+                placeholder={t("slugPlaceholder")}
+              />
+            </FormField>
+
+            <FormField label={t("brandType")} error={getFieldError(fieldErrors, "type")}>
+              <Input
+                value={formValues.type === "parts" ? t("partsBrands") : t("vehicleBrands")}
+                readOnly
+              />
+            </FormField>
+
+            {formValues.type === "vehicle" ? (
+              <FormField
+                label={t("originCountry")}
+                error={getFieldError(fieldErrors, "originCountry") || getFieldError(fieldErrors, "country")}
+                note={t("optionalField")}
+              >
+                <Input
+                  value={formValues.originCountry}
+                  onChange={(event) => onChange("originCountry", event.target.value)}
+                  placeholder={t("originCountry")}
+                />
+              </FormField>
+            ) : (
+              <FormField
+                label={t("description")}
+                error={getFieldError(fieldErrors, "description")}
+                note={t("optionalField")}
+              >
+                <Textarea
+                  value={formValues.description}
+                  onChange={(event) => onChange("description", event.target.value)}
+                  placeholder={t("brandDescriptionPlaceholder")}
+                />
+              </FormField>
+            )}
+
+            <FormField label={t("logo")} note={t("brandLogoDeferredNote")}>
+              <div className="rounded-3xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
+                {t("logoUploadDeferred")}
+              </div>
+            </FormField>
+
+            <FormField label={t("status")} error={getFieldError(fieldErrors, "active")}>
+              <Select
+                value={formValues.active ? "active" : "inactive"}
+                onChange={(event) => onChange("active", event.target.value === "active")}
+              >
+                <option value="active">{t("active")}</option>
+                <option value="inactive">{t("inactive")}</option>
+              </Select>
+            </FormField>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3 border-t border-border pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              {t("cancel")}
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? t("saving") : t("saveBrand")}
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
   );
 }
 
@@ -529,6 +595,7 @@ export function AdminBrandPage() {
     mode: "create",
     values: createDefaultBrandValues(filters.tab),
   });
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [dialogState, setDialogState] = useState({
@@ -619,6 +686,7 @@ export function AdminBrandPage() {
 
   function openCreateDrawer() {
     setFieldErrors({});
+    setSlugManuallyEdited(false);
     setDrawerState({
       open: true,
       mode: "create",
@@ -628,6 +696,7 @@ export function AdminBrandPage() {
 
   function openEditDrawer(item) {
     setFieldErrors({});
+    setSlugManuallyEdited(Boolean(item.slug));
     setDrawerState({
       open: true,
       mode: "edit",
@@ -635,6 +704,7 @@ export function AdminBrandPage() {
         id: item.id,
         name: item.name,
         slug: item.slug,
+        originCountry: item.originCountry,
         description: item.description,
         active: item.active,
         type: item.type,
@@ -652,11 +722,23 @@ export function AdminBrandPage() {
   }
 
   function handleFormChange(field, value) {
+    if (field === "slug") {
+      setSlugManuallyEdited(true);
+    }
+
     setDrawerState((current) => ({
       ...current,
       values: {
         ...current.values,
-        [field]: value,
+        [field]:
+          field === "name"
+            ? value
+            : field === "slug"
+              ? createSlugValue(value)
+              : value,
+        ...(field === "name" && !slugManuallyEdited
+          ? { slug: createSlugValue(value) }
+          : {}),
       },
     }));
   }
@@ -689,6 +771,7 @@ export function AdminBrandPage() {
         mode: "create",
         values: createDefaultBrandValues(filters.tab),
       });
+      setSlugManuallyEdited(false);
       setRefreshKey((value) => value + 1);
     } catch (error) {
       setFieldErrors(getFieldErrors(error));

@@ -7,6 +7,8 @@ import {
 import { endpoints } from "@/lib/api/endpoints";
 
 const DEFAULT_PAGE_SIZE = 10;
+const SUPPORTED_SORTS = new Set(["oldest", "name_asc"]);
+const SUPPORTED_STATUSES = new Set(["active", "inactive"]);
 
 function asArray(value) {
   if (Array.isArray(value)) {
@@ -78,16 +80,20 @@ function buildQuery(filters = {}) {
     limit: filters.limit ?? DEFAULT_PAGE_SIZE,
   };
 
-  if (filters.q) {
-    query.search = filters.q;
+  const search = typeof filters.q === "string" ? filters.q.trim() : "";
+  const status = typeof filters.status === "string" ? filters.status.trim() : "";
+  const sort = typeof filters.sort === "string" ? filters.sort.trim() : "";
+
+  if (search) {
+    query.search = search;
   }
 
-  if (filters.status) {
-    query.isActive = filters.status === "active";
+  if (SUPPORTED_STATUSES.has(status)) {
+    query.status = status;
   }
 
-  if (filters.sort) {
-    query.sort = filters.sort;
+  if (SUPPORTED_SORTS.has(sort)) {
+    query.sort = sort;
   }
 
   return query;
@@ -180,6 +186,9 @@ function buildBrandPayload(values) {
     name: firstString(values.name),
     slug: firstString(values.slug),
     description: firstString(values.description),
+    originCountry: firstString(values.originCountry),
+    country: firstString(values.originCountry),
+    countryOfOrigin: firstString(values.originCountry),
     isActive: typeof activeValue === "boolean" ? activeValue : undefined,
     active: typeof activeValue === "boolean" ? activeValue : undefined,
     status: typeof activeValue === "boolean" ? (activeValue ? "active" : "inactive") : undefined,
@@ -187,10 +196,16 @@ function buildBrandPayload(values) {
 }
 
 function configByType(type) {
+  const normalizedType = type === "parts" ? "parts" : "vehicle";
+  const endpoint =
+    normalizedType === "parts"
+      ? endpoints.admin.partsBrands
+      : endpoints.admin.vehicleBrands;
+
   return {
-    endpoint: endpoints.admin.brands,
-    detailPath: (id) => `${endpoints.admin.brands}/${id}`,
-    normalize: (item) => normalizeBrand(item, type === "parts" ? "parts" : "vehicle"),
+    endpoint,
+    detailPath: (id) => `${endpoint}/${id}`,
+    normalize: (item) => normalizeBrand(item, normalizedType),
   };
 }
 
@@ -213,7 +228,7 @@ export async function getAdminBrands(type, filters) {
 }
 
 export async function getAdminVehicleBrandOptions() {
-  const response = await apiGet(endpoints.admin.brands);
+  const response = await apiGet(endpoints.admin.vehicleBrands);
 
   return normalizeItems(response.data).map((item) => ({
     id: item?.id ?? item?._id ?? item?.slug ?? item?.name ?? "brand",
